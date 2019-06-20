@@ -23,7 +23,6 @@
 package jdk.vm.ci.services;
 
 import static jdk.vm.ci.services.Services.IS_BUILDING_NATIVE_IMAGE;
-import static jdk.vm.ci.services.Services.IS_IN_NATIVE_IMAGE;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +80,7 @@ public abstract class JVMCIServiceLocator {
         result = ServiceLoader.load(JVMCIServiceLocator.class, ClassLoader.getSystemClassLoader());
         if (IS_BUILDING_NATIVE_IMAGE) {
             ArrayList<JVMCIServiceLocator> l = new ArrayList<>();
-            for (JVMCIServiceLocator locator: result) {
+            for (JVMCIServiceLocator locator : result) {
                 l.add(locator);
             }
             l.trimToSize();

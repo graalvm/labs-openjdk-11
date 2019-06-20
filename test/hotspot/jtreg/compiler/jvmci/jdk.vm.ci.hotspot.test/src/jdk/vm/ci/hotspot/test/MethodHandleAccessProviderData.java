@@ -173,6 +173,7 @@ public class MethodHandleAccessProviderData implements TestInterface {
     }
 
     // can't use nested classes for storing these test methods. see JDK-8010319
+    @SuppressWarnings("unused")
     private void privateMethod() {
         // empty
     }

@@ -13,3 +13,13 @@ test/nashorn/lib
 NashornProfile.txt
 **/JTreport/**
 **/JTwork/**
+**/.checkstyle
+**/.classpath
+**/.externalToolBuilders
+**/.factorypath
+**/.idea
+**/.metadata/
+**/.project
+**/.pydevproject
+**/.settings/
+**/*.pyc

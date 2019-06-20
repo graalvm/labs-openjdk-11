@@ -33,7 +33,6 @@ import java.util.Formatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.ServiceLoader;
 import java.util.Set;
 
@@ -44,9 +43,6 @@ import jdk.internal.misc.VM;
  * Provides utilities needed by JVMCI clients.
  */
 public final class Services {
-
-    // This class must be compilable and executable on JDK 8 since it's used in annotation
-    // processors while building JDK 9 so use of API added in JDK 9 is made via reflection.
 
     /**
      * Guards code that should be run when building an JVMCI shared library but should be excluded

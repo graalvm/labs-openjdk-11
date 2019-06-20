@@ -25,10 +25,12 @@ package jdk.vm.ci.hotspot;
 import jdk.vm.ci.code.BytecodeFrame;
 import jdk.vm.ci.code.CompiledCode;
 import jdk.vm.ci.code.StackSlot;
+import jdk.vm.ci.code.VirtualObject;
 import jdk.vm.ci.code.site.DataPatch;
 import jdk.vm.ci.code.site.Infopoint;
 import jdk.vm.ci.code.site.Site;
 import jdk.vm.ci.meta.Assumptions.Assumption;
+import jdk.vm.ci.meta.ResolvedJavaField;
 import jdk.vm.ci.meta.ResolvedJavaMethod;
 
 /**
@@ -160,5 +162,14 @@ public class HotSpotCompiledCode implements CompiledCode {
             }
         }
         return true;
+    }
+
+    public static void verifyVirtualObject(VirtualObject v) {
+        v.verifyLayout(new VirtualObject.LayoutVerifier() {
+            @Override
+            public int getOffset(ResolvedJavaField field) {
+                return field.getOffset();
+            }
+        });
     }
 }

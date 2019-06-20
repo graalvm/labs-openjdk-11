@@ -206,7 +206,7 @@ public abstract class TestAssembler {
 
     private StackSlot deoptRescue;
 
-    public ValueKindFactory<TestValueKind> valueKindFactory = new ValueKindFactory<TestAssembler.TestValueKind>() {
+    public ValueKindFactory<TestValueKind> valueKindFactory = new ValueKindFactory<>() {
         public TestValueKind getValueKind(JavaKind javaKind) {
             return (TestValueKind) TestAssembler.this.getValueKind(javaKind);
         }
@@ -389,7 +389,7 @@ public abstract class TestAssembler {
     public abstract void emitLoad(AllocatableValue av, Object prim);
 
     /**
-     * Emit a call to a fixed address <code>addr</code>
+     * Emit a call to a fixed address <code>addr</code>.
      */
     public abstract void emitCall(long addr);
 
