@@ -105,6 +105,7 @@ extern "C" address check_vfp_fault_instr;
 extern "C" address check_simd_fault_instr;
 
 void VM_Version::early_initialize() {
+  Abstract_VM_Version::early_initialize();
 
   // Make sure that _arm_arch is initialized so that any calls to OrderAccess will
   // use proper dmb instruction

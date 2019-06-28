@@ -30,8 +30,9 @@
 #include "runtime/arguments.hpp"
 #include "runtime/vm_version.hpp"
 
-const char* Abstract_VM_Version::_s_vm_release = Abstract_VM_Version::vm_release();
-const char* Abstract_VM_Version::_s_internal_vm_info_string = Abstract_VM_Version::internal_vm_info_string();
+const char* Abstract_VM_Version::_s_vm_release = NULL;
+const char* Abstract_VM_Version::_s_vm_name = NULL;
+const char* Abstract_VM_Version::_s_internal_vm_info_string = NULL;
 
 uint64_t Abstract_VM_Version::_features = 0;
 const char* Abstract_VM_Version::_features_string = "";
@@ -110,8 +111,116 @@ bool Abstract_VM_Version::_parallel_worker_threads_initialized = false;
 #endif
 #define VMNAME HOTSPOT_VM_DISTRO " " VMLP VMTYPE " VM"
 
+void Abstract_VM_Version::early_initialize() {
+  Abstract_VM_Version::init_vm_properties(Abstract_VM_Version::_s_vm_name, Abstract_VM_Version::_s_vm_release);
+  _s_internal_vm_info_string = Abstract_VM_Version::init_internal_vm_info_string();
+}
+
+int Abstract_VM_Version::init_vm_properties(const char*& name, const char*& version) {
+  int non_defaults = 0;
+  name = VMNAME;
+  version = VM_RELEASE;
+  char filename[JVM_MAXPATHLEN];
+  os::jvm_path(filename, JVM_MAXPATHLEN);
+  char *end = strrchr(filename, *os::file_separator());
+  if (end == NULL) {
+    warning("Could not find '%c' in %s", *os::file_separator(), filename);
+  } else {
+    jio_snprintf(end, JVM_MAXPATHLEN - (end - filename), "%svm.properties", os::file_separator());
+    struct stat statbuf;
+
+    if (os::stat(filename, &statbuf) == 0) {
+      FILE* stream = fopen(filename, "r");
+      if (stream != NULL) {
+        char* buffer = NEW_C_HEAP_ARRAY(char, statbuf.st_size + 1, mtInternal);
+        int num_read = (int)fread(buffer, 1, statbuf.st_size, stream);
+        int err = ferror(stream);
+        fclose(stream);
+        if (num_read != statbuf.st_size) {
+          warning("Only read %d of " INT64_FORMAT " characters from %s", num_read, statbuf.st_size, filename);
+          FREE_C_HEAP_ARRAY(char, buffer);
+        } else if (err != 0) {
+          warning("Error reading from %s (errno = %d)", filename, err);
+          FREE_C_HEAP_ARRAY(char, buffer);
+        } else {
+          char* last = buffer + statbuf.st_size;
+          *last = '\0';
+          // Strip trailing new lines at end of file
+          while (--last >= buffer && (*last == '\r' || *last == '\n')) {
+            *last = '\0';
+          }
+
+          char* line = buffer;
+          int line_no = 1;
+          while (line - buffer < statbuf.st_size) {
+            // find line end (\r, \n or \r\n)
+            char* nextline = NULL;
+            char* cr = strchr(line, '\r');
+            char* lf = strchr(line, '\n');
+            if (cr != NULL && lf != NULL) {
+              char* min = MIN2(cr, lf);
+              *min = '\0';
+              if (lf == cr + 1) {
+                nextline = lf + 1;
+              } else {
+                nextline = min + 1;
+              }
+            } else if (cr != NULL) {
+              *cr = '\0';
+              nextline = cr + 1;
+            } else if (lf != NULL) {
+              *lf = '\0';
+              nextline = lf + 1;
+            }
+
+            char* sep = strchr(line, '=');
+            if (sep == NULL) {
+              warning("%s:%d: could not find '='", filename, line_no);
+              return non_defaults;
+            }
+            if (sep == line) {
+              warning("%s:%d: empty property name", filename, line_no);
+              return non_defaults;
+            }
+            *sep = '\0';
+            const char* key = line;
+            char* value = sep + 1;
+            if (strcmp(key, "name") == 0) {
+              if (name == VMNAME) {
+                non_defaults++;
+              }
+              name = value;
+            } else if (strcmp(key, "version") == 0) {
+              if (version == VM_RELEASE) {
+                non_defaults++;
+              }
+              version = value;
+            } else {
+              warning("%s:%d: property must be \"name\" or \"version\", not \"%s\"", filename, line_no, key);
+              return non_defaults;
+            }
+
+            if (nextline == NULL) {
+              return true;
+            }
+            line = nextline;
+            line_no++;
+          }
+        }
+      } else {
+        warning("Error reading from %s (errno = %d)", filename, errno);
+      }
+    }
+  }
+  return non_defaults;
+}
+
 const char* Abstract_VM_Version::vm_name() {
-  return VMNAME;
+  // If this assertion fails, it most likely means a platform specific
+  // implementation of VM_Version::early_initialize() did not call
+  // Abstract_VM_Version::early_initialize() as required.
+  assert(_s_vm_name != NULL, "VM name is not initialized");
+  return _s_vm_name;
 }
 
 
@@ -166,7 +275,11 @@ const char* Abstract_VM_Version::vm_info_string() {
 //       fatal error handler. if the crash is in native thread,
 //       stringStream cannot get resource allocated and will SEGV.
 const char* Abstract_VM_Version::vm_release() {
-  return VM_RELEASE;
+  // If this assertion fails, it most likely means a platform specific
+  // implementation of VM_Version::early_initialize() did not call
+  // Abstract_VM_Version::early_initialize() as required.
+  assert(_s_vm_release != NULL, "VM release  is not initialized");
+  return _s_vm_release;
 }
 
 // NOTE: do *not* use stringStream. this function is called by
@@ -205,7 +318,7 @@ const char *Abstract_VM_Version::vm_platform_string() {
   return OS "-" CPU;
 }
 
-const char* Abstract_VM_Version::internal_vm_info_string() {
+const char* Abstract_VM_Version::init_internal_vm_info_string() {
   #ifndef HOTSPOT_BUILD_USER
     #define HOTSPOT_BUILD_USER unknown
   #endif
@@ -281,6 +394,10 @@ const char* Abstract_VM_Version::internal_vm_info_string() {
   return strcmp(DEBUG_LEVEL, "release") == 0
       ? VMNAME " (" INTERNAL_VERSION_SUFFIX
       : VMNAME " (" DEBUG_LEVEL " " INTERNAL_VERSION_SUFFIX;
+}
+
+const char* Abstract_VM_Version::internal_vm_info_string() {
+  return _s_internal_vm_info_string;
 }
 
 const char *Abstract_VM_Version::vm_build_user() {
