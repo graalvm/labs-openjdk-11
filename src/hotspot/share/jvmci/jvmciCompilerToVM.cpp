@@ -40,6 +40,7 @@
 #include "oops/typeArrayOop.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "prims/nativeLookup.hpp"
+#include "classfile/classLoaderData.inline.hpp"
 #include "runtime/deoptimization.hpp"
 #include "runtime/fieldDescriptor.hpp"
 #include "runtime/frame.inline.hpp"
@@ -2036,7 +2037,7 @@ C2V_VMENTRY_0(jboolean, isTrustedForIntrinsics, (JNIEnv* env, jobject, jobject h
     JVMCI_THROW_0(NullPointerException);
   }
   InstanceKlass* ik = InstanceKlass::cast(JVMCIENV->asKlass(JVMCIENV->wrap(holder)));
-  if (ik->class_loader_data()->is_builtin_class_loader_data()) {
+  if (ik->class_loader_data()->is_boot_class_loader_data() || ik->class_loader_data()->is_platform_class_loader_data()) {
     return true;
   }
   return false;
