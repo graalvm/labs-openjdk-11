@@ -44,33 +44,33 @@ class fileStream;
                     constraint, \
                     writeable) \
                                                                             \
-  experimental(bool, EnableJVMCI, false,                                    \
+  product(bool, EnableJVMCI, true,                                          \
           "Enable JVMCI")                                                   \
                                                                             \
-  experimental(bool, UseJVMCICompiler, false,                               \
+	product(bool, UseJVMCICompiler, false,                                    \
           "Use JVMCI as the default compiler")                              \
                                                                             \
-  experimental(bool, JVMCIPrintProperties, false,                           \
+  product(bool, JVMCIPrintProperties, false,                                \
           "Prints properties used by the JVMCI compiler and exits")         \
                                                                             \
-  experimental(bool, BootstrapJVMCI, false,                                 \
+  product(bool, BootstrapJVMCI, false,                                      \
           "Bootstrap JVMCI before running Java main method. This "          \
           "initializes the compile queue with a small set of methods "      \
           "and processes the queue until it is empty. Combining this with " \
           "-XX:-TieredCompilation makes JVMCI compile more of itself.")     \
                                                                             \
-  experimental(bool, EagerJVMCI, false,                                     \
+  product(bool, EagerJVMCI, false,                                          \
           "Force eager JVMCI initialization")                               \
                                                                             \
-  experimental(bool, PrintBootstrap, true,                                  \
+  product(bool, PrintBootstrap, true,                                       \
           "Print JVMCI bootstrap progress and summary")                     \
                                                                             \
-  experimental(intx, JVMCIThreads, 1,                                       \
+  product(intx, JVMCIThreads, 1,                                            \
           "Force number of JVMCI compiler threads to use. Ignored if "      \
           "UseJVMCICompiler is false.")                                     \
           range(1, max_jint)                                                \
                                                                             \
-  experimental(intx, JVMCIHostThreads, 1,                                   \
+  product(intx, JVMCIHostThreads, 1,                                        \
           "Force number of C1 compiler threads. Ignored if "                \
           "UseJVMCICompiler is false.")                                     \
           range(1, max_jint)                                                \
@@ -82,35 +82,35 @@ class fileStream;
   NOT_COMPILER2(product(bool, ReduceInitialCardMarks, true,                 \
           "Defer write barriers of young objects"))                         \
                                                                             \
-  experimental(intx, JVMCITraceLevel, 0,                                    \
+  product(intx, JVMCITraceLevel, 0,                                         \
           "Trace level for JVMCI: "                                         \
           "1 means emit a message for each CompilerToVM call,"              \
           "levels greater than 1 provide progressively greater detail")     \
                                                                             \
-  experimental(intx, JVMCICounterSize, 0,                                   \
+  product(intx, JVMCICounterSize, 0,                                        \
           "Reserved size for benchmark counters")                           \
           range(0, max_jint)                                                \
                                                                             \
-  experimental(bool, JVMCICountersExcludeCompiler, true,                    \
+  product(bool, JVMCICountersExcludeCompiler, true,                         \
           "Exclude JVMCI compiler threads from benchmark counters")         \
                                                                             \
   develop(bool, JVMCIUseFastLocking, true,                                  \
           "Use fast inlined locking code")                                  \
                                                                             \
-  experimental(intx, JVMCINMethodSizeLimit, (80*K)*wordSize,                \
+  product(intx, JVMCINMethodSizeLimit, (80*K)*wordSize,                     \
           "Maximum size of a compiled method.")                             \
                                                                             \
-  experimental(intx, MethodProfileWidth, 0,                                 \
+  product(intx, MethodProfileWidth, 0,                                      \
           "Number of methods to record in call profile")                    \
                                                                             \
-  experimental(ccstr, JVMCILibPath, NULL,                                   \
+  product(ccstr, JVMCILibPath, NULL,                                        \
           "LD path for loading the JVMCI shared library")                   \
                                                                             \
-  experimental(ccstr, JVMCILibDumpJNIConfig, NULL,                          \
+  product(ccstr, JVMCILibDumpJNIConfig, NULL,                               \
           "Dumps to the given file a description of the classes, fields "   \
           "and methods the JVMCI shared library must provide")              \
                                                                             \
-  experimental(bool, UseJVMCINativeLibrary, false,                          \
+  product(bool, UseJVMCINativeLibrary, false,                               \
           "Execute JVMCI Java code from a shared library "                  \
           "instead of loading it from class files and executing it "        \
           "on the HotSpot heap")                                            \
