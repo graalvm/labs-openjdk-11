@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,6 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 package jdk.internal.vm.compiler.collections.test;
@@ -142,7 +158,12 @@ public class EconomicSetTest {
         }
         Assert.assertEquals(initialList, removalList);
         Assert.assertEquals(1, finalList.size());
-        Assert.assertEquals(new Integer(9), finalList.get(0));
+        Assert.assertEquals(newInteger(9), finalList.get(0));
+    }
+
+    @SuppressWarnings({"deprecation", "unused"})
+    private static Integer newInteger(int value) {
+        return new Integer(value);
     }
 
 }

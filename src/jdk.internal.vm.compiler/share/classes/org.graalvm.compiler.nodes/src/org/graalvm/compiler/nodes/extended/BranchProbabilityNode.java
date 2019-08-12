@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,11 @@ import org.graalvm.compiler.core.common.calc.CanonicalCondition;
 import org.graalvm.compiler.core.common.type.IntegerStamp;
 import org.graalvm.compiler.core.common.type.StampFactory;
 import org.graalvm.compiler.debug.GraalError;
+import org.graalvm.compiler.graph.Node;
 import org.graalvm.compiler.graph.NodeClass;
 import org.graalvm.compiler.graph.iterators.NodePredicates;
+import org.graalvm.compiler.graph.spi.Canonicalizable;
+import org.graalvm.compiler.graph.spi.CanonicalizerTool;
 import org.graalvm.compiler.graph.spi.Simplifiable;
 import org.graalvm.compiler.graph.spi.SimplifierTool;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
@@ -56,7 +59,7 @@ import org.graalvm.compiler.nodes.spi.LoweringTool;
  * intended primarily for snippets, so that they can define their fast and slow paths.
  */
 @NodeInfo(cycles = CYCLES_0, cyclesRationale = "Artificial Node", size = SIZE_0)
-public final class BranchProbabilityNode extends FloatingNode implements Simplifiable, Lowerable {
+public final class BranchProbabilityNode extends FloatingNode implements Simplifiable, Lowerable, Canonicalizable {
 
     public static final NodeClass<BranchProbabilityNode> TYPE = NodeClass.create(BranchProbabilityNode.class);
     public static final double LIKELY_PROBABILITY = 0.6;
@@ -95,6 +98,15 @@ public final class BranchProbabilityNode extends FloatingNode implements Simplif
 
     public ValueNode getCondition() {
         return condition;
+    }
+
+    @Override
+    public Node canonical(CanonicalizerTool tool) {
+        if (condition.isConstant()) {
+            // fold constant conditions early during PE
+            return condition;
+        }
+        return this;
     }
 
     @Override

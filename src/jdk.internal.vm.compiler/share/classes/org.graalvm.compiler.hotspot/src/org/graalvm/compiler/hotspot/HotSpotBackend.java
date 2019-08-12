@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,14 @@
 
 package org.graalvm.compiler.hotspot;
 
+import static org.graalvm.compiler.replacements.arraycopy.ArrayCopyForeignCalls.UNSAFE_ARRAYCOPY;
+
 import java.util.EnumSet;
 
+import jdk.internal.vm.compiler.collections.EconomicMap;
+import jdk.internal.vm.compiler.collections.EconomicSet;
+import jdk.internal.vm.compiler.collections.Equivalence;
+import jdk.internal.vm.compiler.collections.MapCursor;
 import org.graalvm.compiler.code.CompilationResult;
 import org.graalvm.compiler.core.common.CompilationIdentifier;
 import org.graalvm.compiler.core.common.cfg.AbstractBlockBase;
@@ -40,6 +46,7 @@ import org.graalvm.compiler.hotspot.nodes.aot.ResolveConstantStubCall;
 import org.graalvm.compiler.hotspot.replacements.AESCryptSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.BigIntegerSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.CipherBlockChainingSubstitutions;
+import org.graalvm.compiler.hotspot.replacements.DigestBaseSubstitutions;
 import org.graalvm.compiler.hotspot.replacements.SHA2Substitutions;
 import org.graalvm.compiler.hotspot.replacements.SHA5Substitutions;
 import org.graalvm.compiler.hotspot.replacements.SHASubstitutions;
@@ -65,11 +72,8 @@ import org.graalvm.compiler.options.OptionKey;
 import org.graalvm.compiler.options.OptionType;
 import org.graalvm.compiler.options.OptionValues;
 import org.graalvm.compiler.phases.tiers.SuitesProvider;
+import org.graalvm.compiler.serviceprovider.JavaVersionUtil;
 import org.graalvm.compiler.word.Word;
-import jdk.internal.vm.compiler.collections.EconomicMap;
-import jdk.internal.vm.compiler.collections.EconomicSet;
-import jdk.internal.vm.compiler.collections.Equivalence;
-import jdk.internal.vm.compiler.collections.MapCursor;
 import jdk.internal.vm.compiler.word.Pointer;
 
 import jdk.vm.ci.code.CompilationRequest;
@@ -93,7 +97,7 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     public static class Options {
         // @formatter:off
         @Option(help = "Use Graal arithmetic stubs instead of HotSpot stubs where possible")
-        public static final OptionKey<Boolean> GraalArithmeticStubs = new OptionKey<>(false); // GR-8276
+        public static final OptionKey<Boolean> GraalArithmeticStubs = new OptionKey<>(JavaVersionUtil.JAVA_SPEC >= 9);
         @Option(help = "Enables instruction profiling on assembler level. Valid values are a comma separated list of supported instructions." +
                         " Compare with subclasses of Assembler.InstructionCounter.", type = OptionType.Debug)
         public static final OptionKey<String> ASMInstructionProfiling = new OptionKey<>(null);
@@ -260,18 +264,77 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     private static native void sha5ImplCompressStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word bufAddr, Object state);
 
     /**
-     * @see org.graalvm.compiler.hotspot.meta.HotSpotUnsafeSubstitutions#copyMemory
+     * @see DigestBaseSubstitutions#implCompressMultiBlock0
      */
-    public static final ForeignCallDescriptor UNSAFE_ARRAYCOPY = new ForeignCallDescriptor("unsafe_arraycopy", void.class, Word.class, Word.class, Word.class);
+    public static final ForeignCallDescriptor SHA_IMPL_COMPRESS_MB = new ForeignCallDescriptor("shaImplCompressMB", int.class, Word.class, Object.class, int.class, int.class);
 
-    public static void unsafeArraycopy(Word srcAddr, Word dstAddr, Word size) {
-        unsafeArraycopyStub(HotSpotBackend.UNSAFE_ARRAYCOPY, srcAddr, dstAddr, size);
+    public static int shaImplCompressMBStub(Word bufAddr, Object stateAddr, int ofs, int limit) {
+        return shaImplCompressMBStub(HotSpotBackend.SHA_IMPL_COMPRESS_MB, bufAddr, stateAddr, ofs, limit);
     }
 
-    public static final ForeignCallDescriptor GENERIC_ARRAYCOPY = new ForeignCallDescriptor("generic_arraycopy", int.class, Word.class, int.class, Word.class, int.class, int.class);
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int shaImplCompressMBStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word bufAddr, Object state, int ofs, int limit);
+
+    public static final ForeignCallDescriptor SHA2_IMPL_COMPRESS_MB = new ForeignCallDescriptor("sha2ImplCompressMB", int.class, Word.class, Object.class, int.class, int.class);
+
+    public static int sha2ImplCompressMBStub(Word bufAddr, Object stateAddr, int ofs, int limit) {
+        return sha2ImplCompressMBStub(HotSpotBackend.SHA2_IMPL_COMPRESS_MB, bufAddr, stateAddr, ofs, limit);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int sha2ImplCompressMBStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word bufAddr, Object state, int ofs, int limit);
+
+    public static final ForeignCallDescriptor SHA5_IMPL_COMPRESS_MB = new ForeignCallDescriptor("sha5ImplCompressMB", int.class, Word.class, Object.class, int.class, int.class);
+
+    public static int sha5ImplCompressMBStub(Word bufAddr, Object stateAddr, int ofs, int limit) {
+        return sha5ImplCompressMBStub(HotSpotBackend.SHA5_IMPL_COMPRESS_MB, bufAddr, stateAddr, ofs, limit);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int sha5ImplCompressMBStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word bufAddr, Object state, int ofs, int limit);
+
+    public static void unsafeArraycopy(Word srcAddr, Word dstAddr, Word size) {
+        unsafeArraycopyStub(UNSAFE_ARRAYCOPY, srcAddr, dstAddr, size);
+    }
 
     @NodeIntrinsic(ForeignCallNode.class)
     private static native void unsafeArraycopyStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word srcAddr, Word dstAddr, Word size);
+
+    /**
+     * Descriptor for {@code StubRoutines::_ghash_processBlocks}.
+     */
+    public static final ForeignCallDescriptor GHASH_PROCESS_BLOCKS = new ForeignCallDescriptor("ghashProcessBlocks", void.class, Word.class, Word.class, Word.class, int.class);
+
+    /**
+     * Descriptor for {@code StubRoutines::_base64_encodeBlock}.
+     */
+    public static final ForeignCallDescriptor BASE64_ENCODE_BLOCK = new ForeignCallDescriptor("base64EncodeBlock", void.class, Word.class, int.class, int.class, Word.class, int.class, boolean.class);
+
+    /**
+     * Descriptor for {@code StubRoutines::_counterMode_AESCrypt}.
+     */
+    public static final ForeignCallDescriptor COUNTERMODE_IMPL_CRYPT = new ForeignCallDescriptor("counterModeAESCrypt", int.class, Word.class, Word.class, Word.class, Word.class, int.class,
+                    Word.class, Word.class);
+
+    public static int counterModeAESCrypt(Word srcAddr, Word dstAddr, Word kPtr, Word cntPtr, int len, Word encCntPtr, Word used) {
+        return counterModeAESCrypt(COUNTERMODE_IMPL_CRYPT, srcAddr, dstAddr, kPtr, cntPtr, len, encCntPtr, used);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int counterModeAESCrypt(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word srcAddr, Word dstAddr, Word kPtr, Word cntPtr, int len, Word encCntPtr,
+                    Word used);
+
+    /**
+     * Descriptor for {@code StubRoutines::_vectorizedMismatch}.
+     */
+    public static final ForeignCallDescriptor VECTORIZED_MISMATCHED = new ForeignCallDescriptor("vectorizedMismatch", int.class, Word.class, Word.class, int.class, int.class);
+
+    public static int vectorizedMismatch(Word aAddr, Word bAddr, int length, int log2ArrayIndexScale) {
+        return vectorizedMismatchStub(VECTORIZED_MISMATCHED, aAddr, bAddr, length, log2ArrayIndexScale);
+    }
+
+    @NodeIntrinsic(ForeignCallNode.class)
+    private static native int vectorizedMismatchStub(@ConstantNodeParameter ForeignCallDescriptor descriptor, Word aAddr, Word bAddr, int length, int log2ArrayIndexScale);
 
     /**
      * @see VMErrorNode
@@ -279,19 +342,34 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     public static final ForeignCallDescriptor VM_ERROR = new ForeignCallDescriptor("vm_error", void.class, Object.class, Object.class, long.class);
 
     /**
-     * New multi array stub call.
+     * New multi array stub that throws an {@link OutOfMemoryError} on allocation failure.
      */
     public static final ForeignCallDescriptor NEW_MULTI_ARRAY = new ForeignCallDescriptor("new_multi_array", Object.class, KlassPointer.class, int.class, Word.class);
 
     /**
-     * New array stub.
+     * New multi array stub that will return null on allocation failure.
      */
-    public static final ForeignCallDescriptor NEW_ARRAY = new ForeignCallDescriptor("new_array", Object.class, KlassPointer.class, int.class, boolean.class);
+    public static final ForeignCallDescriptor NEW_MULTI_ARRAY_OR_NULL = new ForeignCallDescriptor("new_multi_array_or_null", Object.class, KlassPointer.class, int.class, Word.class);
 
     /**
-     * New instance stub.
+     * New array stub that throws an {@link OutOfMemoryError} on allocation failure.
+     */
+    public static final ForeignCallDescriptor NEW_ARRAY = new ForeignCallDescriptor("new_array", Object.class, KlassPointer.class, int.class);
+
+    /**
+     * New array stub that will return null on allocation failure.
+     */
+    public static final ForeignCallDescriptor NEW_ARRAY_OR_NULL = new ForeignCallDescriptor("new_array_or_null", Object.class, KlassPointer.class, int.class);
+
+    /**
+     * New instance stub that throws an {@link OutOfMemoryError} on allocation failure.
      */
     public static final ForeignCallDescriptor NEW_INSTANCE = new ForeignCallDescriptor("new_instance", Object.class, KlassPointer.class);
+
+    /**
+     * New instance stub that will return null on allocation failure.
+     */
+    public static final ForeignCallDescriptor NEW_INSTANCE_OR_NULL = new ForeignCallDescriptor("new_instance_or_null", Object.class, KlassPointer.class);
 
     /**
      * @see ResolveConstantStubCall
@@ -379,6 +457,13 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     }
 
     /**
+     * Translates a set of registers from the callee's perspective to the caller's perspective. This
+     * is needed for architectures where input/output registers are renamed during a call (e.g.
+     * register windows on SPARC). Registers which are not visible by the caller are removed.
+     */
+    protected abstract EconomicSet<Register> translateToCallerRegisters(EconomicSet<Register> calleeRegisters);
+
+    /**
      * Updates a given stub with respect to the registers it destroys.
      * <p>
      * Any entry in {@code calleeSaveInfo} that {@linkplain SaveRegistersOp#supportsRemove()
@@ -426,9 +511,14 @@ public abstract class HotSpotBackend extends Backend implements FrameMap.Referen
     }
 
     @Override
-    public CompiledCode createCompiledCode(ResolvedJavaMethod method, CompilationRequest compilationRequest, CompilationResult compResult) {
+    public CompiledCode createCompiledCode(ResolvedJavaMethod method,
+                    CompilationRequest compilationRequest,
+                    CompilationResult compResult,
+                    boolean isDefault,
+                    OptionValues options) {
+        assert !isDefault || compResult.getName() == null : "a default nmethod should have a null name since it is associated with a Method*";
         HotSpotCompilationRequest compRequest = compilationRequest instanceof HotSpotCompilationRequest ? (HotSpotCompilationRequest) compilationRequest : null;
-        return HotSpotCompiledCodeBuilder.createCompiledCode(getCodeCache(), method, compRequest, compResult);
+        return HotSpotCompiledCodeBuilder.createCompiledCode(getCodeCache(), method, compRequest, compResult, options);
     }
 
     @Override

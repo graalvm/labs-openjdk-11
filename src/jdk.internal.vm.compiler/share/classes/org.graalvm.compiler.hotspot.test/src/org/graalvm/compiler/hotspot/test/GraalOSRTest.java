@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,9 +28,6 @@ import org.graalvm.compiler.api.directives.GraalDirectives;
 import org.junit.Assert;
 import org.junit.Test;
 
-import jdk.vm.ci.meta.ProfilingInfo;
-import jdk.vm.ci.meta.ResolvedJavaMethod;
-
 /**
  * Test on-stack-replacement with Graal. The test manually triggers a Graal OSR-compilation which is
  * later invoked when hitting the backedge counter overflow.
@@ -54,6 +51,11 @@ public class GraalOSRTest extends GraalOSRTestBase {
     @Test
     public void testOSR03() {
         testOSR(getInitialOptions(), "testNonReduceLoop");
+    }
+
+    @Test
+    public void testOSR04() {
+        testOSR(getInitialOptions(), "testDeoptAfterCountedLoop");
     }
 
     static int limit = 10000;
@@ -104,57 +106,13 @@ public class GraalOSRTest extends GraalOSRTestBase {
         return ret;
     }
 
-    @Test
-    public void testOSR04() {
-        testFunnyOSR("testDoWhile", GraalOSRTest::testDoWhile);
-    }
-
-    @Test
-    public void testOSR05() {
-        testFunnyOSR("testDoWhileLocked", GraalOSRTest::testDoWhileLocked);
-    }
-
-    /**
-     * Because of a bug in C1 profile collection HotSpot can sometimes request an OSR compilation
-     * for a backedge which isn't ever taken. This test synthetically creates that situation.
-     */
-    private void testFunnyOSR(String name, Runnable warmup) {
-        ResolvedJavaMethod method = getResolvedJavaMethod(name);
-        int iterations = 0;
-        while (true) {
-            ProfilingInfo profilingInfo = method.getProfilingInfo();
-            if (profilingInfo.isMature()) {
-                break;
-            }
-
-            warmup.run();
-            if (iterations++ % 1000 == 0) {
-                System.err.print('.');
-            }
-            if (iterations > 200000) {
-                throw new AssertionError("no profile");
-            }
+    public static ReturnValue testDeoptAfterCountedLoop() {
+        long ret = 0;
+        for (int i = 0; GraalDirectives.injectBranchProbability(1, i < limit * limit); i++) {
+            GraalDirectives.blackhole(i);
+            ret = GraalDirectives.opaque(i);
         }
-        compileOSR(getInitialOptions(), method);
-        Result result = executeExpected(method, null);
-        checkResult(result);
-    }
-
-    private static boolean repeatLoop;
-
-    public static ReturnValue testDoWhile() {
-        do {
-            sideEffect++;
-        } while (repeatLoop);
-        return ReturnValue.SUCCESS;
-    }
-
-    public static synchronized ReturnValue testDoWhileLocked() {
-        // synchronized (GraalOSRTest.class) {
-        do {
-            sideEffect++;
-        } while (repeatLoop);
-        // }
-        return ReturnValue.SUCCESS;
+        GraalDirectives.controlFlowAnchor();
+        return ret + 1 == limit * limit ? ReturnValue.SUCCESS : ReturnValue.FAILURE;
     }
 }

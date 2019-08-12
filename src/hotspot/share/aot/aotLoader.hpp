@@ -65,6 +65,7 @@ public:
   static uint64_t get_saved_fingerprint(InstanceKlass* ik) NOT_AOT({ return 0; });
   static void oops_do(OopClosure* f) NOT_AOT_RETURN;
   static void metadata_do(void f(Metadata*)) NOT_AOT_RETURN;
+  static void initialize_box_caches(TRAPS) NOT_AOT_RETURN;
 
   NOT_PRODUCT( static void print_statistics() NOT_AOT_RETURN; )
 

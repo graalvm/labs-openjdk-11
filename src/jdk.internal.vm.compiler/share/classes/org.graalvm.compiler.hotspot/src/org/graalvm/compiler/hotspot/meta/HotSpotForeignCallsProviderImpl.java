@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,9 @@ import java.util.List;
 import jdk.internal.vm.compiler.collections.EconomicMap;
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.spi.ForeignCallDescriptor;
+import org.graalvm.compiler.debug.GraalError;
 import org.graalvm.compiler.hotspot.HotSpotForeignCallLinkage;
+import org.graalvm.compiler.hotspot.HotSpotForeignCallLinkage.Reexecutability;
 import org.graalvm.compiler.hotspot.HotSpotForeignCallLinkage.RegisterEffect;
 import org.graalvm.compiler.hotspot.HotSpotForeignCallLinkage.Transition;
 import org.graalvm.compiler.hotspot.HotSpotForeignCallLinkageImpl;
@@ -102,14 +104,27 @@ public abstract class HotSpotForeignCallsProviderImpl implements HotSpotForeignC
      * Creates and registers the details for linking a foreign call to a {@link Stub}.
      *
      * @param descriptor the signature of the call to the stub
-     * @param reexecutable specifies if the stub call can be re-executed without (meaningful) side
-     *            effects. Deoptimization will not return to a point before a stub call that cannot
-     *            be re-executed.
      * @param transition specifies if this is a {@linkplain Transition#LEAF leaf} call
+     * @param reexecutability specifies if the stub call can be re-executed without (meaningful)
+     *            side effects. Deoptimization will not return to a point before a stub call that
+     *            cannot be re-executed.
      * @param killedLocations the memory locations killed by the stub call
      */
-    public HotSpotForeignCallLinkage registerStubCall(ForeignCallDescriptor descriptor, boolean reexecutable, Transition transition, LocationIdentity... killedLocations) {
-        return register(HotSpotForeignCallLinkageImpl.create(metaAccess, codeCache, wordTypes, this, descriptor, 0L, PRESERVES_REGISTERS, JavaCall, JavaCallee, transition, reexecutable,
+    public HotSpotForeignCallLinkage registerStubCall(
+                    ForeignCallDescriptor descriptor,
+                    Transition transition,
+                    Reexecutability reexecutability,
+                    LocationIdentity... killedLocations) {
+        return register(HotSpotForeignCallLinkageImpl.create(metaAccess,
+                        codeCache,
+                        wordTypes,
+                        this,
+                        descriptor,
+                        0L, PRESERVES_REGISTERS,
+                        JavaCall,
+                        JavaCallee,
+                        transition,
+                        reexecutability,
                         killedLocations));
     }
 
@@ -117,52 +132,75 @@ public abstract class HotSpotForeignCallsProviderImpl implements HotSpotForeignC
      * Creates and registers the linkage for a foreign call.
      *
      * @param descriptor the signature of the foreign call
-     * @param address the address of the code to call
+     * @param address the address of the code to call (must be non-zero)
      * @param outgoingCcType outgoing (caller) calling convention type
      * @param effect specifies if the call destroys or preserves all registers (apart from
      *            temporaries which are always destroyed)
      * @param transition specifies if this is a {@linkplain Transition#LEAF leaf} call
-     * @param reexecutable specifies if the foreign call can be re-executed without (meaningful)
+     * @param reexecutability specifies if the foreign call can be re-executed without (meaningful)
      *            side effects. Deoptimization will not return to a point before a foreign call that
      *            cannot be re-executed.
      * @param killedLocations the memory locations killed by the foreign call
      */
-    public HotSpotForeignCallLinkage registerForeignCall(ForeignCallDescriptor descriptor, long address, CallingConvention.Type outgoingCcType, RegisterEffect effect, Transition transition,
-                    boolean reexecutable, LocationIdentity... killedLocations) {
+    public HotSpotForeignCallLinkage registerForeignCall(
+                    ForeignCallDescriptor descriptor,
+                    long address,
+                    CallingConvention.Type outgoingCcType,
+                    RegisterEffect effect,
+                    Transition transition,
+                    Reexecutability reexecutability,
+                    LocationIdentity... killedLocations) {
         Class<?> resultType = descriptor.getResultType();
-        assert address != 0;
+        assert address != 0 : descriptor;
         assert transition != SAFEPOINT || resultType.isPrimitive() || Word.class.isAssignableFrom(resultType) : "non-leaf foreign calls must return objects in thread local storage: " + descriptor;
-        return register(HotSpotForeignCallLinkageImpl.create(metaAccess, codeCache, wordTypes, this, descriptor, address, effect, outgoingCcType, null, transition, reexecutable, killedLocations));
+        return register(HotSpotForeignCallLinkageImpl.create(metaAccess,
+                        codeCache,
+                        wordTypes,
+                        this,
+                        descriptor,
+                        address,
+                        effect,
+                        outgoingCcType,
+                        null, // incomingCcType
+                        transition,
+                        reexecutability,
+                        killedLocations));
     }
 
     /**
-     * Creates a {@linkplain ForeignCallStub stub} for a foreign call.
+     * Creates a {@linkplain ForeignCallStub stub} for the foreign call described by
+     * {@code descriptor} if {@code address != 0}.
      *
      * @param descriptor the signature of the call to the stub
      * @param address the address of the foreign code to call
      * @param prependThread true if the JavaThread value for the current thread is to be prepended
      *            to the arguments for the call to {@code address}
      * @param transition specifies if this is a {@linkplain Transition#LEAF leaf} call
-     * @param reexecutable specifies if the foreign call can be re-executed without (meaningful)
+     * @param reexecutability specifies if the foreign call can be re-executed without (meaningful)
      *            side effects. Deoptimization will not return to a point before a foreign call that
      *            cannot be re-executed.
      * @param killedLocations the memory locations killed by the foreign call
      */
-    public void linkForeignCall(OptionValues options, HotSpotProviders providers, ForeignCallDescriptor descriptor, long address, boolean prependThread, Transition transition, boolean reexecutable,
+    public void linkForeignCall(OptionValues options,
+                    HotSpotProviders providers,
+                    ForeignCallDescriptor descriptor,
+                    long address,
+                    boolean prependThread,
+                    Transition transition,
+                    Reexecutability reexecutability,
                     LocationIdentity... killedLocations) {
-        ForeignCallStub stub = new ForeignCallStub(options, jvmciRuntime, providers, address, descriptor, prependThread, transition, reexecutable, killedLocations);
-        HotSpotForeignCallLinkage linkage = stub.getLinkage();
-        HotSpotForeignCallLinkage targetLinkage = stub.getTargetLinkage();
-        linkage.setCompiledStub(stub);
-        register(linkage);
-        register(targetLinkage);
+        if (address != 0) {
+            ForeignCallStub stub = new ForeignCallStub(options, jvmciRuntime, providers, address, descriptor, prependThread, transition, reexecutability, killedLocations);
+            HotSpotForeignCallLinkage linkage = stub.getLinkage();
+            HotSpotForeignCallLinkage targetLinkage = stub.getTargetLinkage();
+            linkage.setCompiledStub(stub);
+            register(linkage);
+            register(targetLinkage);
+        }
     }
 
     public static final boolean PREPEND_THREAD = true;
     public static final boolean DONT_PREPEND_THREAD = !PREPEND_THREAD;
-
-    public static final boolean REEXECUTABLE = true;
-    public static final boolean NOT_REEXECUTABLE = !REEXECUTABLE;
 
     public static final LocationIdentity[] NO_LOCATIONS = {};
 
@@ -170,8 +208,16 @@ public abstract class HotSpotForeignCallsProviderImpl implements HotSpotForeignC
     public HotSpotForeignCallLinkage lookupForeignCall(ForeignCallDescriptor descriptor) {
         assert foreignCalls != null : descriptor;
         HotSpotForeignCallLinkage callTarget = foreignCalls.get(descriptor);
+        if (callTarget == null) {
+            throw GraalError.shouldNotReachHere("missing implementation for runtime call: " + descriptor);
+        }
         callTarget.finalizeAddress(runtime.getHostBackend());
         return callTarget;
+    }
+
+    @Override
+    public boolean isAvailable(ForeignCallDescriptor descriptor) {
+        return foreignCalls.containsKey(descriptor);
     }
 
     @Override

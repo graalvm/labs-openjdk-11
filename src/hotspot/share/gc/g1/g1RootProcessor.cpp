@@ -45,6 +45,9 @@
 #include "runtime/mutex.hpp"
 #include "services/management.hpp"
 #include "utilities/macros.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 
 void G1RootProcessor::worker_has_discovered_all_strong_classes() {
   assert(ClassUnloadingWithConcurrentMark, "Currently only needed when doing G1 Class Unloading");
@@ -284,6 +287,15 @@ void G1RootProcessor::process_vm_roots(G1RootClosures* closures,
     G1GCParPhaseTimesTracker x(phase_times, G1GCPhaseTimes::AOTCodeRoots, worker_i);
     if (!_process_strong_tasks.is_task_claimed(G1RP_PS_aot_oops_do)) {
         AOTLoader::oops_do(strong_roots);
+    }
+  }
+#endif
+
+#if INCLUDE_JVMCI
+  if (EnableJVMCI) {
+    G1GCParPhaseTimesTracker x(phase_times, G1GCPhaseTimes::JVMCIRoots, worker_i);
+    if (!_process_strong_tasks.is_task_claimed(G1RP_PS_JVMCI_oops_do)) {
+      JVMCI::oops_do(strong_roots);
     }
   }
 #endif

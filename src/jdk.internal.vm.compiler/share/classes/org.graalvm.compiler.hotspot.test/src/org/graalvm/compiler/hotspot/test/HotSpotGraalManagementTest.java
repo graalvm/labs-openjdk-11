@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@
 
 package org.graalvm.compiler.hotspot.test;
 
+import static org.graalvm.compiler.hotspot.test.HotSpotGraalCompilerTest.assumeGraalIsNotJIT;
 import static org.graalvm.compiler.hotspot.test.HotSpotGraalManagementTest.JunitShield.findAttributeInfo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -72,9 +73,12 @@ public class HotSpotGraalManagementTest {
     private static final boolean DEBUG = Boolean.getBoolean(HotSpotGraalManagementTest.class.getSimpleName() + ".debug");
 
     public HotSpotGraalManagementTest() {
+        assumeGraalIsNotJIT("random flipping of Graal options can cause havoc if Graal is being used as a JIT");
         try {
+            /* Trigger loading of the management library using the bootstrap class loader. */
+            ManagementFactory.getThreadMXBean();
             MBeanServerFactory.findMBeanServer(null);
-        } catch (NoClassDefFoundError e) {
+        } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
             throw new AssumptionViolatedException("Management classes/module(s) not available: " + e);
         }
     }
@@ -358,25 +362,31 @@ public class HotSpotGraalManagementTest {
         assertNotNull("Info is found", info);
 
         final MBeanOperationInfo[] arr = info.getOperations();
-        assertEquals("Currently three overloads", 3, arr.length);
         MBeanOperationInfo dumpOp = null;
+        int dumpMethodCount = 0;
         for (int i = 0; i < arr.length; i++) {
-            assertEquals("dumpMethod", arr[i].getName());
-            if (arr[i].getSignature().length == 3) {
-                dumpOp = arr[i];
+            if ("dumpMethod".equals(arr[i].getName())) {
+                if (arr[i].getSignature().length == 3) {
+                    dumpOp = arr[i];
+                }
+                dumpMethodCount++;
             }
         }
+        assertEquals("Currently three overloads", 3, dumpMethodCount);
         assertNotNull("three args variant (as used by VisualVM) found", dumpOp);
 
         MBeanAttributeInfo dumpPath = findAttributeInfo("DumpPath", info);
         MBeanAttributeInfo printGraphFile = findAttributeInfo("PrintGraphFile", info);
         MBeanAttributeInfo showDumpFiles = findAttributeInfo("ShowDumpFiles", info);
+        MBeanAttributeInfo methodFilter = findAttributeInfo("MethodFilter", info);
         Object originalDumpPath = server.getAttribute(mbeanName, dumpPath.getName());
         Object originalPrintGraphFile = server.getAttribute(mbeanName, printGraphFile.getName());
         Object originalShowDumpFiles = server.getAttribute(mbeanName, showDumpFiles.getName());
+        Object originalMethodFilter = server.getAttribute(mbeanName, methodFilter.getName());
         final File tmpDir = new File(HotSpotGraalManagementTest.class.getSimpleName() + "_" + System.currentTimeMillis()).getAbsoluteFile();
 
         server.setAttribute(mbeanName, new Attribute(dumpPath.getName(), quoted(tmpDir)));
+        server.setAttribute(mbeanName, new Attribute(methodFilter.getName(), ""));
         // Force output to a file even if there's a running IGV instance available.
         server.setAttribute(mbeanName, new Attribute(printGraphFile.getName(), true));
         server.setAttribute(mbeanName, new Attribute(showDumpFiles.getName(), false));
@@ -385,6 +395,7 @@ public class HotSpotGraalManagementTest {
             server.invoke(mbeanName, "dumpMethod", params, null);
             boolean found = false;
             String expectedIgvDumpSuffix = "[Arrays.asList(Object[])List].bgv";
+            Assert.assertTrue(tmpDir.toString() + " was not created or is not a directory", tmpDir.isDirectory());
             List<String> dumpPathEntries = Arrays.asList(tmpDir.list());
             for (String entry : dumpPathEntries) {
                 if (entry.endsWith(expectedIgvDumpSuffix)) {
@@ -396,8 +407,11 @@ public class HotSpotGraalManagementTest {
                                 dumpPathEntries.stream().collect(Collectors.joining(System.lineSeparator()))));
             }
         } finally {
-            deleteDirectory(tmpDir.toPath());
+            if (tmpDir.isDirectory()) {
+                deleteDirectory(tmpDir.toPath());
+            }
             server.setAttribute(mbeanName, new Attribute(dumpPath.getName(), originalDumpPath));
+            server.setAttribute(mbeanName, new Attribute(methodFilter.getName(), originalMethodFilter));
             server.setAttribute(mbeanName, new Attribute(printGraphFile.getName(), originalPrintGraphFile));
             server.setAttribute(mbeanName, new Attribute(showDumpFiles.getName(), originalShowDumpFiles));
         }

@@ -148,6 +148,11 @@ extern Mutex*   MetaspaceExpand_lock;            // protects Metaspace virtualsp
 
 extern Monitor* CodeHeapStateAnalytics_lock;     // lock print functions against concurrent analyze functions.
                                                  // Only used locally in PrintCodeCacheLayout processing.
+#if INCLUDE_JVMCI
+extern Monitor* JVMCI_lock;                      // Monitor to control initialization of JVMCI
+extern Mutex*   JVMCIGlobalAlloc_lock;           // JVMCI global storage allocate list lock
+extern Mutex*   JVMCIGlobalActive_lock;          // JVMCI global storage active list lock
+#endif
 
 // A MutexLocker provides mutual exclusion with respect to a given mutex
 // for the scope which contains the locker.  The lock is an OS lock, not

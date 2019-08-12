@@ -27,6 +27,9 @@
 #include "classfile/symbolTable.hpp"
 #include "code/icBuffer.hpp"
 #include "gc/shared/collectedHeap.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 #include "interpreter/bytecodes.hpp"
 #include "memory/universe.hpp"
 #include "prims/methodHandles.hpp"
@@ -137,6 +140,12 @@ jint init_globals() {
     return JNI_EINVAL;
   }
   VMRegImpl::set_regName();
+
+#if INCLUDE_JVMCI
+  if (EnableJVMCI) {
+    JVMCI::initialize_globals();
+  }
+#endif
 
   if (!universe_post_init()) {
     return JNI_ERR;

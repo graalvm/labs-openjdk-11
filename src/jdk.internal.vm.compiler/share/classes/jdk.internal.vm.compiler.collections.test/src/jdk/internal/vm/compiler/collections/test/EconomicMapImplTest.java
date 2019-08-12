@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,6 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 package jdk.internal.vm.compiler.collections.test;
@@ -114,7 +130,12 @@ public class EconomicMapImplTest {
             }
         });
         set.addAll(Arrays.asList(0, 1, 2, 3, 4, 5, 6, 7, 8, 9));
-        Assert.assertTrue(set.add(new Integer(0)));
+        Assert.assertTrue(set.add(newInteger(0)));
+    }
+
+    @SuppressWarnings({"deprecation", "unused"})
+    private static Integer newInteger(int value) {
+        return new Integer(value);
     }
 
     @Test(expected = UnsupportedOperationException.class)

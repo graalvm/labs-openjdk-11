@@ -146,6 +146,26 @@ Mutex*   UnsafeJlong_lock             = NULL;
 Monitor* CodeHeapStateAnalytics_lock  = NULL;
 
 Mutex*   MetaspaceExpand_lock         = NULL;
+Mutex*   ClassLoaderDataGraph_lock    = NULL;
+Monitor* ThreadsSMRDelete_lock        = NULL;
+Mutex*   SharedDecoder_lock           = NULL;
+Mutex*   DCmdFactory_lock             = NULL;
+#if INCLUDE_NMT
+Mutex*   NMTQuery_lock                = NULL;
+#endif
+#if INCLUDE_CDS
+#if INCLUDE_JVMTI
+Mutex*   CDSClassFileStream_lock      = NULL;
+#endif
+Mutex*   DumpTimeTable_lock           = NULL;
+#endif // INCLUDE_CDS
+
+#if INCLUDE_JVMCI
+Monitor* JVMCI_lock                   = NULL;
+Mutex*   JVMCIGlobalAlloc_lock        = NULL;
+Mutex*   JVMCIGlobalActive_lock       = NULL;
+#endif
+
 
 #define MAX_NUM_MUTEX 128
 static Monitor * _mutex_array[MAX_NUM_MUTEX];
@@ -317,6 +337,11 @@ void mutex_init() {
 #endif
 
   def(CodeHeapStateAnalytics_lock  , PaddedMutex  , leaf,        true,  Monitor::_safepoint_check_never);
+#if INCLUDE_JVMCI
+  def(JVMCI_lock                   , PaddedMonitor, nonleaf+2,   true,  Monitor::_safepoint_check_always);
+  def(JVMCIGlobalAlloc_lock        , PaddedMutex  , nonleaf,     true,  Monitor::_safepoint_check_never);
+  def(JVMCIGlobalActive_lock       , PaddedMutex  , nonleaf-1,   true,  Monitor::_safepoint_check_never);
+#endif
 }
 
 GCMutexLocker::GCMutexLocker(Monitor * mutex) {

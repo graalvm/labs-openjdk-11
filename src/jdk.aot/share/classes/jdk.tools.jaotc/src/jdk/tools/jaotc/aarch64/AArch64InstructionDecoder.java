@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * Copyright (c) 2018, Red Hat Inc. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
@@ -22,17 +22,17 @@
  * questions.
  */
 
+
+
 package jdk.tools.jaotc.aarch64;
 
 import jdk.tools.jaotc.InstructionDecoder;
-
-import jdk.vm.ci.code.TargetDescription;
 
 public final class AArch64InstructionDecoder extends InstructionDecoder {
 
     private int currentEndOfInstruction;
 
-    public AArch64InstructionDecoder(TargetDescription target) {
+    public AArch64InstructionDecoder() {
     }
 
     @Override

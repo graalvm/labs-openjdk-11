@@ -84,7 +84,7 @@ public class SecurityRestrictionsTest {
         NO_JVMCI {
             @Override
             public Class<? extends Throwable> getExpectedException() {
-                return InternalError.class;
+                return Error.class;
             }
         },
         ALL_PERM {

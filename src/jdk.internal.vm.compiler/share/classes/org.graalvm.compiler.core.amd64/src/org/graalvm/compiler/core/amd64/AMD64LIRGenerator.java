@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2009, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2009, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,10 +29,10 @@ import static jdk.vm.ci.code.ValueUtil.asRegister;
 import static jdk.vm.ci.code.ValueUtil.isAllocatableValue;
 import static jdk.vm.ci.code.ValueUtil.isRegister;
 import static org.graalvm.compiler.asm.amd64.AMD64Assembler.AMD64BinaryArithmetic.CMP;
-import static org.graalvm.compiler.asm.amd64.AMD64Assembler.OperandSize.DWORD;
-import static org.graalvm.compiler.asm.amd64.AMD64Assembler.OperandSize.PD;
-import static org.graalvm.compiler.asm.amd64.AMD64Assembler.OperandSize.PS;
-import static org.graalvm.compiler.asm.amd64.AMD64Assembler.OperandSize.QWORD;
+import static org.graalvm.compiler.asm.amd64.AMD64BaseAssembler.OperandSize.DWORD;
+import static org.graalvm.compiler.asm.amd64.AMD64BaseAssembler.OperandSize.PD;
+import static org.graalvm.compiler.asm.amd64.AMD64BaseAssembler.OperandSize.PS;
+import static org.graalvm.compiler.asm.amd64.AMD64BaseAssembler.OperandSize.QWORD;
 import static org.graalvm.compiler.core.common.GraalOptions.GeneratePIC;
 import static org.graalvm.compiler.lir.LIRValueUtil.asConstant;
 import static org.graalvm.compiler.lir.LIRValueUtil.asConstantValue;
@@ -41,12 +41,14 @@ import static org.graalvm.compiler.lir.LIRValueUtil.isConstantValue;
 import static org.graalvm.compiler.lir.LIRValueUtil.isIntConstant;
 import static org.graalvm.compiler.lir.LIRValueUtil.isJavaConstant;
 
+import java.util.Optional;
+
 import org.graalvm.compiler.asm.amd64.AMD64Assembler.AMD64BinaryArithmetic;
 import org.graalvm.compiler.asm.amd64.AMD64Assembler.AMD64MIOp;
 import org.graalvm.compiler.asm.amd64.AMD64Assembler.AMD64RMOp;
 import org.graalvm.compiler.asm.amd64.AMD64Assembler.ConditionFlag;
-import org.graalvm.compiler.asm.amd64.AMD64Assembler.OperandSize;
 import org.graalvm.compiler.asm.amd64.AMD64Assembler.SSEOp;
+import org.graalvm.compiler.asm.amd64.AMD64BaseAssembler.OperandSize;
 import org.graalvm.compiler.core.common.LIRKind;
 import org.graalvm.compiler.core.common.NumUtil;
 import org.graalvm.compiler.core.common.calc.Condition;
@@ -66,6 +68,7 @@ import org.graalvm.compiler.lir.amd64.AMD64AddressValue;
 import org.graalvm.compiler.lir.amd64.AMD64ArithmeticLIRGeneratorTool;
 import org.graalvm.compiler.lir.amd64.AMD64ArrayCompareToOp;
 import org.graalvm.compiler.lir.amd64.AMD64ArrayEqualsOp;
+import org.graalvm.compiler.lir.amd64.AMD64ArrayIndexOfOp;
 import org.graalvm.compiler.lir.amd64.AMD64Binary;
 import org.graalvm.compiler.lir.amd64.AMD64BinaryConsumer;
 import org.graalvm.compiler.lir.amd64.AMD64ByteSwapOp;
@@ -77,6 +80,7 @@ import org.graalvm.compiler.lir.amd64.AMD64ControlFlow.CondSetOp;
 import org.graalvm.compiler.lir.amd64.AMD64ControlFlow.FloatBranchOp;
 import org.graalvm.compiler.lir.amd64.AMD64ControlFlow.FloatCondMoveOp;
 import org.graalvm.compiler.lir.amd64.AMD64ControlFlow.FloatCondSetOp;
+import org.graalvm.compiler.lir.amd64.AMD64ControlFlow.HashTableSwitchOp;
 import org.graalvm.compiler.lir.amd64.AMD64ControlFlow.ReturnOp;
 import org.graalvm.compiler.lir.amd64.AMD64ControlFlow.StrategySwitchOp;
 import org.graalvm.compiler.lir.amd64.AMD64ControlFlow.TableSwitchOp;
@@ -86,11 +90,13 @@ import org.graalvm.compiler.lir.amd64.AMD64Move.CompareAndSwapOp;
 import org.graalvm.compiler.lir.amd64.AMD64Move.MembarOp;
 import org.graalvm.compiler.lir.amd64.AMD64Move.StackLeaOp;
 import org.graalvm.compiler.lir.amd64.AMD64PauseOp;
-import org.graalvm.compiler.lir.amd64.AMD64StringIndexOfOp;
+import org.graalvm.compiler.lir.amd64.AMD64StringLatin1InflateOp;
+import org.graalvm.compiler.lir.amd64.AMD64StringUTF16CompressOp;
 import org.graalvm.compiler.lir.amd64.AMD64ZapRegistersOp;
 import org.graalvm.compiler.lir.amd64.AMD64ZapStackOp;
 import org.graalvm.compiler.lir.gen.LIRGenerationResult;
 import org.graalvm.compiler.lir.gen.LIRGenerator;
+import org.graalvm.compiler.lir.hashing.Hasher;
 import org.graalvm.compiler.phases.util.Providers;
 
 import jdk.vm.ci.amd64.AMD64;
@@ -261,8 +267,8 @@ public abstract class AMD64LIRGenerator extends LIRGenerator {
 
     public void emitCompareAndSwapBranch(ValueKind<?> kind, AMD64AddressValue address, Value expectedValue, Value newValue, Condition condition, LabelRef trueLabel, LabelRef falseLabel,
                     double trueLabelProbability) {
-        assert kind.equals(expectedValue.getValueKind());
-        assert kind.equals(newValue.getValueKind());
+        assert kind.getPlatformKind().getSizeInBytes() <= expectedValue.getValueKind().getPlatformKind().getSizeInBytes();
+        assert kind.getPlatformKind().getSizeInBytes() <= newValue.getValueKind().getPlatformKind().getSizeInBytes();
         assert condition == Condition.EQ || condition == Condition.NE;
         AMD64Kind memKind = (AMD64Kind) kind.getPlatformKind();
         RegisterValue raxValue = AMD64.rax.asValue(kind);
@@ -541,9 +547,16 @@ public abstract class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
-    public Variable emitArrayEquals(JavaKind kind, Value array1, Value array2, Value length) {
+    public Variable emitArrayEquals(JavaKind kind, Value array1, Value array2, Value length, int constantLength, boolean directPointers) {
         Variable result = newVariable(LIRKind.value(AMD64Kind.DWORD));
-        append(new AMD64ArrayEqualsOp(this, kind, result, array1, array2, asAllocatable(length)));
+        append(new AMD64ArrayEqualsOp(this, kind, kind, result, array1, array2, asAllocatable(length), constantLength, directPointers, getMaxVectorSize()));
+        return result;
+    }
+
+    @Override
+    public Variable emitArrayEquals(JavaKind kind1, JavaKind kind2, Value array1, Value array2, Value length, int constantLength, boolean directPointers) {
+        Variable result = newVariable(LIRKind.value(AMD64Kind.DWORD));
+        append(new AMD64ArrayEqualsOp(this, kind1, kind2, result, array1, array2, asAllocatable(length), constantLength, directPointers, getMaxVectorSize()));
         return result;
     }
 
@@ -554,15 +567,53 @@ public abstract class AMD64LIRGenerator extends LIRGenerator {
         return 4096;
     }
 
+    /**
+     * Return the maximum size of vector registers used in SSE/AVX instructions.
+     */
+    protected int getMaxVectorSize() {
+        // default for "unlimited"
+        return -1;
+    }
+
     @Override
-    public Variable emitStringIndexOf(Value source, Value sourceCount, Value target, Value targetCount, int constantTargetCount) {
+    public Variable emitArrayIndexOf(JavaKind arrayKind, JavaKind valueKind, boolean findTwoConsecutive, Value arrayPointer, Value arrayLength, Value fromIndex, Value... searchValues) {
         Variable result = newVariable(LIRKind.value(AMD64Kind.DWORD));
-        RegisterValue cnt1 = AMD64.rdx.asValue(sourceCount.getValueKind());
-        emitMove(cnt1, sourceCount);
-        RegisterValue cnt2 = AMD64.rax.asValue(targetCount.getValueKind());
-        emitMove(cnt2, targetCount);
-        append(new AMD64StringIndexOfOp(this, result, source, target, cnt1, cnt2, AMD64.rcx.asValue(), AMD64.xmm0.asValue(), constantTargetCount, getVMPageSize()));
+        append(new AMD64ArrayIndexOfOp(arrayKind, valueKind, findTwoConsecutive, getMaxVectorSize(), this, result,
+                        asAllocatable(arrayPointer), asAllocatable(arrayLength), asAllocatable(fromIndex), searchValues));
         return result;
+    }
+
+    @Override
+    public void emitStringLatin1Inflate(Value src, Value dst, Value len) {
+        RegisterValue rsrc = AMD64.rsi.asValue(src.getValueKind());
+        RegisterValue rdst = AMD64.rdi.asValue(dst.getValueKind());
+        RegisterValue rlen = AMD64.rdx.asValue(len.getValueKind());
+
+        emitMove(rsrc, src);
+        emitMove(rdst, dst);
+        emitMove(rlen, len);
+
+        append(new AMD64StringLatin1InflateOp(this, rsrc, rdst, rlen));
+    }
+
+    @Override
+    public Variable emitStringUTF16Compress(Value src, Value dst, Value len) {
+        RegisterValue rsrc = AMD64.rsi.asValue(src.getValueKind());
+        RegisterValue rdst = AMD64.rdi.asValue(dst.getValueKind());
+        RegisterValue rlen = AMD64.rdx.asValue(len.getValueKind());
+
+        emitMove(rsrc, src);
+        emitMove(rdst, dst);
+        emitMove(rlen, len);
+
+        LIRKind reskind = LIRKind.value(AMD64Kind.DWORD);
+        RegisterValue rres = AMD64.rax.asValue(reskind);
+
+        append(new AMD64StringUTF16CompressOp(this, rres, rsrc, rdst, rlen));
+
+        Variable res = newVariable(reskind);
+        emitMove(res, rres);
+        return res;
     }
 
     @Override
@@ -592,6 +643,19 @@ public abstract class AMD64LIRGenerator extends LIRGenerator {
     }
 
     @Override
+    protected Optional<Hasher> hasherFor(JavaConstant[] keyConstants, double minDensity) {
+        return Hasher.forKeys(keyConstants, minDensity);
+    }
+
+    @Override
+    protected void emitHashTableSwitch(Hasher hasher, JavaConstant[] keys, LabelRef defaultTarget, LabelRef[] targets, Value value) {
+        Value index = hasher.hash(value, arithmeticLIRGen);
+        Variable scratch = newVariable(LIRKind.value(target().arch.getWordKind()));
+        Variable entryScratch = newVariable(LIRKind.value(target().arch.getWordKind()));
+        append(new HashTableSwitchOp(keys, defaultTarget, targets, value, index, scratch, entryScratch));
+    }
+
+    @Override
     public void emitPause() {
         append(new AMD64PauseOp());
     }
@@ -606,7 +670,8 @@ public abstract class AMD64LIRGenerator extends LIRGenerator {
         return new AMD64ZapStackOp(zappedStack, zapValues);
     }
 
-    public void emitLFence() {
+    @Override
+    public void emitSpeculationFence() {
         append(new AMD64LFenceOp());
     }
 }

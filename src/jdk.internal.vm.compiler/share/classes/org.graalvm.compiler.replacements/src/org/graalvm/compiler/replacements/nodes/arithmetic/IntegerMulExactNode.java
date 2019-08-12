@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,13 +30,14 @@ import static org.graalvm.compiler.nodeinfo.NodeSize.SIZE_2;
 import org.graalvm.compiler.core.common.type.IntegerStamp;
 import org.graalvm.compiler.graph.NodeClass;
 import org.graalvm.compiler.graph.spi.CanonicalizerTool;
+import org.graalvm.compiler.nodeinfo.InputType;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
-import org.graalvm.compiler.nodes.AbstractBeginNode;
 import org.graalvm.compiler.nodes.ConstantNode;
 import org.graalvm.compiler.nodes.NodeView;
 import org.graalvm.compiler.nodes.ValueNode;
 import org.graalvm.compiler.nodes.calc.MulNode;
-import org.graalvm.compiler.nodes.spi.LoweringTool;
+import org.graalvm.compiler.nodes.extended.GuardedNode;
+import org.graalvm.compiler.nodes.extended.GuardingNode;
 
 import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaKind;
@@ -46,13 +47,16 @@ import jdk.vm.ci.meta.JavaKind;
  * in case the addition would overflow the 32 bit range.
  */
 @NodeInfo(cycles = CYCLES_4, cyclesRationale = "mul+cmp", size = SIZE_2)
-public final class IntegerMulExactNode extends MulNode implements IntegerExactArithmeticNode {
+public final class IntegerMulExactNode extends MulNode implements GuardedNode, IntegerExactArithmeticNode {
     public static final NodeClass<IntegerMulExactNode> TYPE = NodeClass.create(IntegerMulExactNode.class);
 
-    public IntegerMulExactNode(ValueNode x, ValueNode y) {
+    @Input(InputType.Guard) protected GuardingNode guard;
+
+    public IntegerMulExactNode(ValueNode x, ValueNode y, GuardingNode guard) {
         super(TYPE, x, y);
         setStamp(x.stamp(NodeView.DEFAULT).unrestricted());
         assert x.stamp(NodeView.DEFAULT).isCompatible(y.stamp(NodeView.DEFAULT)) && x.stamp(NodeView.DEFAULT) instanceof IntegerStamp;
+        this.guard = guard;
     }
 
     @Override
@@ -69,10 +73,10 @@ public final class IntegerMulExactNode extends MulNode implements IntegerExactAr
     @Override
     public ValueNode canonical(CanonicalizerTool tool, ValueNode forX, ValueNode forY) {
         if (forX.isConstant() && !forY.isConstant()) {
-            return new IntegerMulExactNode(forY, forX).canonical(tool);
+            return new IntegerMulExactNode(forY, forX, guard).canonical(tool);
         }
-        if (forX.isConstant()) {
-            return canonicalXconstant(forX, forY);
+        if (forX.isConstant() && forY.isConstant()) {
+            return canonicalXYconstant(forX, forY);
         } else if (forY.isConstant()) {
             long c = forY.asJavaConstant().asLong();
             if (c == 1) {
@@ -88,7 +92,7 @@ public final class IntegerMulExactNode extends MulNode implements IntegerExactAr
         return this;
     }
 
-    private ValueNode canonicalXconstant(ValueNode forX, ValueNode forY) {
+    private ValueNode canonicalXYconstant(ValueNode forX, ValueNode forY) {
         JavaConstant xConst = forX.asJavaConstant();
         JavaConstant yConst = forY.asJavaConstant();
         assert xConst.getJavaKind() == yConst.getJavaKind();
@@ -106,12 +110,13 @@ public final class IntegerMulExactNode extends MulNode implements IntegerExactAr
     }
 
     @Override
-    public IntegerExactArithmeticSplitNode createSplit(AbstractBeginNode next, AbstractBeginNode deopt) {
-        return graph().add(new IntegerMulExactSplitNode(stamp(NodeView.DEFAULT), getX(), getY(), next, deopt));
+    public GuardingNode getGuard() {
+        return guard;
     }
 
     @Override
-    public void lower(LoweringTool tool) {
-        IntegerExactArithmeticSplitNode.lower(tool, this);
+    public void setGuard(GuardingNode guard) {
+        updateUsagesInterface(this.guard, guard);
+        this.guard = guard;
     }
 }

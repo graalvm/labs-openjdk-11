@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,8 @@ public abstract class AbstractBeginNode extends FixedWithNextNode implements LIR
 
     public static final NodeClass<AbstractBeginNode> TYPE = NodeClass.create(AbstractBeginNode.class);
 
+    private boolean withSpeculationFence;
+
     protected AbstractBeginNode(NodeClass<? extends AbstractBeginNode> c) {
         this(c, StampFactory.forVoid());
     }
@@ -57,21 +59,20 @@ public abstract class AbstractBeginNode extends FixedWithNextNode implements LIR
         Node next = from;
         while (next != null) {
             if (next instanceof AbstractBeginNode) {
-                AbstractBeginNode begin = (AbstractBeginNode) next;
-                return begin;
+                return (AbstractBeginNode) next;
             }
             next = next.predecessor();
         }
         return null;
     }
 
-    private void evacuateGuards(FixedNode evacuateFrom) {
+    private void evacuateAnchored(FixedNode evacuateFrom) {
         if (!hasNoUsages()) {
             AbstractBeginNode prevBegin = prevBegin(evacuateFrom);
             assert prevBegin != null;
-            for (Node anchored : anchored().snapshot()) {
-                anchored.replaceFirstInput(this, prevBegin);
-            }
+            replaceAtUsages(InputType.Anchor, prevBegin);
+            replaceAtUsages(InputType.Guard, prevBegin);
+            assert anchored().isEmpty() : anchored().snapshot();
         }
     }
 
@@ -80,7 +81,7 @@ public abstract class AbstractBeginNode extends FixedWithNextNode implements LIR
     }
 
     public void prepareDelete(FixedNode evacuateFrom) {
-        evacuateGuards(evacuateFrom);
+        evacuateAnchored(evacuateFrom);
     }
 
     @Override
@@ -91,7 +92,9 @@ public abstract class AbstractBeginNode extends FixedWithNextNode implements LIR
 
     @Override
     public void generate(NodeLIRBuilderTool gen) {
-        // nop
+        if (withSpeculationFence) {
+            gen.getLIRGeneratorTool().emitSpeculationFence();
+        }
     }
 
     public NodeIterable<GuardNode> guards() {
@@ -112,7 +115,15 @@ public abstract class AbstractBeginNode extends FixedWithNextNode implements LIR
         };
     }
 
-    private class BlockNodeIterator implements Iterator<FixedNode> {
+    /**
+     * Set this begin node to be a speculation fence. This will prevent speculative execution of
+     * this block.
+     */
+    public void setWithSpeculationFence() {
+        this.withSpeculationFence = true;
+    }
+
+    private static class BlockNodeIterator implements Iterator<FixedNode> {
 
         private FixedNode current;
 

@@ -329,7 +329,8 @@ public:
   void preserve_callee_argument_oops(frame fr, const RegisterMap *reg_map, OopClosure* f);
 
   // implicit exceptions support
-  virtual address continuation_for_implicit_exception(address pc) { return NULL; }
+  address continuation_for_implicit_div0_exception(address pc) { return continuation_for_implicit_exception(pc, true); }
+  address continuation_for_implicit_null_exception(address pc) { return continuation_for_implicit_exception(pc, false); }
 
   static address get_deopt_original_pc(const frame* fr);
 
@@ -340,6 +341,8 @@ public:
   // Inline cache support for class unloading and nmethod unloading
  private:
   bool cleanup_inline_caches_impl(bool parallel, bool unloading_occurred, bool clean_all);
+  address continuation_for_implicit_exception(address pc, bool for_div0_check);
+
  public:
   bool cleanup_inline_caches(bool clean_all = false) {
     // Serial version used by sweeper and whitebox test
@@ -398,9 +401,6 @@ public:
 
 protected:
   virtual bool do_unloading_oops(address low_boundary, BoolObjectClosure* is_alive) = 0;
-#if INCLUDE_JVMCI
-  virtual bool do_unloading_jvmci() = 0;
-#endif
 
 private:
   // GC support to help figure out if an nmethod has been

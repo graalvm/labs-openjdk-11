@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,9 @@
 
 package org.graalvm.compiler.options;
 
+import static jdk.vm.ci.services.Services.IS_BUILDING_NATIVE_IMAGE;
+import static jdk.vm.ci.services.Services.IS_IN_NATIVE_IMAGE;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Formatter;
@@ -32,7 +35,8 @@ import java.util.ServiceLoader;
 
 import jdk.internal.vm.compiler.collections.EconomicMap;
 import jdk.internal.vm.compiler.collections.MapCursor;
-import org.graalvm.util.CollectionsUtil;
+
+import jdk.vm.ci.services.Services;
 
 /**
  * This class contains methods for parsing Graal options and matching them against a set of
@@ -40,25 +44,35 @@ import org.graalvm.util.CollectionsUtil;
  */
 public class OptionsParser {
 
+    private static volatile List<OptionDescriptors> cachedOptionDescriptors;
+
     /**
-     * Gets an iterable composed of the {@link ServiceLoader}s to be used when looking for
-     * {@link OptionDescriptors} providers.
+     * Gets an iterable of available {@link OptionDescriptors}.
      */
     public static Iterable<OptionDescriptors> getOptionsLoader() {
-        ServiceLoader<OptionDescriptors> graalLoader = ServiceLoader.load(OptionDescriptors.class, OptionDescriptors.class.getClassLoader());
-        boolean java8OrEarlier = System.getProperty("java.specification.version").compareTo("1.9") < 0;
+        if (IS_IN_NATIVE_IMAGE || cachedOptionDescriptors != null) {
+            return cachedOptionDescriptors;
+        }
+        boolean java8OrEarlier = Services.getSavedProperties().get("java.specification.version").compareTo("1.9") < 0;
+        ClassLoader loader;
         if (java8OrEarlier) {
-            return graalLoader;
+            // On JDK 8, Graal and its extensions are loaded by same class loader.
+            loader = OptionDescriptors.class.getClassLoader();
         } else {
             /*
              * The Graal module (i.e., jdk.internal.vm.compiler) is loaded by the platform class
-             * loader on JDK 9. Other modules that extend Graal or are Graal dependencies (such as
-             * Truffle) are supplied via --module-path which means they are loaded by the app class
-             * loader. As such, we need to search the app class loader path as well.
+             * loader as of JDK 9. Modules that depend on and extend Graal are loaded by the app
+             * class loader. As such, we need to start the provider search at the app class loader
+             * instead of the platform class loader.
              */
-            ServiceLoader<OptionDescriptors> truffleLoader = ServiceLoader.load(OptionDescriptors.class, ClassLoader.getSystemClassLoader());
-            return CollectionsUtil.concat(graalLoader, truffleLoader);
+            loader = ClassLoader.getSystemClassLoader();
         }
+        return ServiceLoader.load(OptionDescriptors.class, loader);
+    }
+
+    public static void setCachedOptionDescriptors(List<OptionDescriptors> cachedOptionDescriptors) {
+        assert IS_BUILDING_NATIVE_IMAGE : "Used to pre-initialize the option descriptors during native image generation";
+        OptionsParser.cachedOptionDescriptors = cachedOptionDescriptors;
     }
 
     /**
@@ -178,7 +192,7 @@ public class OptionsParser {
             }
         }
 
-        desc.optionKey.update(values, value);
+        desc.getOptionKey().update(values, value);
     }
 
     private static long parseLong(String v) {

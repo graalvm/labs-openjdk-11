@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,11 +53,14 @@ public interface HotSpotForeignCallLinkage extends ForeignCallLinkage, InvokeTar
      */
     enum Transition {
         /**
-         * A call to a leaf function that is guaranteed to not use floating point registers and will
-         * never have its caller stack inspected by the VM. That is, {@code JavaFrameAnchor}
-         * management around the call can be omitted.
+         * A call to a leaf function that is guaranteed to not use floating point registers.
+         * Consequently, floating point registers cleanup will be waived. On AMD64, this means the
+         * compiler will no longer emit vzeroupper instruction around the foreign call, which it
+         * normally does for unknown foreign calls to avoid potential SSE-AVX transition penalty.
+         * Besides, this foreign call will never have its caller stack inspected by the VM. That is,
+         * {@code JavaFrameAnchor} management around the call can be omitted.
          */
-        LEAF_NOFP,
+        LEAF_NO_VZERO,
 
         /**
          * A call to a leaf function that might use floating point registers but will never have its
@@ -83,11 +86,47 @@ public interface HotSpotForeignCallLinkage extends ForeignCallLinkage, InvokeTar
     }
 
     /**
+     * Constants specifying when a foreign call or stub call is re-executable.
+     */
+    enum Reexecutability {
+        /**
+         * Denotes a call that cannot be re-executed. If an exception is raised, the call is
+         * deoptimized and the exception is passed on to be dispatched. If the call can throw an
+         * exception it needs to have a precise frame state.
+         */
+        NOT_REEXECUTABLE,
+
+        /**
+         * Denotes a call that can only be re-executed if it returns with a pending exception. This
+         * type of call models a function that may throw exceptions before any side effects happen.
+         * In this case if an exception is raised the call may be deoptimized and reexecuted. It
+         * also means that while the call has side effects and may deoptimize it doesn't necessarily
+         * need to have a precise frame state.
+         */
+        REEXECUTABLE_ONLY_AFTER_EXCEPTION,
+
+        /**
+         * Denotes a call that can always be re-executed. If an exception is raised by the call it
+         * may be cleared, compiled code deoptimized and reexecuted. Since the call has no side
+         * effects it is assumed that the same exception will be thrown.
+         */
+        REEXECUTABLE
+    }
+
+    /**
      * Sentinel marker for a computed jump address.
      */
     long JUMP_ADDRESS = 0xDEADDEADBEEFBEEFL;
 
+    /**
+     * Determines if the call has side effects.
+     */
     boolean isReexecutable();
+
+    /**
+     * Determines if the call returning a pending exception implies it is side-effect free.
+     */
+    boolean isReexecutableOnlyAfterException();
 
     LocationIdentity[] getKilledLocations();
 

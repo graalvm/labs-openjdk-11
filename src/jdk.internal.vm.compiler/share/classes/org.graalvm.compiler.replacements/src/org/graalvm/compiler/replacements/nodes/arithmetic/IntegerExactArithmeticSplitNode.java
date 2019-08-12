@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,20 +32,11 @@ import org.graalvm.compiler.graph.NodeClass;
 import org.graalvm.compiler.graph.spi.Simplifiable;
 import org.graalvm.compiler.nodeinfo.NodeInfo;
 import org.graalvm.compiler.nodes.AbstractBeginNode;
-import org.graalvm.compiler.nodes.BeginNode;
 import org.graalvm.compiler.nodes.ControlSplitNode;
-import org.graalvm.compiler.nodes.DeoptimizeNode;
-import org.graalvm.compiler.nodes.FixedNode;
-import org.graalvm.compiler.nodes.FixedWithNextNode;
-import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.ValueNode;
-import org.graalvm.compiler.nodes.calc.FloatingNode;
 import org.graalvm.compiler.nodes.spi.LIRLowerable;
-import org.graalvm.compiler.nodes.spi.LoweringTool;
 import org.graalvm.compiler.nodes.spi.NodeLIRBuilderTool;
 
-import jdk.vm.ci.meta.DeoptimizationAction;
-import jdk.vm.ci.meta.DeoptimizationReason;
 import jdk.vm.ci.meta.Value;
 
 @NodeInfo(cycles = CYCLES_2, cyclesRationale = "add+cmp", size = SIZE_2)
@@ -90,6 +81,16 @@ public abstract class IntegerExactArithmeticSplitNode extends ControlSplitNode i
         return overflowSuccessor;
     }
 
+    public void setNext(AbstractBeginNode next) {
+        updatePredecessor(this.next, next);
+        this.next = next;
+    }
+
+    public void setOverflowSuccessor(AbstractBeginNode overflowSuccessor) {
+        updatePredecessor(this.overflowSuccessor, overflowSuccessor);
+        this.overflowSuccessor = overflowSuccessor;
+    }
+
     public ValueNode getX() {
         return x;
     }
@@ -105,21 +106,6 @@ public abstract class IntegerExactArithmeticSplitNode extends ControlSplitNode i
     }
 
     protected abstract Value generateArithmetic(NodeLIRBuilderTool generator);
-
-    static void lower(LoweringTool tool, IntegerExactArithmeticNode node) {
-        if (node.asNode().graph().getGuardsStage() == StructuredGraph.GuardsStage.FIXED_DEOPTS) {
-            FloatingNode floatingNode = (FloatingNode) node;
-            FixedWithNextNode previous = tool.lastFixedNode();
-            FixedNode next = previous.next();
-            previous.setNext(null);
-            DeoptimizeNode deopt = floatingNode.graph().add(new DeoptimizeNode(DeoptimizationAction.InvalidateReprofile, DeoptimizationReason.ArithmeticException));
-            AbstractBeginNode normalBegin = floatingNode.graph().add(new BeginNode());
-            normalBegin.setNext(next);
-            IntegerExactArithmeticSplitNode split = node.createSplit(normalBegin, BeginNode.begin(deopt));
-            previous.setNext(split);
-            floatingNode.replaceAndDelete(split);
-        }
-    }
 
     @Override
     public int getSuccessorCount() {

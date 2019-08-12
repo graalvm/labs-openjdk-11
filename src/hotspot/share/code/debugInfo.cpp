@@ -55,7 +55,7 @@ oop DebugInfoReadStream::read_oop() {
   return o;
 }
 
-ScopeValue* DebugInfoReadStream::read_object_value() {
+ScopeValue* DebugInfoReadStream::read_object_value(bool is_auto_box) {
   int id = read_int();
 #ifdef ASSERT
   assert(_obj_pool != NULL, "object pool does not exist");
@@ -63,7 +63,7 @@ ScopeValue* DebugInfoReadStream::read_object_value() {
     assert(_obj_pool->at(i)->as_ObjectValue()->id() != id, "should not be read twice");
   }
 #endif
-  ObjectValue* result = new ObjectValue(id);
+  ObjectValue* result = is_auto_box ? new AutoBoxObjectValue(id) : new ObjectValue(id);
   // Cache the object since an object field could reference it.
   _obj_pool->push(result);
   result->read_object(this);
@@ -87,7 +87,8 @@ ScopeValue* DebugInfoReadStream::get_cached_object() {
 
 enum { LOCATION_CODE = 0, CONSTANT_INT_CODE = 1,  CONSTANT_OOP_CODE = 2,
                           CONSTANT_LONG_CODE = 3, CONSTANT_DOUBLE_CODE = 4,
-                          OBJECT_CODE = 5,        OBJECT_ID_CODE = 6 };
+                          OBJECT_CODE = 5,        OBJECT_ID_CODE = 6,
+                          AUTO_BOX_OBJECT_CODE = 7 };
 
 ScopeValue* ScopeValue::read_from(DebugInfoReadStream* stream) {
   ScopeValue* result = NULL;
@@ -97,7 +98,8 @@ ScopeValue* ScopeValue::read_from(DebugInfoReadStream* stream) {
    case CONSTANT_OOP_CODE:    result = new ConstantOopReadValue(stream); break;
    case CONSTANT_LONG_CODE:   result = new ConstantLongValue(stream);    break;
    case CONSTANT_DOUBLE_CODE: result = new ConstantDoubleValue(stream);  break;
-   case OBJECT_CODE:          result = stream->read_object_value();      break;
+   case OBJECT_CODE:          result = stream->read_object_value(false /*is_auto_box*/); break;
+   case AUTO_BOX_OBJECT_CODE: result = stream->read_object_value(true /*is_auto_box*/);  break;
    case OBJECT_ID_CODE:       result = stream->get_cached_object();      break;
    default: ShouldNotReachHere();
   }
@@ -141,7 +143,7 @@ void ObjectValue::write_on(DebugInfoWriteStream* stream) {
     stream->write_int(_id);
   } else {
     _visited = true;
-    stream->write_int(OBJECT_CODE);
+    stream->write_int(is_auto_box() ? AUTO_BOX_OBJECT_CODE : OBJECT_CODE);
     stream->write_int(_id);
     _klass->write_on(stream);
     int length = _field_values.length();
@@ -251,7 +253,11 @@ void ConstantOopReadValue::write_on(DebugInfoWriteStream* stream) {
 }
 
 void ConstantOopReadValue::print_on(outputStream* st) const {
+  if (value()() != NULL) {
   value()()->print_value_on(st);
+  } else {
+    st->print_cr("NULL");
+  }
 }
 
 

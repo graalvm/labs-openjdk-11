@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import org.graalvm.compiler.lir.StandardOp.SaveRegistersOp;
 import org.graalvm.compiler.lir.asm.CompilationResultBuilder;
 import org.graalvm.compiler.lir.framemap.FrameMap;
 
+import jdk.vm.ci.amd64.AMD64Kind;
 import jdk.vm.ci.code.Register;
 import jdk.vm.ci.code.RegisterSaveLayout;
 import jdk.vm.ci.meta.JavaConstant;
@@ -66,7 +67,7 @@ public final class AMD64ZapRegistersOp extends AMD64LIRInstruction implements Sa
         for (int i = 0; i < zappedRegisters.length; i++) {
             Register reg = zappedRegisters[i];
             if (reg != null) {
-                AMD64Move.const2reg(crb, masm, reg, zapValues[i]);
+                AMD64Move.const2reg(crb, masm, reg, zapValues[i], AMD64Kind.QWORD);
             }
         }
     }

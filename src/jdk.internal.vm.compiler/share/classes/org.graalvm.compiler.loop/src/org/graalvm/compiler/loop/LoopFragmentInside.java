@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import java.util.List;
 
 import jdk.internal.vm.compiler.collections.EconomicMap;
 import jdk.internal.vm.compiler.collections.Equivalence;
+import org.graalvm.compiler.core.common.type.IntegerStamp;
 import org.graalvm.compiler.debug.DebugCloseable;
 import org.graalvm.compiler.debug.DebugContext;
 import org.graalvm.compiler.debug.GraalError;
@@ -64,9 +65,14 @@ import org.graalvm.compiler.nodes.ValuePhiNode;
 import org.graalvm.compiler.nodes.VirtualState.NodeClosure;
 import org.graalvm.compiler.nodes.calc.AddNode;
 import org.graalvm.compiler.nodes.calc.CompareNode;
+import org.graalvm.compiler.nodes.calc.ConditionalNode;
+import org.graalvm.compiler.nodes.calc.IntegerBelowNode;
 import org.graalvm.compiler.nodes.calc.SubNode;
+import org.graalvm.compiler.nodes.extended.OpaqueNode;
 import org.graalvm.compiler.nodes.memory.MemoryPhiNode;
 import org.graalvm.compiler.nodes.util.GraphUtil;
+
+import jdk.vm.ci.code.CodeUtil;
 
 public class LoopFragmentInside extends LoopFragment {
 
@@ -150,20 +156,8 @@ public class LoopFragmentInside extends LoopFragment {
     /**
      * Duplicate the body within the loop after the current copy copy of the body, updating the
      * iteration limit to account for the duplication.
-     *
-     * @param loop
      */
-    public void insertWithinAfter(LoopEx loop) {
-        insertWithinAfter(loop, true);
-    }
-
-    /**
-     * Duplicate the body within the loop after the current copy copy of the body.
-     *
-     * @param loop
-     * @param updateLimit true if the iteration limit should be adjusted.
-     */
-    public void insertWithinAfter(LoopEx loop, boolean updateLimit) {
+    public void insertWithinAfter(LoopEx loop, EconomicMap<LoopBeginNode, OpaqueNode> opaqueUnrolledStrides) {
         assert isDuplicate() && original().loop() == loop;
 
         patchNodes(dataFixWithinAfter);
@@ -175,12 +169,13 @@ public class LoopFragmentInside extends LoopFragment {
         LoopBeginNode mainLoopBegin = loop.loopBegin();
         ArrayList<ValueNode> backedgeValues = new ArrayList<>();
         for (PhiNode mainPhiNode : mainLoopBegin.phis()) {
-            ValueNode duplicatedNode = getDuplicatedNode(mainPhiNode.valueAt(1));
+            ValueNode originalNode = mainPhiNode.valueAt(1);
+            ValueNode duplicatedNode = getDuplicatedNode(originalNode);
             if (duplicatedNode == null) {
-                if (mainLoopBegin.isPhiAtMerge(mainPhiNode.valueAt(1))) {
-                    duplicatedNode = ((PhiNode) (mainPhiNode.valueAt(1))).valueAt(1);
+                if (mainLoopBegin.isPhiAtMerge(originalNode)) {
+                    duplicatedNode = ((PhiNode) (originalNode)).valueAt(1);
                 } else {
-                    assert mainPhiNode.valueAt(1).isConstant() : mainPhiNode.valueAt(1);
+                    assert originalNode.isConstant() || loop.isOutsideLoop(originalNode) : "Not duplicated node " + originalNode;
                 }
             }
             backedgeValues.add(duplicatedNode);
@@ -201,32 +196,43 @@ public class LoopFragmentInside extends LoopFragment {
             graph().removeFixed(safepoint);
         }
 
-        int unrollFactor = mainLoopBegin.getUnrollFactor();
         StructuredGraph graph = mainLoopBegin.graph();
-        if (updateLimit) {
-            // Now use the previous unrollFactor to update the exit condition to power of two
-            InductionVariable iv = loop.counted().getCounter();
-            CompareNode compareNode = (CompareNode) loop.counted().getLimitTest().condition();
-            ValueNode compareBound;
-            if (compareNode.getX() == iv.valueNode()) {
-                compareBound = compareNode.getY();
-            } else if (compareNode.getY() == iv.valueNode()) {
-                compareBound = compareNode.getX();
+        if (opaqueUnrolledStrides != null) {
+            OpaqueNode opaque = opaqueUnrolledStrides.get(loop.loopBegin());
+            CountedLoopInfo counted = loop.counted();
+            ValueNode counterStride = counted.getCounter().strideNode();
+            if (opaque == null) {
+                opaque = new OpaqueNode(AddNode.add(counterStride, counterStride, NodeView.DEFAULT));
+                ValueNode limit = counted.getLimit();
+                int bits = ((IntegerStamp) limit.stamp(NodeView.DEFAULT)).getBits();
+                ValueNode newLimit = SubNode.create(limit, opaque, NodeView.DEFAULT);
+                LogicNode overflowCheck;
+                ConstantNode extremum;
+                if (counted.getDirection() == InductionVariable.Direction.Up) {
+                    // limit - counterStride could overflow negatively if limit - min <
+                    // counterStride
+                    extremum = ConstantNode.forIntegerBits(bits, CodeUtil.minValue(bits));
+                    overflowCheck = IntegerBelowNode.create(SubNode.create(limit, extremum, NodeView.DEFAULT), opaque, NodeView.DEFAULT);
+                } else {
+                    assert counted.getDirection() == InductionVariable.Direction.Down;
+                    // limit - counterStride could overflow if max - limit < -counterStride
+                    // i.e., counterStride < limit - max
+                    extremum = ConstantNode.forIntegerBits(bits, CodeUtil.maxValue(bits));
+                    overflowCheck = IntegerBelowNode.create(opaque, SubNode.create(limit, extremum, NodeView.DEFAULT), NodeView.DEFAULT);
+                }
+                newLimit = ConditionalNode.create(overflowCheck, extremum, newLimit, NodeView.DEFAULT);
+                CompareNode compareNode = (CompareNode) counted.getLimitTest().condition();
+                compareNode.replaceFirstInput(limit, graph.addOrUniqueWithInputs(newLimit));
+                opaqueUnrolledStrides.put(loop.loopBegin(), opaque);
             } else {
-                throw GraalError.shouldNotReachHere();
-            }
-            long originalStride = unrollFactor == 1 ? iv.constantStride() : iv.constantStride() / unrollFactor;
-            if (iv.direction() == InductionVariable.Direction.Up) {
-                ConstantNode aboveVal = graph.unique(ConstantNode.forIntegerStamp(iv.initNode().stamp(NodeView.DEFAULT), unrollFactor * originalStride));
-                ValueNode newLimit = graph.addWithoutUnique(new SubNode(compareBound, aboveVal));
-                compareNode.replaceFirstInput(compareBound, newLimit);
-            } else if (iv.direction() == InductionVariable.Direction.Down) {
-                ConstantNode aboveVal = graph.unique(ConstantNode.forIntegerStamp(iv.initNode().stamp(NodeView.DEFAULT), unrollFactor * -originalStride));
-                ValueNode newLimit = graph.addWithoutUnique(new AddNode(compareBound, aboveVal));
-                compareNode.replaceFirstInput(compareBound, newLimit);
+                assert counted.getCounter().isConstantStride();
+                assert Math.addExact(counted.getCounter().constantStride(), counted.getCounter().constantStride()) == counted.getCounter().constantStride() * 2;
+                ValueNode previousValue = opaque.getValue();
+                opaque.setValue(graph.addOrUniqueWithInputs(AddNode.add(counterStride, previousValue, NodeView.DEFAULT)));
+                GraphUtil.tryKillUnused(previousValue);
             }
         }
-        mainLoopBegin.setUnrollFactor(unrollFactor * 2);
+        mainLoopBegin.setUnrollFactor(mainLoopBegin.getUnrollFactor() * 2);
         mainLoopBegin.setLoopFrequency(mainLoopBegin.loopFrequency() / 2);
         graph.getDebug().dump(DebugContext.DETAILED_LEVEL, graph, "LoopPartialUnroll %s", loop);
 
@@ -383,11 +389,6 @@ public class LoopFragmentInside extends LoopFragment {
                 }
             }
         };
-    }
-
-    @Override
-    protected void finishDuplication() {
-        // TODO (gd) ?
     }
 
     @Override

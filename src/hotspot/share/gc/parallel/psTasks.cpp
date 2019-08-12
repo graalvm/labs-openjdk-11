@@ -40,6 +40,9 @@
 #include "runtime/thread.hpp"
 #include "runtime/vmThread.hpp"
 #include "services/management.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 
 //
 // ScavengeRootsTask
@@ -99,6 +102,12 @@ void ScavengeRootsTask::do_it(GCTaskManager* manager, uint which) {
         AOTLoader::oops_do(&roots_closure);
       }
       break;
+
+#if INCLUDE_JVMCI
+    case jvmci:
+      JVMCI::oops_do(&roots_closure);
+      break;
+#endif
 
     default:
       fatal("Unknown root type");

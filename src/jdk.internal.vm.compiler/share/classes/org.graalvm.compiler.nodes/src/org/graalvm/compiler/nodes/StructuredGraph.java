@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,6 @@
 
 package org.graalvm.compiler.nodes;
 
-import static org.graalvm.compiler.graph.Graph.SourcePositionTracking.Default;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -40,13 +38,14 @@ import jdk.internal.vm.compiler.collections.EconomicMap;
 import jdk.internal.vm.compiler.collections.EconomicSet;
 import jdk.internal.vm.compiler.collections.Equivalence;
 import jdk.internal.vm.compiler.collections.UnmodifiableEconomicMap;
+import org.graalvm.compiler.api.replacements.MethodSubstitution;
+import org.graalvm.compiler.api.replacements.Snippet;
 import org.graalvm.compiler.core.common.CancellationBailoutException;
 import org.graalvm.compiler.core.common.CompilationIdentifier;
 import org.graalvm.compiler.core.common.GraalOptions;
 import org.graalvm.compiler.core.common.cfg.BlockMap;
 import org.graalvm.compiler.core.common.type.Stamp;
 import org.graalvm.compiler.debug.DebugContext;
-import org.graalvm.compiler.debug.GraalError;
 import org.graalvm.compiler.debug.JavaMethodContext;
 import org.graalvm.compiler.debug.TTY;
 import org.graalvm.compiler.graph.Graph;
@@ -109,6 +108,10 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
 
         public boolean allowsFloatingGuards() {
             return this == FLOATING_GUARDS;
+        }
+
+        public boolean allowsGuardInsertion() {
+            return this.ordinal() <= FIXED_DEOPTS.ordinal();
         }
 
         public boolean areFrameStatesAtDeopts() {
@@ -179,11 +182,12 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
         private int entryBCI = JVMCICompiler.INVOCATION_ENTRY_BCI;
         private boolean useProfilingInfo = true;
         private boolean recordInlinedMethods = true;
-        private SourcePositionTracking trackNodeSourcePosition = Default;
+        private boolean trackNodeSourcePosition;
         private final OptionValues options;
         private Cancellable cancellable = null;
         private final DebugContext debug;
         private NodeSourcePosition callerContext;
+        private boolean isSubstitution;
 
         /**
          * Creates a builder for a graph.
@@ -211,6 +215,14 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
 
         public Builder name(String s) {
             this.name = s;
+            return this;
+        }
+
+        /**
+         * @see StructuredGraph#isSubstitution
+         */
+        public Builder setIsSubstitution(boolean flag) {
+            this.isSubstitution = flag;
             return this;
         }
 
@@ -281,14 +293,9 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
             return this;
         }
 
-        public Builder trackNodeSourcePosition(SourcePositionTracking tracking) {
-            this.trackNodeSourcePosition = tracking;
-            return this;
-        }
-
         public Builder trackNodeSourcePosition(boolean flag) {
             if (flag) {
-                this.trackNodeSourcePosition = SourcePositionTracking.Track;
+                this.trackNodeSourcePosition = true;
             }
             return this;
         }
@@ -300,8 +307,22 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
 
         public StructuredGraph build() {
             List<ResolvedJavaMethod> inlinedMethods = recordInlinedMethods ? new ArrayList<>() : null;
-            return new StructuredGraph(name, rootMethod, entryBCI, assumptions, speculationLog, useProfilingInfo, inlinedMethods,
-                            trackNodeSourcePosition, compilationId, options, debug, cancellable, callerContext);
+            // @formatter:off
+            return new StructuredGraph(name,
+                            rootMethod,
+                            entryBCI,
+                            assumptions,
+                            speculationLog,
+                            useProfilingInfo,
+                            isSubstitution,
+                            inlinedMethods,
+                            trackNodeSourcePosition,
+                            compilationId,
+                            options,
+                            debug,
+                            cancellable,
+                            callerContext);
+            // @formatter:on
         }
     }
 
@@ -320,6 +341,8 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
     private boolean isAfterExpandLogic = false;
     private final boolean useProfilingInfo;
     private final Cancellable cancellable;
+    private final boolean isSubstitution;
+
     /**
      * The assumptions made while constructing and transforming this graph.
      */
@@ -366,14 +389,15 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
                     Assumptions assumptions,
                     SpeculationLog speculationLog,
                     boolean useProfilingInfo,
+                    boolean isSubstitution,
                     List<ResolvedJavaMethod> methods,
-                    SourcePositionTracking trackNodeSourcePosition,
+                    boolean trackNodeSourcePosition,
                     CompilationIdentifier compilationId,
                     OptionValues options,
                     DebugContext debug,
                     Cancellable cancellable,
                     NodeSourcePosition context) {
-        super(name, options, debug);
+        super(name, options, debug, trackNodeSourcePosition);
         this.setStart(add(new StartNode()));
         this.rootMethod = method;
         this.graphId = uniqueGraphIds.incrementAndGet();
@@ -383,11 +407,23 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
         this.methods = methods;
         this.speculationLog = speculationLog;
         this.useProfilingInfo = useProfilingInfo;
-        this.trackNodeSourcePosition = trackNodeSourcePosition;
-        assert trackNodeSourcePosition != null;
+        this.isSubstitution = isSubstitution;
+        assert checkIsSubstitutionInvariants(method, isSubstitution);
         this.cancellable = cancellable;
         this.inliningLog = new InliningLog(rootMethod, GraalOptions.TraceInlining.getValue(options));
         this.callerContext = context;
+    }
+
+    private static boolean checkIsSubstitutionInvariants(ResolvedJavaMethod method, boolean isSubstitution) {
+        if (method != null) {
+            if (method.getAnnotation(Snippet.class) != null || method.getAnnotation(MethodSubstitution.class) != null) {
+                assert isSubstitution : "Graph for method " + method.format("%H.%n(%p)") +
+                                " annotated by " + Snippet.class.getName() + " or " +
+                                MethodSubstitution.class.getName() +
+                                " must have its `isSubstitution` field set to true";
+            }
+        }
+        return true;
     }
 
     public void setLastSchedule(ScheduleResult result) {
@@ -532,6 +568,7 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
                         assumptions == null ? null : new Assumptions(),
                         speculationLog,
                         useProfilingInfo,
+                        isSubstitution,
                         methods != null ? new ArrayList<>(methods) : null,
                         trackNodeSourcePosition,
                         newCompilationId,
@@ -641,7 +678,7 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
         if (node instanceof AbstractBeginNode) {
             ((AbstractBeginNode) node).prepareDelete();
         }
-        assert node.hasNoUsages() : node + " " + node.usages().count() + ", " + node.usages().first();
+        assert node.hasNoUsages() : node + " " + node.getUsageCount() + ", " + node.usages().first();
         GraphUtil.unlinkFixedNode(node);
         node.safeDelete();
     }
@@ -856,6 +893,15 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
     }
 
     /**
+     * Returns true if this graph is built without parsing the {@linkplain #method() root method} or
+     * if the root method is annotated by {@link Snippet} or {@link MethodSubstitution}. This is
+     * preferred over querying annotations directly as querying annotations can cause class loading.
+     */
+    public boolean isSubstitution() {
+        return isSubstitution;
+    }
+
+    /**
      * Gets the profiling info for the {@linkplain #method() root method} of this graph.
      */
     public ProfilingInfo getProfilingInfo() {
@@ -920,7 +966,7 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
      */
     public List<ResolvedJavaMethod> getMethods() {
         if (methods != null) {
-            assert checkFrameStatesAgainstInlinedMethods();
+            assert isSubstitution || checkFrameStatesAgainstInlinedMethods();
             return Collections.unmodifiableList(methods);
         }
         return Collections.emptyList();
@@ -930,10 +976,9 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
      * Records that {@code method} was used to build this graph.
      */
     public void recordMethod(ResolvedJavaMethod method) {
-        if (methods == null) {
-            throw new GraalError("inlined method recording not enabled for %s", this);
+        if (methods != null) {
+            methods.add(method);
         }
-        methods.add(method);
     }
 
     /**
@@ -941,14 +986,13 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
      * to build another graph.
      */
     public void updateMethods(StructuredGraph other) {
-        if (methods == null) {
-            throw new GraalError("inlined method recording not enabled for %s", this);
-        }
-        if (other.rootMethod != null) {
-            methods.add(other.rootMethod);
-        }
-        for (ResolvedJavaMethod m : other.methods) {
-            methods.add(m);
+        if (methods != null) {
+            if (other.rootMethod != null) {
+                methods.add(other.rootMethod);
+            }
+            for (ResolvedJavaMethod m : other.methods) {
+                methods.add(m);
+            }
         }
     }
 
@@ -1004,14 +1048,6 @@ public final class StructuredGraph extends Graph implements JavaMethodContext {
             }
         }
         return res;
-    }
-
-    /**
-     *
-     * @return true if the graph contains only a {@link StartNode} and {@link ReturnNode}
-     */
-    public boolean isTrivial() {
-        return !(start.next() instanceof ReturnNode);
     }
 
     @Override
