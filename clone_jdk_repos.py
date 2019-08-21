@@ -91,8 +91,9 @@ def create_or_update_mirror(url, mirror, revision):
     else:
         log('Updating {} mirror at {}'.format(url, mirror))
         if url.startswith('ssh://git'):
-            check_call(['git', '-C', mirror, 'fetch'])
             check_call(['git', '-C', mirror, 'clean', '-dxf', '.'])
+            check_call(['git', '-C', mirror, 'checkout', 'master'])
+            check_call(['git', '-C', mirror, 'pull'])
             check_call(['git', '-C', mirror, 'checkout', revision])
         else:
             check_call(['hg', '--cwd', mirror, 'pull'])

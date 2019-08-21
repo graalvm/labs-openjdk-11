@@ -191,9 +191,11 @@
             ["mach5/bin/mach5", "remote-build-and-test",
              "--src-root", "jdk11u",
              "--email", "tom.rodriguez@oracle.com",
-             "--id-tag", "graal-integration",
+             "--id-tag", "labsjdk11-gate",
              "--log-level", "INFO",
              "--job", "builds-tier1,hs-tier1,hs-tier3-graal,hs-tier4-graal",
+             "--slack-channel", "graal-compiler-team",
+             "--slack-workspace", "CORPARCH",
              "--comment", "labjdk11 gate test"]
         ]
     },
