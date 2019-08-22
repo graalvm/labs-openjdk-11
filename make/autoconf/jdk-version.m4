@@ -458,7 +458,11 @@ AC_DEFUN_ONCE([JDKVER_SETUP_JDK_VERSION_NUMBERS],
   if test "x$VERSION_PRE" = x; then
     VERSION_IS_GA=true
   else
-    VERSION_IS_GA=false
+    if test "x$DEFAULT_VERSION_IS_GA" != x; then
+      VERSION_IS_GA=$DEFAULT_VERSION_IS_GA
+    else
+      VERSION_IS_GA=false
+    fi
   fi
 
   # VERSION_NUMBER but always with exactly 4 positions, with 0 for empty positions.
