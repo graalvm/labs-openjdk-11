@@ -183,7 +183,7 @@
             ["mach5/bin/mach5", "version"],
 
             # Create or refresh local cache of jdk11u tree
-            ["python", "-u", "clone_jdk_repos.py", "jdk11u", "${CI_CACHE}", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/labsjdk-11.git", "master",
+            ["python", "-u", "clone_jdk_repos.py", "jdk11u", "${CI_CACHE}", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/labsjdk-11.git", "${DOWNSTREAM_BRANCH}",
              "http://closedjdk.us.oracle.com/jdk-updates/jdk11u", "tip"],
 
             ["ls", "-l"],
