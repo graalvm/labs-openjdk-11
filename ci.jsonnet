@@ -188,8 +188,10 @@
 
             ["ls", "-l"],
 
+            # for now directly submit from the cached repo since mach5 doesn't like having a repo
+            # inside another rep and we're currently inside of the open repo.
             ["mach5/bin/mach5", "remote-build-and-test",
-             "--src-root", "jdk11u",
+             "--src-root", "${CI_CACHE}/jdk11u",
              "--email", "tom.rodriguez@oracle.com",
              "--id-tag", "labsjdk11-gate",
              "--log-level", "INFO",
