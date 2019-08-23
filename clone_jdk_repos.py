@@ -95,6 +95,8 @@ def create_or_update_mirror(url, mirror, revision):
             check_call(['git', '-C', mirror, 'checkout', 'master'])
             check_call(['git', '-C', mirror, 'pull'])
             check_call(['git', '-C', mirror, 'checkout', revision])
+            # make sure any local changes are overwritten by the upstream
+            check_call(['git', '-C', mirror, 'reset', '--hard', '@{u}'])
         else:
             check_call(['hg', '--cwd', mirror, 'pull'])
             check_call(['hg', '--cwd', mirror, 'update', '--clean', '--rev', revision])
