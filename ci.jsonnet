@@ -184,21 +184,24 @@
 
             # Create or refresh local cache of jdk11u tree
             ["python", "-u", "clone_jdk_repos.py", "jdk11u", "${CI_CACHE}", "ssh://git@ol-bitbucket.us.oracle.com:7999/g/labsjdk-11.git", "${DOWNSTREAM_BRANCH}",
-             "http://closedjdk.us.oracle.com/jdk-updates/jdk11u", "tip"],
+                "http://closedjdk.us.oracle.com/jdk-updates/jdk11u", "tip"],
 
             ["ls", "-l"],
 
             # for now directly submit from the cached repo since mach5 doesn't like having a repo
-            # inside another rep and we're currently inside of the open repo.
+            # inside another repo and we're currently inside of the open repo.
             ["mach5/bin/mach5", "remote-build-and-test",
-             "--src-root", "${CI_CACHE}/jdk11u",
-             "--email", "tom.rodriguez@oracle.com",
-             "--id-tag", "labsjdk11-gate",
-             "--log-level", "INFO",
-             "--job", "builds-tier1,hs-tier1,hs-tier3-graal,hs-tier4-graal",
-             "--slack-channel", "graal-compiler-team",
-             "--slack-workspace", "CORPARCH",
-             "--comment", "labjdk11 gate test"]
+                "--src-root", "${CI_CACHE}/jdk11u",e
+                "--email", "tom.rodriguez@oracle.com",
+                "--id-tag", "labsjdk11-gate",
+                "--log-level", "INFO",
+                "--job", "builds-tier1,hs-tier1,hs-tier3-graal,hs-tier4-graal",
+                "--slack-channel", "graal-compiler-team",
+                "--slack-workspace", "CORPARCH",
+                "--comment", "labjdk11 gate test"]
+
+            # clean up any jib cached files
+            ["bash", "${CI_CACHE}/jdk11u/jib.sh", "clean", "-P"]
         ]
     },
 }
