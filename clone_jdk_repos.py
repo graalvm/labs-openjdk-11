@@ -92,10 +92,8 @@ def create_or_update_mirror(url, mirror, revision):
         log('Updating {} mirror at {}'.format(url, mirror))
         if url.startswith('ssh://git'):
             check_call(['git', '-C', mirror, 'clean', '-dxf', '.'])
-            check_call(['git', '-C', mirror, 'fetch', revision])
+            check_call(['git', '-C', mirror, 'fetch'])
             check_call(['git', '-C', mirror, 'checkout', revision])
-            # make sure any local changes are overwritten by the upstream branch
-            check_call(['git', '-C', mirror, 'reset', '--hard', '@{u}'])
         else:
             check_call(['hg', '--cwd', mirror, 'pull'])
             check_call(['hg', '--cwd', mirror, 'update', '--clean', '--rev', revision])
