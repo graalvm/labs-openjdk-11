@@ -822,9 +822,11 @@ void GenCollectedHeap::process_roots(StrongRootsScope* scope,
   if (!_process_strong_tasks->is_task_claimed(GCH_PS_jvmti_oops_do)) {
     JvmtiExport::oops_do(strong_roots);
   }
+#if INCLUDE_AOT
   if (UseAOT && !_process_strong_tasks->is_task_claimed(GCH_PS_aot_oops_do)) {
     AOTLoader::oops_do(strong_roots);
   }
+#endif
 
 #if INCLUDE_JVMCI
   if (EnableJVMCI && _process_strong_tasks->is_task_claimed(GCH_PS_jvmci_oops_do)) {
