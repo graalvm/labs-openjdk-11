@@ -165,7 +165,7 @@ final class HotSpotSpeculationEncoding extends ByteArrayOutputStream implements 
         } catch (CloneNotSupportedException | NoSuchAlgorithmException e) {
             // Should never happen given that SHA-1 is mandated in a
             // compliant Java platform implementation.
-            throw new JVMCIError("Expect a cloneable implementation of a SHA-1 message digest to be available", e);
+            throw new JVMCIError(e, "Expect a cloneable implementation of a SHA-1 message digest to be available");
         }
     }
 

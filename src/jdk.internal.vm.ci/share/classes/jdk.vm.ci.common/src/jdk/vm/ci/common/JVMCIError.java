@@ -100,6 +100,20 @@ public class JVMCIError extends Error {
         super(cause);
     }
 
+    /**
+     * This constructor creates a {@link JVMCIError} with a message assembled via
+     * {@link String#format(String, Object...)} for a given causing Throwable instance. It always
+     * uses the ENGLISH locale in order to always generate the same output.
+     *
+     * @param cause the original exception that contains additional information on this error
+     * @param msg the message that will be associated with the error, in String.format syntax
+     * @param args parameters to String.format - parameters that implement {@link Iterable} will be
+     *            expanded into a [x, x, ...] representation.
+     */
+    public JVMCIError(Throwable cause, String msg, Object... args) {
+        super(format(msg, args), cause);
+    }
+
     private static String format(String msg, Object... args) {
         if (args != null) {
             // expand Iterable parameters into a list representation
