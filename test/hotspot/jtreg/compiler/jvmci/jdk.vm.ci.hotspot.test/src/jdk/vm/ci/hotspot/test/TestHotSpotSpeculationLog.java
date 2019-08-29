@@ -20,6 +20,20 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
+/*
+ * @test jdk.vm.ci.hotspot.test.TestHotSpotSpeculationLog
+ * @requires vm.jvmci
+ * @modules jdk.internal.vm.ci/jdk.vm.ci.runtime
+ *          jdk.internal.vm.ci/jdk.vm.ci.meta
+ *          jdk.internal.vm.ci/jdk.vm.ci.hotspot
+ *          java.base/jdk.internal.vm.annotation
+ *          java.base/jdk.internal.misc
+ * @library /test/lib /compiler/jvmci/jdk.vm.ci.hotspot.test/src
+ * @run junit/othervm -da:jdk.vm.ci... -XX:+UnlockExperimentalVMOptions -XX:+EnableJVMCI
+ *                   -XX:-UseJVMCICompiler jdk.vm.ci.hotspot.test.TestHotSpotSpeculationLog
+ */
+
 package jdk.vm.ci.hotspot.test;
 
 import java.util.function.Supplier;
@@ -78,7 +92,8 @@ public class TestHotSpotSpeculationLog {
     public synchronized void testFailedSpeculations() {
         HotSpotSpeculationLog log = new HotSpotSpeculationLog();
         DummyReason reason1 = new DummyReason("dummy1");
-        DummyReason reason2 = new DummyReason("dummy2");
+        String longName = new String(new char[2000]).replace('\0', 'X');
+        DummyReason reason2 = new DummyReason(longName);
         Assert.assertTrue(log.maySpeculate(reason1));
         Assert.assertTrue(log.maySpeculate(reason2));
 
