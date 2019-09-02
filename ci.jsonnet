@@ -72,6 +72,15 @@
             CI_ARCH: "amd64"
         }
     },
+
+    AArch64:: {
+        capabilities+: ["aarch64"],
+        name+: "-aarch64",
+        environment+: {
+            CI_ARCH: "aarch64"
+        }
+    },
+
     SPARCv9:: {
         capabilities+: ["sparcv9"],
         name+: "-sparcv9",
@@ -109,7 +118,7 @@
         downloads+: {
             JAVA_HOME: {
                 name : "oraclejdk",
-                version : "11.0.3+7",
+                version : "11.0.3+12",
                 platformspecific: true
             }
         }
@@ -155,6 +164,7 @@
         self.Build + mach
         for mach in [
             self.Linux + self.AMD64 + self.OracleJDK,
+            self.Linux + self.AArch64 + self.OracleJDK,
             self.Darwin + self.AMD64 + self.OracleJDK,
             self.Windows + self.AMD64 + self.OracleJDK,
             self.Solaris + self.SPARCv9 + self.OracleJDK,
