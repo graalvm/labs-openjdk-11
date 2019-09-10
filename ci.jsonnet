@@ -1,14 +1,23 @@
 {
     Windows:: {
+        downloads+: {
+            MSYS2: {name: "msys2", version: "20190524", platformspecific: true},
+            DEVKIT: {name: "devkit", version: "VS2017-15.5.5", platformspecific: true},
+        },
         capabilities+: ["windows"],
         name+: "-windows",
         environment+: {
-            PATH : "$MKS_HOME;$PATH",  # Makes the `test` utility available
-            CI_OS: "windows"
+            CI_OS: "windows",
+            PATH: "$MSYS2\\usr\\bin;$PATH",
+            # Don't fake ln by copying files
+            MSYS: "winsymlinks:nativestrict",
+            # Prevent expansion of `/` in args
+            MSYS2_ARG_CONV_EXCL: "-Fe;/Gy"
         },
-        packages+: {
-            msvc: "==10.0",
-        },
+        setup+: [
+            # Initialize MSYS2
+            ["bash", "--login"],
+        ],
     },
     Linux:: {
         docker: {
@@ -145,7 +154,8 @@
                           "--with-jvm-variants=server",
                           "--disable-warnings-as-errors",
                           "--with-zlib=bundled",
-                          "--with-boot-jdk=${JAVA_HOME}"],
+                          "--with-boot-jdk=${JAVA_HOME}",
+                          "--with-devkit=${DEVKIT}"],
             ["$MAKE", "CONF=release", "images"],
 
             # Make fastdebug build
@@ -155,7 +165,8 @@
                           "--with-jvm-variants=server",
                           "--disable-warnings-as-errors",
                           "--with-zlib=bundled",
-                          "--with-boot-jdk=${JAVA_HOME}"],
+                          "--with-boot-jdk=${JAVA_HOME}",
+                          "--with-devkit=${DEVKIT}"],
             ["$MAKE", "CONF=fastdebug", "images"],
         ],
     },
@@ -179,7 +190,8 @@
                               "--with-native-debug-symbols=none",
                               "--enable-static-build=yes",
                               "--with-zlib=bundled", #embed zlib in libzip
-                              "--with-boot-jdk=${JAVA_HOME}"],
+                              "--with-boot-jdk=${JAVA_HOME}",
+                              "--with-devkit=${DEVKIT}"],
                 ["$MAKE", "CONF=release", "images"],
                 ["python", "-u", "ci_test.py", "release"],
 
@@ -189,7 +201,8 @@
                               "--with-native-debug-symbols=external",
                               "--enable-static-build=yes",
                               "--with-zlib=bundled",
-                              "--with-boot-jdk=${JAVA_HOME}"],
+                              "--with-boot-jdk=${JAVA_HOME}",
+                              "--with-devkit=${DEVKIT}"],
                 ["$MAKE", "CONF=fastdebug", "images"],
                 ["python", "-u", "ci_test.py", "fastdebug"],
             ]
