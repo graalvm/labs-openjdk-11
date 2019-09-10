@@ -1,0 +1,55 @@
+#
+# Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 2 only, as
+# published by the Free Software Foundation.  Oracle designates this
+# particular file as subject to the "Classpath" exception as provided
+# by Oracle in the LICENSE file that accompanied this code.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 2 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 2 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
+
+include $(SPEC)
+include MakeBase.gmk
+
+default: jdk-static-libs
+
+ifeq ($(STATIC_LIB_BUILD),true)
+JDK_STATIC_LIB_TARGETS = $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)java$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)net$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)nio$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)zip$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)sunec$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)fdlibm$(STATIC_LIBRARY_SUFFIX)
+
+jdk-static-libs: $(JDK_STATIC_LIB_TARGETS)
+
+$(JDK_STATIC_LIB_TARGETS):
+	$(MKDIR) -p $(JDK_OUTPUTDIR)/lib/static
+	$(CD) $(OUTPUTDIR)/support/native/java.base/lib$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@))) && \
+	$(AR) $(AR_OUT_OPTION)$(LIBRARY_PREFIX)$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@)))$(STATIC_LIBRARY_SUFFIX) *$(OBJ_SUFFIX)
+	$(CD) $(OUTPUTDIR)/support/native/java.base/lib$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@))) && \
+	$(CP) $(LIBRARY_PREFIX)$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@)))$(STATIC_LIBRARY_SUFFIX) \
+$(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@)))$(STATIC_LIBRARY_SUFFIX)
+
+else
+JDK_STATIC_LIB_TARGETS =
+
+jdk-static-libs:
+endif
+
+.PHONY: jdk-static-libs

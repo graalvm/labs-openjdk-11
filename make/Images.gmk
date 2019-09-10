@@ -271,6 +271,22 @@ ifneq ($(filter jdk, $(MAKECMDGOALS)), )
   JDK_TARGETS += $(JDK_COPY_DEMOS)
 endif
 
+
+################################################################################
+# Copy static libraries
+
+ifeq ($(STATIC_LIB_BUILD),true)
+  STATIC_LIB_FILES := $(shell $(FIND) $(JDK_OUTPUTDIR)/lib/static -type f)
+
+  $(eval $(call SetupCopyFiles, JDK_COPY_STATIC_LIBS, \
+      SRC := $(JDK_OUTPUTDIR)/lib/static, \
+      DEST := $(JDK_IMAGE_DIR)/lib/static, \
+      FILES := $(STATIC_LIB_FILES), \
+  ))
+
+  JDK_TARGETS += $(JDK_COPY_STATIC_LIBS)
+endif
+
 ################################################################################
 # Code coverage data files
 

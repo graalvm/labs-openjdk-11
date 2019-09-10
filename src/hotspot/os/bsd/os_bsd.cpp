@@ -439,7 +439,7 @@ void os::init_system_properties_values() {
     if (pslash != NULL) {
       *pslash = '\0';            // Get rid of /{client|server|hotspot}.
     }
-#ifdef STATIC_BUILD
+#ifdef FULL_STATIC_BUILD
     strcat(buf, "/lib");
 #endif
 
