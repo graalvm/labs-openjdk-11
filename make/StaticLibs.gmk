@@ -40,9 +40,9 @@ jdk-static-libs: $(JDK_STATIC_LIB_TARGETS)
 
 $(JDK_STATIC_LIB_TARGETS):
 	$(MKDIR) -p $(JDK_OUTPUTDIR)/lib/static
-	$(CD) $(OUTPUTDIR)/support/native/java.base/lib$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@))) && \
+	$(CD) $(OUTPUTDIR)/support/native/*/lib$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@))) && \
 	$(AR) $(AR_OUT_OPTION)$(LIBRARY_PREFIX)$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@)))$(STATIC_LIBRARY_SUFFIX) *$(OBJ_SUFFIX)
-	$(CD) $(OUTPUTDIR)/support/native/java.base/lib$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@))) && \
+	$(CD) $(OUTPUTDIR)/support/native/*/lib$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@))) && \
 	$(CP) $(LIBRARY_PREFIX)$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@)))$(STATIC_LIBRARY_SUFFIX) \
 $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)$(patsubst $(LIBRARY_PREFIX)%,%,$(basename $(notdir $@)))$(STATIC_LIBRARY_SUFFIX)
 
