@@ -169,24 +169,26 @@
             self.Windows + self.AMD64 + self.OracleJDK,
             self.Solaris + self.SPARCv9 + self.OracleJDK,
         ]
-        self.Build + [
+    ] + [
+        self.Build + {
+            name: "gate-staticjdklibs",
             run: [
                 # Make static-jdk-libs build
                 ["sh", "configure", "--with-debug-level=release",
                               "--disable-warnings-as-errors",
                               "--with-native-debug-symbols=external",
-                              "--enable-static-build=yes"
+                              "--enable-static-build=yes",
                               "--with-zlib=bundled", #embed zlib in libzip
                               "--with-boot-jdk=${JAVA_HOME}"],
                 ["$MAKE", "CONF=release", "images"],
                 ["python", "-u", "ci_test.py"],
             ]
-        ] + smach
-        for smach in [
+        } + mach
+        for mach in [
             self.Linux + self.AMD64 + self.OracleJDK,
             self.Darwin + self.AMD64 + self.OracleJDK,
             self.Windows + self.AMD64 + self.OracleJDK,
-        ]
+        ]    
     ] + [ self.Mach5Build + self.Linux + self.AMD64 + self.OracleJDK ],
 
     Mach5Build:: {
