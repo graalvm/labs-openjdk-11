@@ -169,6 +169,22 @@
             self.Windows + self.AMD64 + self.OracleJDK,
             self.Solaris + self.SPARCv9 + self.OracleJDK,
         ]
+        self.Build + [
+            run: [
+                # Make static-jdk-libs build
+                ["sh", "configure", "--with-debug-level=release",
+                              "--disable-warnings-as-errors",
+                              "--enable-static-build=yes"
+                              "--with-zlib=bundled", #embed zlib in libzip
+                              "--with-boot-jdk=${JAVA_HOME}"],
+                ["$MAKE", "CONF=release", "images"],
+            ]
+        ] + smach
+        for smach in [
+            self.Linux + self.AMD64 + self.OracleJDK,
+            self.Darwin + self.AMD64 + self.OracleJDK,
+            self.Windows + self.AMD64 + self.OracleJDK,
+        ]
     ] + [ self.Mach5Build + self.Linux + self.AMD64 + self.OracleJDK ],
 
     Mach5Build:: {
