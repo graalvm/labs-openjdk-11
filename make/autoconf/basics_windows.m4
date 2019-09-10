@@ -93,10 +93,10 @@ AC_DEFUN([BASIC_MAKE_WINDOWS_SPACE_SAFE_MSYS],
   # contains just simple characters, use it. Otherwise (spaces, weird characters),
   # take no chances and rewrite it.
   # Note: m4 eats our [], so we need to use @<:@ and @:>@ instead.
-  has_forbidden_chars=`$ECHO "$input_path" | $GREP @<:@^-_/:a-zA-Z0-9@:>@`
+  has_forbidden_chars=`$ECHO "$input_path" | $GREP @<:@^-._/:a-zA-Z0-9@:>@`
   if test "x$has_forbidden_chars" != x; then
     # Now convert it to mixed DOS-style, short mode (no spaces, and / instead of \)
-    new_path=`cmd /c "for %A in (\"$input_path\") do @echo %~sA"|$TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
+    new_path=`cmd //c for %A in \( "$input_path" \) do @echo %~sA | $TR \\\\\\\\ / | $TR 'ABCDEFGHIJKLMNOPQRSTUVWXYZ' 'abcdefghijklmnopqrstuvwxyz'`
   fi
 ])
 
@@ -349,7 +349,7 @@ AC_DEFUN([BASIC_CHECK_PATHS_WINDOWS],
 
     AC_MSG_CHECKING([msys root directory as unix-style path])
     # The cmd output ends with Windows line endings (CR/LF), the grep command will strip that away
-    MSYS_ROOT_PATH=`cd / ; cmd /c cd | $GREP ".*"`
+    MSYS_ROOT_PATH=`cd / ; cmd //c cd | $GREP ".*"`
     BASIC_WINDOWS_REWRITE_AS_UNIX_PATH(MSYS_ROOT_PATH)
     AC_MSG_RESULT([$MSYS_ROOT_PATH])
     WINDOWS_ENV_ROOT_PATH="$MSYS_ROOT_PATH"

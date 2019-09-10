@@ -406,7 +406,7 @@ AC_DEFUN([TOOLCHAIN_SETUP_VISUAL_STUDIO_ENV],
       # The | cat is to stop SetEnv.Cmd to mess with system colors on msys.
       # Change directory so we don't need to mess with Windows paths in redirects.
       cd $VS_ENV_TMP_DIR
-      cmd /c extract-vs-env.bat | $CAT
+      cmd //c extract-vs-env.bat | $CAT
       cd $CURDIR
 
       if test ! -s $VS_ENV_TMP_DIR/set-vs-env.sh; then
