@@ -77,7 +77,7 @@ void mkdirs(int oklen, char* path) {
 
 
 #ifndef PRODUCT
-#ifndef STATIC_BUILD
+#ifndef FULL_STATIC_BUILD
 // use the definition in libjvm when building statically
 void breakpoint() { }  // hook for debugger
 int assert_failed(const char* p) {

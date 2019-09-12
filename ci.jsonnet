@@ -181,14 +181,24 @@
                               "--with-zlib=bundled", #embed zlib in libzip
                               "--with-boot-jdk=${JAVA_HOME}"],
                 ["$MAKE", "CONF=release", "images"],
-                ["python", "-u", "ci_test.py"],
+                ["python", "-u", "ci_test.py", "release"],
+
+                # Make static-jdk-libs build (fastdebug)
+                ["sh", "configure", "--with-debug-level=fastdebug",
+                              "--disable-warnings-as-errors",
+                              "--with-native-debug-symbols=external",
+                              "--enable-static-build=yes",
+                              "--with-zlib=bundled",
+                              "--with-boot-jdk=${JAVA_HOME}"],
+                ["$MAKE", "CONF=fastdebug", "images"],
+                ["python", "-u", "ci_test.py", "fastdebug"],
             ]
         } + mach
         for mach in [
             self.Linux + self.AMD64 + self.OracleJDK,
             self.Darwin + self.AMD64 + self.OracleJDK,
             self.Windows + self.AMD64 + self.OracleJDK,
-        ]    
+        ]
     ] + [ self.Mach5Build + self.Linux + self.AMD64 + self.OracleJDK ],
 
     Mach5Build:: {
