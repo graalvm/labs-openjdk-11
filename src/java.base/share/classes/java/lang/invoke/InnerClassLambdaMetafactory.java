@@ -40,6 +40,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.PropertyPermission;
 import java.util.Set;
 
+import jdk.internal.misc.VM;
+
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
 /**
@@ -86,10 +88,15 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     // For dumping generated classes to disk, for debugging purposes
     private static final ProxyClassesDumper dumper;
 
+    private static final boolean initializeLambdas;
+
     static {
         final String key = "jdk.internal.lambda.dumpProxyClasses";
         String path = GetPropertyAction.privilegedGetProperty(key);
         dumper = (null == path) ? null : ProxyClassesDumper.getInstance(path);
+        final String lambdaKey = "java.lang.invoke.InnerClassLambdaMetafactory.initializeLambdas";
+        String initalizeLambdasValue = GetPropertyAction.privilegedGetProperty(lambdaKey);
+        initializeLambdas = !"false".equalsIgnoreCase(initalizeLambdasValue);
     }
 
     // See context values in AbstractValidatingLambdaMetafactory
@@ -186,7 +193,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     @Override
     CallSite buildCallSite() throws LambdaConversionException {
         final Class<?> innerClass = spinInnerClass();
-        if (invokedType.parameterCount() == 0) {
+        if (invokedType.parameterCount() == 0 && initializeLambdas) {
             final Constructor<?>[] ctrs = AccessController.doPrivileged(
                     new PrivilegedAction<>() {
                 @Override
@@ -214,7 +221,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
             }
         } else {
             try {
-                UNSAFE.ensureClassInitialized(innerClass);
+                if (initializeLambdas) {
+                    UNSAFE.ensureClassInitialized(innerClass);
+                }
                 return new ConstantCallSite(
                         MethodHandles.Lookup.IMPL_LOOKUP
                              .findStatic(innerClass, NAME_FACTORY, invokedType));
@@ -272,7 +281,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
         generateConstructor();
 
-        if (invokedType.parameterCount() != 0) {
+        if (invokedType.parameterCount() != 0 || !initializeLambdas) {
             generateFactory();
         }
 
