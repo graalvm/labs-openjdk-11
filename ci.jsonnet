@@ -141,10 +141,10 @@
             # Make release build
             ["sh", "configure", "--with-debug-level=release",
                           "--with-jvm-features=graal",
-                          "--with-native-debug-symbols=external",
+                          "--with-native-debug-symbols=none",
                           "--with-jvm-variants=server",
                           "--disable-warnings-as-errors",
-                          "--with-zlib=bundled", #JDK-8175795
+                          "--with-zlib=bundled",
                           "--with-boot-jdk=${JAVA_HOME}"],
             ["$MAKE", "CONF=release", "images"],
 
@@ -154,7 +154,7 @@
                           "--with-native-debug-symbols=external",
                           "--with-jvm-variants=server",
                           "--disable-warnings-as-errors",
-                          "--with-zlib=bundled", #JDK-8175795
+                          "--with-zlib=bundled",
                           "--with-boot-jdk=${JAVA_HOME}"],
             ["$MAKE", "CONF=fastdebug", "images"],
         ],
@@ -176,7 +176,7 @@
                 # Make static-jdk-libs build
                 ["sh", "configure", "--with-debug-level=release",
                               "--disable-warnings-as-errors",
-                              "--with-native-debug-symbols=external",
+                              "--with-native-debug-symbols=none",
                               "--enable-static-build=yes",
                               "--with-zlib=bundled", #embed zlib in libzip
                               "--with-boot-jdk=${JAVA_HOME}"],
