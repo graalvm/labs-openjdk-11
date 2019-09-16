@@ -34,6 +34,7 @@ JDK_STATIC_LIB_TARGETS = $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)java$(STAT
                   $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)nio$(STATIC_LIBRARY_SUFFIX) \
                   $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)zip$(STATIC_LIBRARY_SUFFIX) \
                   $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)sunec$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)jaas$(STATIC_LIBRARY_SUFFIX) \
                   $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)fdlibm$(STATIC_LIBRARY_SUFFIX)
 
 jdk-static-libs: $(JDK_STATIC_LIB_TARGETS)
