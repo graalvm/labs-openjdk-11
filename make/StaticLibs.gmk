@@ -35,6 +35,12 @@ JDK_STATIC_LIB_TARGETS = $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)java$(STAT
                   $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)zip$(STATIC_LIBRARY_SUFFIX) \
                   $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)sunec$(STATIC_LIBRARY_SUFFIX) \
                   $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)jaas$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)extnet$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)prefs$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)j2gss$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)j2pcsc$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)j2pkcs11$(STATIC_LIBRARY_SUFFIX) \
+                  $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)sctp$(STATIC_LIBRARY_SUFFIX) \
                   $(JDK_OUTPUTDIR)/lib/static/$(LIBRARY_PREFIX)fdlibm$(STATIC_LIBRARY_SUFFIX)
 
 jdk-static-libs: $(JDK_STATIC_LIB_TARGETS)
