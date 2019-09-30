@@ -255,14 +255,14 @@ CompileTaskWrapper::CompileTaskWrapper(CompileTask* task) {
   }
 #endif
   CompileLog*     log  = thread->log();
-  if (log != NULL)  task->log_task_start(log);
+  if (log != NULL && !task->is_unloaded())  task->log_task_start(log);
 }
 
 CompileTaskWrapper::~CompileTaskWrapper() {
   CompilerThread* thread = CompilerThread::current();
   CompileTask* task = thread->task();
   CompileLog*  log  = thread->log();
-  if (log != NULL)  task->log_task_done(log);
+  if (log != NULL && !task->is_unloaded())  task->log_task_done(log);
   thread->set_task(NULL);
   task->set_code_handle(NULL);
   thread->set_env(NULL);
@@ -441,6 +441,9 @@ CompileTask* CompileQueue::get() {
   {
     NoSafepointVerifier nsv;
     task = CompilationPolicy::policy()->select_task(this);
+    if (task != NULL) {
+      task = task->select_for_compilation();
+    }
   }
 
   if (task != NULL) {
@@ -452,7 +455,6 @@ CompileTask* CompileQueue::get() {
     remove(task);
   }
   purge_stale_tasks(); // may temporarily release MCQ lock
-
   return task;
 }
 
@@ -480,7 +482,7 @@ void CompileQueue::purge_stale_tasks() {
 }
 
 void CompileQueue::remove(CompileTask* task) {
-   assert(MethodCompileQueue_lock->owned_by_self(), "must own lock");
+  assert(MethodCompileQueue_lock->owned_by_self(), "must own lock");
   if (task->prev() != NULL) {
     task->prev()->set_next(task->next());
   } else {
@@ -531,7 +533,7 @@ void CompileBroker::print_compile_queues(outputStream* st) {
 
   char buf[2000];
   int buflen = sizeof(buf);
-  Threads::print_threads_compiling(st, buf, buflen);
+  Threads::print_threads_compiling(st, buf, buflen, /* short_form = */ true);
 
   st->cr();
   if (_c1_compile_queue != NULL) {
@@ -2678,7 +2680,7 @@ void CompileBroker::print_info(outputStream *out) {
 //       That's a tradeoff which keeps together important blocks of output.
 //       At the same time, continuous tty_lock hold time is kept in check,
 //       preventing concurrently printing threads from stalling a long time.
-void CompileBroker::print_heapinfo(outputStream* out, const char* function, const char* granularity) {
+void CompileBroker::print_heapinfo(outputStream* out, const char* function, size_t granularity) {
   TimeStamp ts_total;
   TimeStamp ts;
 

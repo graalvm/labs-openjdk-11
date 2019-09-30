@@ -1489,18 +1489,19 @@ Node* GraphKit::make_load(Node* ctl, Node* adr, const Type* t, BasicType bt,
                           LoadNode::ControlDependency control_dependency,
                           bool require_atomic_access,
                           bool unaligned,
-                          bool mismatched) {
+                          bool mismatched,
+                          bool unsafe) {
   assert(adr_idx != Compile::AliasIdxTop, "use other make_load factory" );
   const TypePtr* adr_type = NULL; // debug-mode-only argument
   debug_only(adr_type = C->get_adr_type(adr_idx));
   Node* mem = memory(adr_idx);
   Node* ld;
   if (require_atomic_access && bt == T_LONG) {
-    ld = LoadLNode::make_atomic(ctl, mem, adr, adr_type, t, mo, control_dependency, unaligned, mismatched);
+    ld = LoadLNode::make_atomic(ctl, mem, adr, adr_type, t, mo, control_dependency, unaligned, mismatched, unsafe);
   } else if (require_atomic_access && bt == T_DOUBLE) {
-    ld = LoadDNode::make_atomic(ctl, mem, adr, adr_type, t, mo, control_dependency, unaligned, mismatched);
+    ld = LoadDNode::make_atomic(ctl, mem, adr, adr_type, t, mo, control_dependency, unaligned, mismatched, unsafe);
   } else {
-    ld = LoadNode::make(_gvn, ctl, mem, adr, adr_type, t, bt, mo, control_dependency, unaligned, mismatched);
+    ld = LoadNode::make(_gvn, ctl, mem, adr, adr_type, t, bt, mo, control_dependency, unaligned, mismatched, unsafe);
   }
   ld = _gvn.transform(ld);
   if (((bt == T_OBJECT) && C->do_escape_analysis()) || C->eliminate_boxing()) {
@@ -1515,7 +1516,8 @@ Node* GraphKit::store_to_memory(Node* ctl, Node* adr, Node *val, BasicType bt,
                                 MemNode::MemOrd mo,
                                 bool require_atomic_access,
                                 bool unaligned,
-                                bool mismatched) {
+                                bool mismatched,
+                                bool unsafe) {
   assert(adr_idx != Compile::AliasIdxTop, "use other store_to_memory factory" );
   const TypePtr* adr_type = NULL;
   debug_only(adr_type = C->get_adr_type(adr_idx));
@@ -1533,6 +1535,9 @@ Node* GraphKit::store_to_memory(Node* ctl, Node* adr, Node *val, BasicType bt,
   }
   if (mismatched) {
     st->as_Store()->set_mismatched_access();
+  }
+  if (unsafe) {
+    st->as_Store()->set_unsafe_access();
   }
   st = _gvn.transform(st);
   set_memory(st, adr_idx);
@@ -1790,12 +1795,13 @@ Node* GraphKit::set_results_for_java_call(CallJavaNode* call, bool separate_io_p
 // A better answer would be to separate out card marks from other memory.
 // For now, return the input memory state, so that it can be reused
 // after the call, if this call has restricted memory effects.
-Node* GraphKit::set_predefined_input_for_runtime_call(SafePointNode* call) {
+Node* GraphKit::set_predefined_input_for_runtime_call(SafePointNode* call, Node* narrow_mem) {
   // Set fixed predefined input arguments
   Node* memory = reset_memory();
+  Node* m = narrow_mem == NULL ? memory : narrow_mem;
   call->init_req( TypeFunc::Control,   control()  );
   call->init_req( TypeFunc::I_O,       top()      ); // does no i/o
-  call->init_req( TypeFunc::Memory,    memory     ); // may gc ptrs
+  call->init_req( TypeFunc::Memory,    m          ); // may gc ptrs
   call->init_req( TypeFunc::FramePtr,  frameptr() );
   call->init_req( TypeFunc::ReturnAdr, top()      );
   return memory;
@@ -2453,9 +2459,7 @@ Node* GraphKit::make_runtime_call(int flags,
   } else {
     assert(!wide_out, "narrow in => narrow out");
     Node* narrow_mem = memory(adr_type);
-    prev_mem = reset_memory();
-    map()->set_memory(narrow_mem);
-    set_predefined_input_for_runtime_call(call);
+    prev_mem = set_predefined_input_for_runtime_call(call, narrow_mem);
   }
 
   // Hook each parm in order.  Stop looking at the first NULL.

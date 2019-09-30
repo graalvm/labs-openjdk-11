@@ -2976,14 +2976,15 @@ void os::large_page_init() {
 int os::create_file_for_heap(const char* dir) {
 
   const char name_template[] = "/jvmheap.XXXXXX";
-  char *fullname = (char*)os::malloc((strlen(dir) + strlen(name_template) + 1), mtInternal);
+
+  size_t fullname_len = strlen(dir) + strlen(name_template);
+  char *fullname = (char*)os::malloc(fullname_len + 1, mtInternal);
   if (fullname == NULL) {
     vm_exit_during_initialization(err_msg("Malloc failed during creation of backing file for heap (%s)", os::strerror(errno)));
     return -1;
   }
-
-  (void)strncpy(fullname, dir, strlen(dir)+1);
-  (void)strncat(fullname, name_template, strlen(name_template));
+  int n = snprintf(fullname, fullname_len + 1, "%s%s", dir, name_template);
+  assert((size_t)n == fullname_len, "Unexpected number of characters in string");
 
   os::native_path(fullname);
 
@@ -4877,6 +4878,9 @@ char* os::pd_map_memory(int fd, const char* file_name, size_t file_offset,
       CloseHandle(hFile);
       return NULL;
     }
+
+    // Record virtual memory allocation
+    MemTracker::record_virtual_memory_reserve_and_commit((address)addr, bytes, CALLER_PC);
 
     DWORD bytes_read;
     OVERLAPPED overlapped;

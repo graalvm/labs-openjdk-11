@@ -2645,8 +2645,7 @@ void JavaThread::remove_stack_guard_pages() {
 }
 
 void JavaThread::enable_stack_reserved_zone() {
-  assert(_stack_guard_state != stack_guard_unused, "must be using guard pages.");
-  assert(_stack_guard_state != stack_guard_enabled, "already enabled");
+  assert(_stack_guard_state == stack_guard_reserved_disabled, "inconsistent state");
 
   // The base notation is from the stack's point of view, growing downward.
   // We need to adjust it to work correctly with guard_memory()
@@ -2664,11 +2663,10 @@ void JavaThread::enable_stack_reserved_zone() {
 }
 
 void JavaThread::disable_stack_reserved_zone() {
-  assert(_stack_guard_state != stack_guard_unused, "must be using guard pages.");
-  assert(_stack_guard_state != stack_guard_reserved_disabled, "already disabled");
+  assert(_stack_guard_state == stack_guard_enabled, "inconsistent state");
 
   // Simply return if called for a thread that does not use guard pages.
-  if (_stack_guard_state == stack_guard_unused) return;
+  if (_stack_guard_state != stack_guard_enabled) return;
 
   // The base notation is from the stack's point of view, growing downward.
   // We need to adjust it to work correctly with guard_memory()
@@ -4758,7 +4756,7 @@ void Threads::print_on_error(outputStream* st, Thread* current, char* buf,
   print_threads_compiling(st, buf, buflen);
 }
 
-void Threads::print_threads_compiling(outputStream* st, char* buf, int buflen) {
+void Threads::print_threads_compiling(outputStream* st, char* buf, int buflen, bool short_form) {
   ALL_JAVA_THREADS(thread) {
     if (thread->is_Compiler_thread()) {
       CompilerThread* ct = (CompilerThread*) thread;
@@ -4770,7 +4768,7 @@ void Threads::print_threads_compiling(outputStream* st, char* buf, int buflen) {
       CompileTask* task = ct->task();
       if (task != NULL) {
         thread->print_name_on_error(st, buf, buflen);
-        task->print(st, NULL, true, true);
+        task->print(st, NULL, short_form, true);
       }
     }
   }
