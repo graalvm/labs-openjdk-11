@@ -22,7 +22,6 @@
  */
 package jdk.vm.ci.code;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.Set;
@@ -109,13 +108,31 @@ public final class VirtualObject implements JavaValue {
                         }
                     } else {
                         ResolvedJavaField[] fields = vo.type.getInstanceFields(true);
-                        assert fields.length == vo.values.length : vo.type + ", fields=" + Arrays.toString(fields) + ", values=" + Arrays.toString(vo.values);
-                        for (int i = 0; i < vo.values.length; i++) {
+                        int fieldIndex = 0;
+                        for (int i = 0; i < vo.values.length; i++, fieldIndex++) {
                             if (i != 0) {
                                 buf.append(',');
                             }
-                            buf.append(fields[i].getName()).append('=');
+                            if (fieldIndex >= fields.length) {
+                                buf.append("<missing field>");
+                            } else {
+                                ResolvedJavaField field = fields[fieldIndex];
+                                buf.append(field.getName());
+                                if (vo.slotKinds[i].getSlotCount() == 2 && field.getType().getJavaKind().getSlotCount() == 1) {
+                                    if (fieldIndex + 1 >= fields.length) {
+                                        buf.append("/<missing field>");
+                                    } else {
+                                        ResolvedJavaField field2 = fields[++fieldIndex];
+                                        buf.append('/').append(field2.getName());
+                                    }
+                                }
+                            }
+                            buf.append('=');
                             appendValue(buf, vo.values[i], visited);
+                        }
+                        // Extra fields
+                        for (; fieldIndex < fields.length; fieldIndex++) {
+                            buf.append(fields[fieldIndex].getName()).append("=<missing value>");
                         }
                     }
                 }
