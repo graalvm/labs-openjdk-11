@@ -158,6 +158,11 @@ public class HotSpotCompiledCode implements CompiledCode {
                 if (info.debugInfo != null) {
                     BytecodeFrame frame = info.debugInfo.frame();
                     assert frame == null || frame.validateFormat();
+                    if (info.debugInfo.getVirtualObjectMapping() != null) {
+                        for (VirtualObject v : info.debugInfo.getVirtualObjectMapping()) {
+                            verifyVirtualObject(v);
+                        }
+                    }
                 }
             }
         }
