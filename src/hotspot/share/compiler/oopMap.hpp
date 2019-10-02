@@ -55,7 +55,7 @@ private:
 
 public:
   // Constants
-  enum { type_bits                = 4,
+  enum { type_bits                = 2,
          register_bits            = BitsPerShort - type_bits };
 
   enum { type_shift               = 0,
@@ -66,12 +66,13 @@ public:
          register_mask            = right_n_bits(register_bits),
          register_mask_in_place   = register_mask << register_shift };
 
-  enum oop_types {              // must fit in type_bits
-         unused_value =0,       // powers of 2, for masking OopMapStream
-         oop_value = 1,
-         narrowoop_value = 2,
-         callee_saved_value = 4,
-         derived_oop_value= 8 };
+  enum oop_types {
+         oop_value,
+         narrowoop_value,
+         callee_saved_value,
+         derived_oop_value,
+         unused_value = -1          // Only used as a sentinel value
+  };
 
   // Constructors
   OopMapValue () { set_value(0); set_content_reg(VMRegImpl::Bad()); }
@@ -96,12 +97,12 @@ public:
 
   // Querying
   bool is_oop()               { return mask_bits(value(), type_mask_in_place) == oop_value; }
-  bool is_narrowoop()           { return mask_bits(value(), type_mask_in_place) == narrowoop_value; }
+  bool is_narrowoop()         { return mask_bits(value(), type_mask_in_place) == narrowoop_value; }
   bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; }
   bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; }
 
   void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); }
-  void set_narrowoop()          { set_value((value() & register_mask_in_place) | narrowoop_value); }
+  void set_narrowoop()        { set_value((value() & register_mask_in_place) | narrowoop_value); }
   void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); }
   void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); }
 
@@ -186,8 +187,6 @@ class OopMap: public ResourceObj {
   void copy_data_to(address addr) const;
   OopMap* deep_copy();
 
-  bool has_derived_pointer() const PRODUCT_RETURN0;
-
   bool legal_vm_reg_name(VMReg local) {
      return OopMapValue::legal_vm_reg_name(local);
   }
@@ -271,7 +270,6 @@ private:
 public:
   ImmutableOopMap(const OopMap* oopmap);
 
-  bool has_derived_pointer() const PRODUCT_RETURN0;
   int count() const { return _count; }
 #ifdef ASSERT
   int nr_of_bytes() const; // this is an expensive operation, only used in debug builds
@@ -336,7 +334,6 @@ public:
 class OopMapStream : public StackObj {
  private:
   CompressedReadStream* _stream;
-  int _mask;
   int _size;
   int _position;
   bool _valid_omv;
@@ -344,8 +341,8 @@ class OopMapStream : public StackObj {
   void find_next();
 
  public:
-  OopMapStream(OopMap* oop_map, int oop_types_mask = OopMapValue::type_mask_in_place);
-  OopMapStream(const ImmutableOopMap* oop_map, int oop_types_mask = OopMapValue::type_mask_in_place);
+  OopMapStream(OopMap* oop_map);
+  OopMapStream(const ImmutableOopMap* oop_map);
   bool is_done()                        { if(!_valid_omv) { find_next(); } return !_valid_omv; }
   void next()                           { find_next(); }
   OopMapValue current()                 { return _omv; }
