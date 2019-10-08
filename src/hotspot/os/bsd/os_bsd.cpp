@@ -112,9 +112,11 @@
 
 #ifdef __APPLE__
   #include <mach/mach.h> // semaphore_* API
+#ifndef TARGET_IOS
   #include <mach-o/dyld.h>
   #include <sys/proc_info.h>
   #include <objc/objc-auto.h>
+#endif
 #endif
 
 #ifndef MAP_ANONYMOUS
@@ -1536,7 +1538,7 @@ int os::get_loaded_modules_info(os::LoadedModulesCallbackFunc callback, void *pa
   }
 
   dlclose(handle);
-#elif defined(__APPLE__)
+#elif defined(__APPLE__) && !defined(TARGET_IOS)
   for (uint32_t i = 1; i < _dyld_image_count(); i++) {
     // Value for top_address is returned as 0 since we don't have any information about module size
     if (callback(_dyld_get_image_name(i), (address)_dyld_get_image_header(i), (address)0, param)) {
@@ -3263,6 +3265,7 @@ void os::init(void) {
   initial_time_count = javaTimeNanos();
 
 #ifdef __APPLE__
+#ifndef TARGET_IOS
   // XXXDARWIN
   // Work around the unaligned VM callbacks in hotspot's
   // sharedRuntime. The callbacks don't use SSE2 instructions, and work on
@@ -3270,6 +3273,7 @@ void os::init(void) {
   // alignment when doing symbol lookup. To work around this, we force early
   // binding of all symbols now, thus binding when alignment is known-good.
   _dyld_bind_fully_image_containing_address((const void *) &os::init);
+#endif
 #endif
 
   os::Posix::init();
@@ -3808,6 +3812,7 @@ void os::pause() {
 }
 
 // Darwin has no "environ" in a dynamic library.
+#ifndef TARGET_IOS
 #ifdef __APPLE__
   #include <crt_externs.h>
   #define environ (*_NSGetEnviron())
@@ -3880,6 +3885,9 @@ int os::fork_and_exec(char* cmd, bool use_vfork_if_available) {
     }
   }
 }
+#else // TARGET_IOS
+int os::fork_and_exec(char* cmd, bool available) {return -1; }
+#endif // TARGET_IOS
 
 // Get the default path to the core file
 // Returns the length of the string

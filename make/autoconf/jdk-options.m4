@@ -458,13 +458,17 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
     AC_MSG_RESULT([yes])
     if test "x$OPENJDK_TARGET_OS" != xmacosx && \
        test "x$OPENJDK_TARGET_OS" != xlinux && \
-       test "x$OPENJDK_TARGET_OS" != xwindows; then
+       test "x$OPENJDK_TARGET_OS" != xwindows && \
+       test "x$OPENJDK_TARGET_OS" != xios; then
       AC_MSG_ERROR([--enable-static-build is not supported for this os: $OPENJDK_TARGET_OS])
     fi
     STATIC_BUILD_CFLAGS="-DSTATIC_BUILD=1"
     CFLAGS_JDKLIB_EXTRA="$CFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
     CXXFLAGS_JDKLIB_EXTRA="$CXXFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
     STATIC_LIB_BUILD=true
+    if test "x$OPENJDK_TARGET_OS" = "xios"; then
+      STATIC_BUILD=true
+    fi
   elif test "x$enable_static_build" = "xno"; then
     AC_MSG_CHECKING([if static build is enabled])
     AC_MSG_RESULT([no])

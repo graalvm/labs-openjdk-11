@@ -124,7 +124,7 @@ java.desktop_EXCLUDE_FILES += \
     .template \
     #
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
+ifneq ($(filter $(OPENJDK_TARGET_OS), macosx ios), )
   # exclude all X11 on Mac.
   java.desktop_EXCLUDES += \
       sun/awt/X11 \
