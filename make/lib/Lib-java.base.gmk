@@ -39,10 +39,13 @@ include CoreLibraries.gmk
 ################################################################################
 # Create the network library
 
+LIBNET_SRC_DIRS := $(call FindSrcDirsForComponent, java.base, net)
+
 $(eval $(call SetupJdkLibrary, BUILD_LIBNET, \
     NAME := net, \
     OPTIMIZATION := LOW, \
     CFLAGS := $(CFLAGS_JDKLIB), \
+    SRC := $(LIBNET_SRC_DIRS), \
     DISABLED_WARNINGS_gcc := format-nonliteral, \
     DISABLED_WARNINGS_clang := parentheses-equality constant-logical-operand, \
     DISABLED_WARNINGS_microsoft := 4244 4047 4133 4996, \

@@ -469,6 +469,9 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
     if test "x$OPENJDK_TARGET_OS" = "xios"; then
       STATIC_BUILD=true
     fi
+    if test "x$OPENJDK_TARGET_OS" = "xmacosx"; then
+      STATIC_BUILD=true
+    fi
   elif test "x$enable_static_build" = "xno"; then
     AC_MSG_CHECKING([if static build is enabled])
     AC_MSG_RESULT([no])
