@@ -32,15 +32,12 @@ import sun.security.action.GetPropertyAction;
 
 import java.io.FilePermission;
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.LinkedHashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.PropertyPermission;
 import java.util.Set;
-
-import jdk.internal.misc.VM;
 
 import static jdk.internal.org.objectweb.asm.Opcodes.*;
 
@@ -58,6 +55,7 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     private static final String JAVA_LANG_OBJECT = "java/lang/Object";
     private static final String NAME_CTOR = "<init>";
     private static final String NAME_FACTORY = "get$Lambda";
+    private static final String LAMBDA_INSTANCE_FIELD = "LAMBDA_INSTANCE$";
 
     //Serialization support
     private static final String NAME_SERIALIZED_LAMBDA = "java/lang/invoke/SerializedLambda";
@@ -88,15 +86,10 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     // For dumping generated classes to disk, for debugging purposes
     private static final ProxyClassesDumper dumper;
 
-    private static final boolean initializeLambdas;
-
     static {
         final String key = "jdk.internal.lambda.dumpProxyClasses";
         String path = GetPropertyAction.privilegedGetProperty(key);
         dumper = (null == path) ? null : ProxyClassesDumper.getInstance(path);
-        final String lambdaKey = "java.lang.invoke.InnerClassLambdaMetafactory.initializeLambdas";
-        String initalizeLambdasValue = GetPropertyAction.privilegedGetProperty(lambdaKey);
-        initializeLambdas = !"false".equalsIgnoreCase(initalizeLambdasValue);
     }
 
     // See context values in AbstractValidatingLambdaMetafactory
@@ -186,51 +179,21 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
      *
      * @return a CallSite, which, when invoked, will return an instance of the
      * functional interface
-     * @throws ReflectiveOperationException
      * @throws LambdaConversionException If properly formed functional interface
      * is not found
      */
     @Override
     CallSite buildCallSite() throws LambdaConversionException {
         final Class<?> innerClass = spinInnerClass();
-        if (invokedType.parameterCount() == 0 && initializeLambdas) {
-            final Constructor<?>[] ctrs = AccessController.doPrivileged(
-                    new PrivilegedAction<>() {
-                @Override
-                public Constructor<?>[] run() {
-                    Constructor<?>[] ctrs = innerClass.getDeclaredConstructors();
-                    if (ctrs.length == 1) {
-                        // The lambda implementing inner class constructor is private, set
-                        // it accessible (by us) before creating the constant sole instance
-                        ctrs[0].setAccessible(true);
-                    }
-                    return ctrs;
-                }
-                    });
-            if (ctrs.length != 1) {
-                throw new LambdaConversionException("Expected one lambda constructor for "
-                        + innerClass.getCanonicalName() + ", got " + ctrs.length);
-            }
+        try {
+            MethodHandle lambdaHandle = invokedType.parameterCount() == 0
+                    ? MethodHandles.Lookup.IMPL_LOOKUP.findStaticGetter(innerClass, LAMBDA_INSTANCE_FIELD, invokedType.returnType())
+                    : MethodHandles.Lookup.IMPL_LOOKUP.findStatic(innerClass, NAME_FACTORY, invokedType);
 
-            try {
-                Object inst = ctrs[0].newInstance();
-                return new ConstantCallSite(MethodHandles.constant(samBase, inst));
-            }
-            catch (ReflectiveOperationException e) {
-                throw new LambdaConversionException("Exception instantiating lambda object", e);
-            }
-        } else {
-            try {
-                if (initializeLambdas) {
-                    UNSAFE.ensureClassInitialized(innerClass);
-                }
-                return new ConstantCallSite(
-                        MethodHandles.Lookup.IMPL_LOOKUP
-                             .findStatic(innerClass, NAME_FACTORY, invokedType));
-            }
-            catch (ReflectiveOperationException e) {
-                throw new LambdaConversionException("Exception finding constructor", e);
-            }
+            return new ConstantCallSite(lambdaHandle);
+        }
+        catch (ReflectiveOperationException e) {
+            throw new LambdaConversionException("Exception finding lambda ", e);
         }
     }
 
@@ -280,8 +243,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
         }
 
         generateConstructor();
-
-        if (invokedType.parameterCount() != 0 || !initializeLambdas) {
+        if (invokedType.parameterCount() == 0) {
+            generateStaticField();
+        } else {
             generateFactory();
         }
 
@@ -330,23 +294,50 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     }
 
     /**
+     * Generate a static field that contains the singleton instance of the lambda
+     */
+    private void generateStaticField() {
+        String lambdaTypeDescriptor = BytecodeDescriptor.unparse(invokedType.returnType());
+
+        // Generate the static final field that holds the lambda singleton
+        FieldVisitor fv = cw.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, LAMBDA_INSTANCE_FIELD, lambdaTypeDescriptor, null, null);
+        fv.visitEnd();
+
+        // Instantiate the lambda and store it to the static final field
+        MethodVisitor clinit = cw.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
+        clinit.visitCode();
+
+        instantiateLambda(clinit);
+        clinit.visitFieldInsn(PUTSTATIC, lambdaClassName, LAMBDA_INSTANCE_FIELD, lambdaTypeDescriptor);
+
+        clinit.visitInsn(RETURN);
+        clinit.visitMaxs(-1, -1);
+        clinit.visitEnd();
+    }
+
+    /**
      * Generate the factory method for the class
      */
     private void generateFactory() {
-        MethodVisitor m = cw.visitMethod(ACC_PRIVATE | ACC_STATIC, NAME_FACTORY, invokedType.toMethodDescriptorString(), null, null);
-        m.visitCode();
+            MethodVisitor m = cw.visitMethod(ACC_PRIVATE | ACC_STATIC, NAME_FACTORY, invokedType.toMethodDescriptorString(), null, null);
+            m.visitCode();
+
+            instantiateLambda(m);
+            m.visitInsn(ARETURN);
+
+            m.visitMaxs(-1, -1);
+            m.visitEnd();
+    }
+
+    private void instantiateLambda(MethodVisitor m) {
         m.visitTypeInsn(NEW, lambdaClassName);
         m.visitInsn(Opcodes.DUP);
-        int parameterCount = invokedType.parameterCount();
-        for (int typeIndex = 0, varIndex = 0; typeIndex < parameterCount; typeIndex++) {
+        for (int typeIndex = 0, varIndex = 0; typeIndex < invokedType.parameterCount(); typeIndex++) {
             Class<?> argType = invokedType.parameterType(typeIndex);
             m.visitVarInsn(getLoadOpcode(argType), varIndex);
             varIndex += getParameterSize(argType);
         }
         m.visitMethodInsn(INVOKESPECIAL, lambdaClassName, NAME_CTOR, constructorType.toMethodDescriptorString(), false);
-        m.visitInsn(ARETURN);
-        m.visitMaxs(-1, -1);
-        m.visitEnd();
     }
 
     /**
