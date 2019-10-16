@@ -212,51 +212,5 @@
             self.Darwin + self.AMD64 + self.OracleJDK,
             self.Windows + self.AMD64 + self.OracleJDK,
         ]
-    ] + [ self.Mach5Build + self.Linux + self.AMD64 + self.OracleJDK ],
-
-    Mach5Build:: {
-        name: "gate-labsjdk11-mach5",
-        targets: ["gate"],
-        environment : {
-            CI_CACHE : "${SLAVE_LOCAL_CACHE}/labsjdk11-builder/"
-        },
-        logs : [
-            "*.log",
-            "*.txt"
-        ],
-        setup : [
-            ["set-export", "CI_DATE", ["date"]],
-            ["set-export", "CI_CHANGESET", ["git", "rev-parse","HEAD"]]
-        ],
-        timelimit: "1:00:00",
-        run+: [
-            ["curl", "-g", "--output", "mach5-distribution.zip",
-             "https://java.se.oracle.com/artifactory/jpg-infra-local/com/oracle/java/sparky/mach5/[RELEASE]/mach5-[RELEASE]-distribution.zip"],
-            ["unzip", "mach5-distribution.zip"],
-            ["mv", "mach5-*-distribution", "mach5"],
-            ["mach5/bin/mach5", "version"],
-
-            # Create or refresh local cache of jdk11u tree
-            ["python", "-u", "clone_jdk_repos.py", "jdk11u", "${CI_CACHE}",
-                "ssh://git@ol-bitbucket.us.oracle.com:7999/g/labsjdk-11.git", "${CI_CHANGESET}",
-                "http://closedjdk.us.oracle.com/jdk-updates/jdk11u", "tip"],
-
-            ["ls", "-l"],
-
-            # for now directly submit from the cached repo since mach5 doesn't like having a repo
-            # inside another repo and we're currently inside of the open repo.
-            ["mach5/bin/mach5", "remote-build-and-test",
-                "--src-root", "${CI_CACHE}/jdk11u",
-                "--email", "tom.rodriguez@oracle.com",
-                "--id-tag", "labsjdk11-gate",
-                "--log-level", "INFO",
-                "--job", "builds-tier1,hs-tier1,hs-tier3-graal,hs-tier4-graal",
-                "--slack-channel", "graal-compiler-team",
-                "--slack-workspace", "CORPARCH",
-                "--comment", "labjdk11 gate test"],
-
-            # clean up any jib cached files
-            ["bash", "${CI_CACHE}/jdk11u/jib.sh", "clean", "-P"]
-        ]
-    },
+    ]
 }
