@@ -86,10 +86,17 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     // For dumping generated classes to disk, for debugging purposes
     private static final ProxyClassesDumper dumper;
 
+    // initialize lambdas eagerly for better startup performance
+    private static final boolean eagerlyInitialize;
+
     static {
-        final String key = "jdk.internal.lambda.dumpProxyClasses";
-        String path = GetPropertyAction.privilegedGetProperty(key);
+        final String dumpKey = "jdk.internal.lambda.dumpProxyClasses";
+        String path = GetPropertyAction.privilegedGetProperty(dumpKey);
         dumper = (null == path) ? null : ProxyClassesDumper.getInstance(path);
+
+        final String eagerlyInitializeKey = "jdk.internal.lambda.eagerlyInitialize";
+        String eagerlyInitializeSetting = GetPropertyAction.privilegedGetProperty(eagerlyInitializeKey);
+        eagerlyInitialize = !"false".equals(eagerlyInitializeSetting);
     }
 
     // See context values in AbstractValidatingLambdaMetafactory
@@ -186,6 +193,9 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     CallSite buildCallSite() throws LambdaConversionException {
         final Class<?> innerClass = spinInnerClass();
         try {
+            if (eagerlyInitialize) {
+                UNSAFE.ensureClassInitialized(innerClass);
+            }
             MethodHandle lambdaHandle = invokedType.parameterCount() == 0
                     ? MethodHandles.Lookup.IMPL_LOOKUP.findStaticGetter(innerClass, LAMBDA_INSTANCE_FIELD, invokedType.returnType())
                     : MethodHandles.Lookup.IMPL_LOOKUP.findStatic(innerClass, NAME_FACTORY, invokedType);
