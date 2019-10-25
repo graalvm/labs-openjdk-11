@@ -451,20 +451,17 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
 [
   AC_ARG_ENABLE([static-build], [AS_HELP_STRING([--enable-static-build],
     [enable static library build @<:@disabled@:>@])])
-  STATIC_LIB_BUILD=false
   STATIC_BUILD=false
   if test "x$enable_static_build" = "xyes"; then
     AC_MSG_CHECKING([if static build is enabled])
     AC_MSG_RESULT([yes])
-    if test "x$OPENJDK_TARGET_OS" != xmacosx && \
-       test "x$OPENJDK_TARGET_OS" != xlinux && \
-       test "x$OPENJDK_TARGET_OS" != xwindows; then
-      AC_MSG_ERROR([--enable-static-build is not supported for this os: $OPENJDK_TARGET_OS])
+    if test "x$OPENJDK_TARGET_OS" != "xmacosx"; then
+      AC_MSG_ERROR([--enable-static-build is only supported for macosx builds])
     fi
     STATIC_BUILD_CFLAGS="-DSTATIC_BUILD=1"
     CFLAGS_JDKLIB_EXTRA="$CFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
     CXXFLAGS_JDKLIB_EXTRA="$CXXFLAGS_JDKLIB_EXTRA $STATIC_BUILD_CFLAGS"
-    STATIC_LIB_BUILD=true
+    STATIC_BUILD=true
   elif test "x$enable_static_build" = "xno"; then
     AC_MSG_CHECKING([if static build is enabled])
     AC_MSG_RESULT([no])
@@ -473,7 +470,6 @@ AC_DEFUN_ONCE([JDKOPT_SETUP_STATIC_BUILD],
   fi
 
   AC_SUBST(STATIC_BUILD)
-  AC_SUBST(STATIC_LIB_BUILD)
 ])
 
 ################################################################################

@@ -232,7 +232,7 @@ static InvocationFunctions *GetExportedJNIFunctions() {
     return sExportedJNIFunctions = fxns;
 }
 
-#ifndef FULL_STATIC_BUILD
+#ifndef STATIC_BUILD
 
 JNIEXPORT jint JNICALL
 JNI_GetDefaultJavaVMInitArgs(void *args) {
@@ -291,7 +291,7 @@ static int (*main_fptr)(int argc, char **argv) = NULL;
 static void *apple_main (void *arg)
 {
     if (main_fptr == NULL) {
-#ifdef FULL_STATIC_BUILD
+#ifdef STATIC_BUILD
         extern int main(int argc, char **argv);
         main_fptr = &main;
 #else
@@ -427,7 +427,7 @@ GetJVMPath(const char *jrepath, const char *jvmtype,
 
     JLI_TraceLauncher("Does `%s' exist ... ", jvmpath);
 
-#ifdef FULL_STATIC_BUILD
+#ifdef STATIC_BUILD
     return JNI_TRUE;
 #else
     if (stat(jvmpath, &s) == 0) {
@@ -450,7 +450,7 @@ GetJREPath(char *path, jint pathsize, jboolean speculative)
 
     if (GetApplicationHome(path, pathsize)) {
         /* Is JRE co-located with the application? */
-#ifdef FULL_STATIC_BUILD
+#ifdef STATIC_BUILD
         char jvm_cfg[MAXPATHLEN];
         JLI_Snprintf(jvm_cfg, sizeof(jvm_cfg), "%s/lib/jvm.cfg", path);
         if (access(jvm_cfg, F_OK) == 0) {
@@ -480,7 +480,7 @@ GetJREPath(char *path, jint pathsize, jboolean speculative)
     Dl_info selfInfo;
     dladdr(&GetJREPath, &selfInfo);
 
-#ifdef FULL_STATIC_BUILD
+#ifdef STATIC_BUILD
     char jvm_cfg[MAXPATHLEN];
     char *p = NULL;
     strncpy(jvm_cfg, selfInfo.dli_fname, MAXPATHLEN);
@@ -533,7 +533,7 @@ LoadJavaVM(const char *jvmpath, InvocationFunctions *ifn)
 
     JLI_TraceLauncher("JVM path is %s\n", jvmpath);
 
-#ifndef FULL_STATIC_BUILD
+#ifndef STATIC_BUILD
     libjvm = dlopen(jvmpath, RTLD_NOW + RTLD_GLOBAL);
 #else
     libjvm = dlopen(NULL, RTLD_FIRST);
@@ -588,7 +588,7 @@ SetExecname(char **argv)
     {
         Dl_info dlinfo;
 
-#ifdef FULL_STATIC_BUILD
+#ifdef STATIC_BUILD
         void *fptr;
         fptr = (void *)&SetExecname;
 #else
