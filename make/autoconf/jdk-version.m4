@@ -274,14 +274,10 @@ AC_DEFUN_ONCE([JDKVER_SETUP_JDK_VERSION_NUMBERS],
     fi
   else
     if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
-      if test "x$DEFAULT_VERSION_OPT" != x; then
-        VERSION_OPT=$DEFAULT_VERSION_OPT
-      else
-        # Default is to calculate a string like this 'adhoc.<username>.<base dir name>'
-        # Outer [ ] to quote m4.
-        [ basedirname=`$BASENAME "$TOPDIR" | $TR -d -c '[a-z][A-Z][0-9].-'` ]
-        VERSION_OPT="adhoc.$USERNAME.$basedirname"
-     fi
+      # Default is to calculate a string like this 'adhoc.<username>.<base dir name>'
+      # Outer [ ] to quote m4.
+      [ basedirname=`$BASENAME "$TOPDIR" | $TR -d -c '[a-z][A-Z][0-9].-'` ]
+      VERSION_OPT="adhoc.$USERNAME.$basedirname"
     fi
   fi
 
@@ -464,11 +460,7 @@ AC_DEFUN_ONCE([JDKVER_SETUP_JDK_VERSION_NUMBERS],
   if test "x$VERSION_PRE" = x; then
     VERSION_IS_GA=true
   else
-    if test "x$DEFAULT_VERSION_IS_GA" != x; then
-      VERSION_IS_GA=$DEFAULT_VERSION_IS_GA
-    else
-      VERSION_IS_GA=false
-    fi
+    VERSION_IS_GA=false
   fi
 
   # VERSION_NUMBER but always with exactly 4 positions, with 0 for empty positions.
