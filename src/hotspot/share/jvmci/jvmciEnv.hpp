@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef SHARE_JVMCI_JVMCIENV_HPP
-#define SHARE_JVMCI_JVMCIENV_HPP
+#ifndef SHARE_VM_JVMCI_JVMCIENV_HPP
+#define SHARE_VM_JVMCI_JVMCIENV_HPP
 
 #include "classfile/javaClasses.hpp"
 #include "jvmci/jvmciJavaClasses.hpp"
@@ -485,4 +485,4 @@ public:
   // End of JVMCIEnv
 };
 
-#endif // SHARE_JVMCI_JVMCIENV_HPP
+#endif // SHARE_VM_JVMCI_JVMCIENV_HPP
