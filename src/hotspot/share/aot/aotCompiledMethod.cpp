@@ -32,8 +32,6 @@
 #include "compiler/compilerOracle.hpp"
 #include "gc/shared/cardTableBarrierSet.hpp"
 #include "gc/shared/collectedHeap.hpp"
-#include "jvmci/compilerRuntime.hpp"
-#include "jvmci/jvmciRuntime.hpp"
 #include "oops/method.inline.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/handles.inline.hpp"
@@ -362,7 +360,7 @@ void AOTCompiledMethod::log_identity(xmlStream* log) const {
   log->print(" aot='%2d'", _heap->dso_id());
 }
 
-void AOTCompiledMethod::log_state_change() const {
+void AOTCompiledMethod::log_state_change(oop cause) const {
   if (LogCompilation) {
     ResourceMark m;
     if (xtty != NULL) {

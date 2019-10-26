@@ -1933,11 +1933,9 @@ bool SystemDictionary::initialize_wk_klass(WKID id, int init_opt, TRAPS) {
   Symbol* symbol = vmSymbols::symbol_at((vmSymbols::SID)sid);
   InstanceKlass** klassp = &_well_known_klasses[id];
 
-  bool must_load = (init_opt < SystemDictionary::Opt);
-
   if ((*klassp) == NULL) {
     Klass* k;
-    if (must_load) {
+    if (init_opt < SystemDictionary::Opt) {
       k = resolve_or_fail(symbol, true, CHECK_0); // load required class
     } else {
       k = resolve_or_null(symbol,       CHECK_0); // load optional klass

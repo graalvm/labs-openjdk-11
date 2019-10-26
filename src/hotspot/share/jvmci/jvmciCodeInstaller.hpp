@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_JVMCI_JVMCICODEINSTALLER_HPP
-#define SHARE_JVMCI_JVMCICODEINSTALLER_HPP
+#ifndef SHARE_VM_JVMCI_JVMCI_CODE_INSTALLER_HPP
+#define SHARE_VM_JVMCI_JVMCI_CODE_INSTALLER_HPP
 
 #include "code/debugInfoRec.hpp"
 #include "code/exceptionHandlerTable.hpp"

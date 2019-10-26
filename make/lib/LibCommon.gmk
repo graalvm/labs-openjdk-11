@@ -58,13 +58,19 @@ else ifeq ($(TOOLCHAIN_TYPE), solstudio)
 endif
 
 ################################################################################
-# Find a library
+# Find a library. Used for declaring dependencies on libraries in different
+# modules. If building static versions of libraries, no dependencies need to be
+# declared so define FindLib as empty.
 # Param 1 - module name
 # Param 2 - library name
 # Param 3 - optional subdir for library
-FindLib = \
-    $(call FindLibDirForModule, \
-        $(strip $1))$(strip $3)/$(LIBRARY_PREFIX)$(strip $2)$(SHARED_LIBRARY_SUFFIX)
+ifneq ($(STATIC_LIBS), true)
+  FindLib = \
+      $(call FindLibDirForModule, \
+          $(strip $1))$(strip $3)/$(LIBRARY_PREFIX)$(strip $2)$(SHARED_LIBRARY_SUFFIX)
+else
+  FindLib =
+endif
 
 ################################################################################
 # Find a static library

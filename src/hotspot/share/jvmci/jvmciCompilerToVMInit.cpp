@@ -24,12 +24,10 @@
 // no precompiled headers
 #include "ci/ciUtilities.hpp"
 #include "gc/shared/barrierSet.hpp"
-#include "gc/shared/cardTable.hpp"
 #include "gc/shared/collectedHeap.hpp"
 #include "jvmci/jvmciEnv.hpp"
 #include "jvmci/jvmciCompilerToVM.hpp"
 #include "jvmci/vmStructs_jvmci.hpp"
-#include "memory/universe.hpp"
 #include "runtime/sharedRuntime.hpp"
 #include "utilities/resourceHash.hpp"
 

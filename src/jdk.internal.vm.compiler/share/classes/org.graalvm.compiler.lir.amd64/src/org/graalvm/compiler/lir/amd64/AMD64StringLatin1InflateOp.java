@@ -29,9 +29,11 @@ import static jdk.vm.ci.amd64.AMD64.k2;
 import static jdk.vm.ci.amd64.AMD64.rdi;
 import static jdk.vm.ci.amd64.AMD64.rdx;
 import static jdk.vm.ci.amd64.AMD64.rsi;
+
 import static jdk.vm.ci.code.ValueUtil.asRegister;
 import static org.graalvm.compiler.lir.LIRInstruction.OperandFlag.REG;
 
+import jdk.vm.ci.amd64.AMD64;
 import org.graalvm.compiler.asm.Label;
 import org.graalvm.compiler.asm.amd64.AMD64Address;
 import org.graalvm.compiler.asm.amd64.AMD64Assembler;
@@ -42,7 +44,6 @@ import org.graalvm.compiler.lir.Opcode;
 import org.graalvm.compiler.lir.asm.CompilationResultBuilder;
 import org.graalvm.compiler.lir.gen.LIRGeneratorTool;
 
-import jdk.vm.ci.amd64.AMD64;
 import jdk.vm.ci.amd64.AMD64Kind;
 import jdk.vm.ci.code.Register;
 import jdk.vm.ci.meta.Value;
@@ -51,13 +52,9 @@ import jdk.vm.ci.meta.Value;
 public final class AMD64StringLatin1InflateOp extends AMD64LIRInstruction {
     public static final LIRInstructionClass<AMD64StringLatin1InflateOp> TYPE = LIRInstructionClass.create(AMD64StringLatin1InflateOp.class);
 
-    @Use({REG}) private Value rsrc;
-    @Use({REG}) private Value rdst;
-    @Use({REG}) private Value rlen;
-
-    @Temp({REG}) private Value rsrcTemp;
-    @Temp({REG}) private Value rdstTemp;
-    @Temp({REG}) private Value rlenTemp;
+    @Alive({REG}) private Value rsrc;
+    @Alive({REG}) private Value rdst;
+    @Alive({REG}) private Value rlen;
 
     @Temp({REG}) private Value vtmp1;
     @Temp({REG}) private Value rtmp2;
@@ -69,9 +66,9 @@ public final class AMD64StringLatin1InflateOp extends AMD64LIRInstruction {
         assert asRegister(dst).equals(rdi);
         assert asRegister(len).equals(rdx);
 
-        rsrcTemp = rsrc = src;
-        rdstTemp = rdst = dst;
-        rlenTemp = rlen = len;
+        rsrc = src;
+        rdst = dst;
+        rlen = len;
 
         vtmp1 = tool.newVariable(LIRKind.value(AMD64Kind.V512_BYTE));
         rtmp2 = tool.newVariable(LIRKind.value(AMD64Kind.DWORD));

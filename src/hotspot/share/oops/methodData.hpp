@@ -2062,7 +2062,7 @@ private:
 
 #if INCLUDE_JVMCI
   // Support for HotSpotMethodData.setCompiledIRSize(int)
-  int               _jvmci_ir_size;
+  int                _jvmci_ir_size;
   FailedSpeculation* _failed_speculations;
 #endif
 
@@ -2222,6 +2222,7 @@ public:
 
   InvocationCounter* invocation_counter()     { return &_invocation_counter; }
   InvocationCounter* backedge_counter()       { return &_backedge_counter;   }
+
 #if INCLUDE_JVMCI
   FailedSpeculation** get_failed_speculations_address() {
     return &_failed_speculations;

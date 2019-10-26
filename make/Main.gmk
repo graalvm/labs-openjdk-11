@@ -226,6 +226,21 @@ $(eval $(call DeclareRecipesForPhase, LIBS, \
 ALL_TARGETS += $(LIBS_TARGETS)
 
 ################################################################################
+# Targets for compiling static versions of certain native libraries. These do
+# not end up in the jmods or the normal JDK image, but are instead bundled into
+# a special deliverable.
+$(eval $(call DeclareRecipesForPhase, STATIC_LIBS, \
+    TARGET_SUFFIX := static-libs, \
+    FILE_PREFIX := Lib, \
+    MAKE_SUBDIR := lib, \
+    CHECK_MODULES := $(STATIC_LIBS_MODULES), \
+    USE_WRAPPER := true, \
+    EXTRA_ARGS := STATIC_LIBS=true, \
+))
+
+ALL_TARGETS += $(STATIC_LIBS_TARGETS)
+
+################################################################################
 # Targets for compiling native executables
 $(eval $(call DeclareRecipesForPhase, LAUNCHER, \
     TARGET_SUFFIX := launchers, \
@@ -339,6 +354,9 @@ legacy-jre-image:
 symbols-image:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Images.gmk symbols)
 
+static-libs-image:
+	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f StaticLibsImage.gmk)
+
 mac-jdk-bundle:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f MacBundles.gmk jdk-bundle)
 
@@ -353,7 +371,7 @@ exploded-image-optimize:
 
 ALL_TARGETS += store-source-revision create-source-revision-tracker bootcycle-images zip-security \
     zip-source jrtfs-jar jdk-image legacy-jre-image \
-    symbols-image mac-jdk-bundle mac-legacy-jre-bundle \
+    symbols-image static-libs-image mac-jdk-bundle mac-legacy-jre-bundle \
     release-file exploded-image-optimize
 
 ################################################################################
@@ -582,7 +600,10 @@ test-bundles:
 docs-bundles:
 	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Bundles.gmk docs-bundles)
 
-ALL_TARGETS += product-bundles legacy-bundles test-bundles docs-bundles
+static-libs-bundles:
+	+($(CD) $(TOPDIR)/make && $(MAKE) $(MAKE_ARGS) -f Bundles.gmk static-libs-bundles)
+
+ALL_TARGETS += product-bundles legacy-bundles test-bundles docs-bundles static-libs-bundles
 
 ################################################################################
 # Install targets
@@ -743,6 +764,10 @@ else
   $(foreach m, $(ALL_MODULES), $(eval $m-jmod: $($(m)_JMOD_DEPS)))
   $(foreach m, $(INTERIM_IMAGE_MODULES), $(eval $m-interim-jmod: $($(m)_JMOD_DEPS)))
 
+  # The -static-libs targets depend on -java as well as java.base-copy.
+  $(foreach m, $(filter $(JAVA_MODULES), $(STATIC_LIBS_MODULES)), \
+    $(eval $m-static-libs: $m-java java.base-copy))
+
   # Jmods cannot be created until we have the jmod tool ready to run. During
   # a normal build we run it from the exploded image, but when cross compiling
   # it's run from the buildjdk, which is either created at build time or user
@@ -804,6 +829,8 @@ else
   jdk-image: jmods zip-source demos release-file
   legacy-jre-image: jmods release-file
   symbols-image: $(LIBS_TARGETS) $(LAUNCHER_TARGETS)
+
+  static-libs-image: $(STATIC_LIBS_TARGETS)
 
   mac-jdk-bundle: jdk-image
   mac-legacy-jre-bundle: legacy-jre-image
@@ -896,6 +923,8 @@ else
 
   docs-bundles: docs-image
 
+  static-libs-bundles: static-libs-image
+
   generate-summary: jmods buildtools-modules
 
   update-x11wrappers: java.base-copy buildtools-jdk
@@ -929,6 +958,8 @@ java: $(JAVA_TARGETS)
 rmic: $(RMIC_TARGETS)
 
 libs: $(LIBS_TARGETS)
+
+static-libs: $(STATIC_LIBS_TARGETS)
 
 launchers: $(LAUNCHER_TARGETS)
 
@@ -1036,10 +1067,10 @@ test-image: prepare-test-image \
 all-images: product-images test-image docs-image
 
 # all-bundles packages all our deliverables as tar.gz bundles.
-all-bundles: product-bundles test-bundles docs-bundles
+all-bundles: product-bundles test-bundles docs-bundles static-libs-bundles
 
 ALL_TARGETS += buildtools hotspot hotspot-libs hotspot-gensrc gensrc gendata \
-    copy java rmic libs launchers jmods \
+    copy java rmic libs static-libs launchers jmods \
     jdk.jdwp.agent-gensrc $(ALL_MODULES) demos \
     exploded-image-base exploded-image \
     create-buildjdk docs-jdk-api docs-javase-api docs-reference-api docs-jdk \

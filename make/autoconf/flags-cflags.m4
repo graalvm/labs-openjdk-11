@@ -387,6 +387,18 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
   fi
   AC_SUBST(FDLIBM_CFLAGS)
 
+  # Extra flags needed when building optional static versions of certain
+  # JDK libraries.
+  STATIC_LIBS_CFLAGS="-DSTATIC_BUILD=1"
+  if test "x$TOOLCHAIN_TYPE" = xgcc || test "x$TOOLCHAIN_TYPE" = xclang; then
+    STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -ffunction-sections -fdata-sections"
+  fi
+  if test "x$TOOLCHAIN_TYPE" = xgcc; then
+    # Disable relax-relocation to enable compatibility with older linkers
+    STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -Xassembler -mrelax-relocations=no"
+  fi
+  AC_SUBST(STATIC_LIBS_CFLAGS)
+
   # Tests are only ever compiled for TARGET
   CFLAGS_TESTLIB="$CFLAGS_JDKLIB"
   CXXFLAGS_TESTLIB="$CXXFLAGS_JDKLIB"

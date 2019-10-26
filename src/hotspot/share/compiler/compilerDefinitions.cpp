@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -147,7 +147,7 @@ void set_client_compilation_mode() {
     FLAG_SET_ERGO(uintx, CodeCacheExpansionSize, 32*K);
   }
   if (FLAG_IS_DEFAULT(MetaspaceSize)) {
-    FLAG_SET_ERGO(size_t, MetaspaceSize, 12*M);
+    FLAG_SET_ERGO(size_t, MetaspaceSize, MIN2(12*M, MaxMetaspaceSize));
   }
   if (FLAG_IS_DEFAULT(MaxRAM)) {
     // Do not use FLAG_SET_ERGO to update MaxRAM, as this will impact
@@ -250,22 +250,6 @@ void set_jvmci_specific_flags() {
     if (FLAG_IS_DEFAULT(TypeProfileWidth)) {
       FLAG_SET_DEFAULT(TypeProfileWidth, 8);
     }
-    if (FLAG_IS_DEFAULT(OnStackReplacePercentage)) {
-      FLAG_SET_DEFAULT(OnStackReplacePercentage, 933);
-    }
-    // JVMCI needs values not less than defaults
-    if (FLAG_IS_DEFAULT(ReservedCodeCacheSize)) {
-      FLAG_SET_DEFAULT(ReservedCodeCacheSize, MAX2(64*M, ReservedCodeCacheSize));
-    }
-    if (FLAG_IS_DEFAULT(InitialCodeCacheSize)) {
-      FLAG_SET_DEFAULT(InitialCodeCacheSize, MAX2(16*M, InitialCodeCacheSize));
-    }
-    if (FLAG_IS_DEFAULT(MetaspaceSize)) {
-      FLAG_SET_DEFAULT(MetaspaceSize, MAX2(12*M, MetaspaceSize));
-    }
-    if (FLAG_IS_DEFAULT(NewSizeThreadIncrease)) {
-      FLAG_SET_DEFAULT(NewSizeThreadIncrease, MAX2(4*K, NewSizeThreadIncrease));
-    }
     if (TieredStopAtLevel != CompLevel_full_optimization) {
       // Currently JVMCI compiler can only work at the full optimization level
       warning("forcing TieredStopAtLevel to full optimization because JVMCI is enabled");
@@ -274,7 +258,43 @@ void set_jvmci_specific_flags() {
     if (FLAG_IS_DEFAULT(TypeProfileLevel)) {
       FLAG_SET_DEFAULT(TypeProfileLevel, 0);
     }
-  }
+
+    if (UseJVMCINativeLibrary) {
+      // SVM compiled code requires more stack space
+      if (FLAG_IS_DEFAULT(CompilerThreadStackSize)) {
+        // Duplicate logic in the implementations of os::create_thread
+        // so that we can then double the computed stack size. Once
+        // the stack size requirements of SVM are better understood,
+        // this logic can be pushed down into os::create_thread.
+        int stack_size = CompilerThreadStackSize;
+        if (stack_size == 0) {
+          stack_size = VMThreadStackSize;
+        }
+        if (stack_size != 0) {
+          FLAG_SET_DEFAULT(CompilerThreadStackSize, stack_size * 2);
+        }
+      }
+    } else {
+      // Adjust the on stack replacement percentage to avoid early
+      // OSR compilations while JVMCI itself is warming up
+      if (FLAG_IS_DEFAULT(OnStackReplacePercentage)) {
+        FLAG_SET_DEFAULT(OnStackReplacePercentage, 933);
+      }
+      // JVMCI needs values not less than defaults
+      if (FLAG_IS_DEFAULT(ReservedCodeCacheSize)) {
+        FLAG_SET_DEFAULT(ReservedCodeCacheSize, MAX2(64*M, ReservedCodeCacheSize));
+      }
+      if (FLAG_IS_DEFAULT(InitialCodeCacheSize)) {
+        FLAG_SET_DEFAULT(InitialCodeCacheSize, MAX2(16*M, InitialCodeCacheSize));
+      }
+      if (FLAG_IS_DEFAULT(MetaspaceSize)) {
+        FLAG_SET_DEFAULT(MetaspaceSize, MIN2(MAX2(12*M, MetaspaceSize), MaxMetaspaceSize));
+      }
+      if (FLAG_IS_DEFAULT(NewSizeThreadIncrease)) {
+        FLAG_SET_DEFAULT(NewSizeThreadIncrease, MAX2(4*K, NewSizeThreadIncrease));
+      }
+    } // !UseJVMCINativeLibrary
+  } // UseJVMCICompiler
 }
 #endif // INCLUDE_JVMCI
 

@@ -84,6 +84,9 @@ class GCTaskQueue;
 class ThreadClosure;
 class IdealGraphPrinter;
 
+class JVMCIEnv;
+class JVMCIPrimitiveArray;
+
 class Metadata;
 template <class T, MEMFLAGS F> class ChunkedList;
 typedef ChunkedList<Metadata*, mtInternal> MetadataOnStackBuffer;

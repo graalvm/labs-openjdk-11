@@ -518,6 +518,7 @@ jdk.aot_ADD_JAVAC_FLAGS += -parameters -XDstringConcat=inline \
 jdk.aot_EXCLUDES += \
     jdk.tools.jaotc.test
     #
+
 ################################################################################
 
 sun.charsets_COPY += .dat

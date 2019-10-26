@@ -30,13 +30,9 @@
 
 class ProfileData;
 class vframeArray;
-class MonitorInfo;
 class MonitorValue;
 class ObjectValue;
 class AutoBoxObjectValue;
-class ScopeValue;
-class compiledVFrame;
-template<class E> class GrowableArray;
 
 class Deoptimization : AllStatic {
   friend class VMStructs;
