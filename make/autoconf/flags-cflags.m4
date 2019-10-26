@@ -395,7 +395,8 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
   fi
   if test "x$TOOLCHAIN_TYPE" = xgcc; then
     # Disable relax-relocation to enable compatibility with older linkers
-    STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -Xassembler -mrelax-relocations=no"
+    FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [-Xassembler -mrelax-relocations=no],
+	IF_TRUE: [STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -Xassembler -mrelax-relocations=no"])
   fi
   AC_SUBST(STATIC_LIBS_CFLAGS)
 
