@@ -154,20 +154,18 @@
                 ["sh", "configure", "--with-debug-level=release",
                               "--disable-warnings-as-errors",
                               "--with-native-debug-symbols=none",
-                              "--enable-static-build=yes",
                               "--with-boot-jdk=${JAVA_HOME}",
                               "--with-devkit=${DEVKIT}"],
-                ["$MAKE", "CONF=release", "images"],
+                ["$MAKE", "CONF=release", "static-libs-image"],
                 ["python", "-u", "ci_test.py", "release"],
 
                 # Make static-jdk-libs build (fastdebug)
                 ["sh", "configure", "--with-debug-level=fastdebug",
                               "--disable-warnings-as-errors",
                               "--with-native-debug-symbols=external",
-                              "--enable-static-build=yes",
                               "--with-boot-jdk=${JAVA_HOME}",
                               "--with-devkit=${DEVKIT}"],
-                ["$MAKE", "CONF=fastdebug", "images"],
+                ["$MAKE", "CONF=fastdebug", "static-libs-image"],
                 ["python", "-u", "ci_test.py", "fastdebug"],
             ]
         } + mach
