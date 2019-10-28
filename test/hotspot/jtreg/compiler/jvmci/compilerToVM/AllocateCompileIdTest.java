@@ -33,8 +33,7 @@
  *          jdk.internal.vm.ci/jdk.vm.ci.hotspot
  *          jdk.internal.vm.ci/jdk.vm.ci.code
  *
- * @build jdk.internal.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper
- *        sun.hotspot.WhiteBox sun.hotspot.parser.DiagnosticCommand
+ * @build jdk.internal.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox
  *                                sun.hotspot.parser.DiagnosticCommand
  *                                sun.hotspot.WhiteBox$WhiteBoxPermission
