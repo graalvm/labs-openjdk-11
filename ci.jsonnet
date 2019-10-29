@@ -29,30 +29,6 @@
             CI_OS: "linux"
         },
     },
-    Solaris:: {
-        downloads+: {
-          AUTOCONF_DIR: {name: "autoconf", version: "2.69-AUTOCONF_DIR-relative", platformspecific: true}
-        },
-        packages+: {
-            git: ">=1.8.3",
-            make : ">=3.83",
-            solarisstudio: "==12.6"
-        },
-        capabilities+: ["solaris"],
-        name+: "-solaris",
-        environment+: {
-            MAKE : "gmake",
-            # Limit jobs to mitigate problem described in GR-3554
-            JOBS : "4",
-            CI_OS : "solaris",
-            PATH : "${AUTOCONF_DIR}/bin:${PATH}"
-        },
-        setup+: [
-            # Autoconf stores the install prefix on various places, this command rewrites the paths with $AUTOCONF_DIR.
-            # It assumes that the install prefix of autoconf is /opt/autoconf-2.69.
-            ["perl", "-pi.bak", "-e", "s:/opt/autoconf-2.69:${AUTOCONF_DIR}:", "$AUTOCONF_DIR/share/autoconf/autom4te.cfg"]
-        ]
-    },
     Darwin:: {
         packages+: {
             # No need to specify a "make" package as Mac OS X has make 3.81
@@ -87,15 +63,6 @@
         name+: "-aarch64",
         environment+: {
             CI_ARCH: "aarch64"
-        }
-    },
-
-    SPARCv9:: {
-        capabilities+: ["sparcv9"],
-        name+: "-sparcv9",
-        timelimit: "1:30:00",
-        environment+: {
-            CI_ARCH: "sparcv9"
         }
     },
 
@@ -178,7 +145,6 @@
             self.Linux + self.AArch64 + self.OracleJDK,
             self.Darwin + self.AMD64 + self.OracleJDK,
             self.Windows + self.AMD64 + self.OracleJDK,
-            self.Solaris + self.SPARCv9 + self.OracleJDK,
         ]
     ] + [
         self.Build + {
