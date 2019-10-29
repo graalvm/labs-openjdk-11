@@ -61,6 +61,9 @@
 #include "utilities/align.hpp"
 #include "utilities/events.hpp"
 #include "utilities/stack.inline.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 
 elapsedTimer        PSMarkSweep::_accumulated_time;
 jlong               PSMarkSweep::_time_of_last_gc   = 0;
@@ -526,7 +529,8 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
     ClassLoaderDataGraph::always_strong_cld_do(follow_cld_closure());
     // Do not treat nmethods as strong roots for mark/sweep, since we can unload them.
     //CodeCache::scavenge_root_nmethods_do(CodeBlobToOopClosure(mark_and_push_closure()));
-    AOTLoader::oops_do(mark_and_push_closure());
+    AOT_ONLY(AOTLoader::oops_do(mark_and_push_closure());)
+    JVMCI_ONLY(JVMCI::oops_do(mark_and_push_closure());)
   }
 
   // Flush marking stack.
@@ -564,6 +568,9 @@ void PSMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
 
     // Prune dead klasses from subklass/sibling/implementor lists.
     Klass::clean_weak_klass_links(purged_class);
+
+    // Clean JVMCI metadata handles.
+    JVMCI_ONLY(JVMCI::do_unloading(purged_class));
   }
 
   {
@@ -629,7 +636,10 @@ void PSMarkSweep::mark_sweep_phase3() {
 
   CodeBlobToOopClosure adjust_from_blobs(adjust_pointer_closure(), CodeBlobToOopClosure::FixRelocations);
   CodeCache::blobs_do(&adjust_from_blobs);
-  AOTLoader::oops_do(adjust_pointer_closure());
+  AOT_ONLY(AOTLoader::oops_do(adjust_pointer_closure());)
+
+  JVMCI_ONLY(JVMCI::oops_do(adjust_pointer_closure());)
+
   StringTable::oops_do(adjust_pointer_closure());
   ref_processor()->weak_oops_do(adjust_pointer_closure());
   PSScavenge::reference_processor()->weak_oops_do(adjust_pointer_closure());

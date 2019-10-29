@@ -94,6 +94,9 @@
 #include "utilities/align.hpp"
 #include "utilities/globalDefinitions.hpp"
 #include "utilities/stack.inline.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 
 size_t G1CollectedHeap::_humongous_object_threshold_in_words = 0;
 
@@ -3487,6 +3490,33 @@ private:
 
 Monitor* G1CodeCacheUnloadingTask::_lock = new Monitor(Mutex::leaf, "Code Cache Unload lock", false, Monitor::_safepoint_check_never);
 
+#if INCLUDE_JVMCI
+class JVMCICleaningTask : public StackObj {
+  volatile int       _cleaning_claimed;
+
+public:
+  JVMCICleaningTask():
+      _cleaning_claimed(0) {}
+
+  // Clean JVMCI metadata handles.
+  void work(bool unloading_occurred) {
+    // One worker will clean JVMCI metadata handles.
+    if (unloading_occurred && EnableJVMCI && claim_cleaning_task()) {
+      JVMCI::do_unloading(unloading_occurred);
+    }
+  }
+
+private:
+  bool claim_cleaning_task() {
+    if (_cleaning_claimed) {
+      return false;
+    }
+
+    return Atomic::cmpxchg(1, &_cleaning_claimed, 0) == 0;
+  }
+};
+#endif
+
 class G1KlassCleaningTask : public StackObj {
   volatile int                            _clean_klass_tree_claimed;
   ClassLoaderDataGraphKlassIteratorAtomic _klass_iterator;
@@ -3566,6 +3596,9 @@ private:
   bool                          _unloading_occurred;
   G1StringAndSymbolCleaningTask _string_symbol_task;
   G1CodeCacheUnloadingTask      _code_cache_task;
+#if INCLUDE_JVMCI
+  JVMCICleaningTask             _jvmci_cleaning_task;
+#endif
   G1KlassCleaningTask           _klass_cleaning_task;
   G1ResolvedMethodCleaningTask  _resolved_method_cleaning_task;
 
@@ -3575,6 +3608,7 @@ public:
       AbstractGangTask("Parallel Cleaning"),
       _string_symbol_task(is_alive, true, true, G1StringDedup::is_enabled()),
       _code_cache_task(num_workers, is_alive, unloading_occurred),
+      JVMCI_ONLY(_jvmci_cleaning_task() COMMA)
       _klass_cleaning_task(),
       _unloading_occurred(unloading_occurred),
       _resolved_method_cleaning_task() {
@@ -3582,6 +3616,10 @@ public:
 
   // The parallel work done by all worker threads.
   void work(uint worker_id) {
+    // Clean JVMCI metadata handles.
+    // Execute this task first because it is serial task.
+    JVMCI_ONLY(_jvmci_cleaning_task.work(_unloading_occurred);)
+
     // Do first pass of code cache cleaning.
     _code_cache_task.work_first_pass(worker_id);
 
