@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,17 @@
  */
 
 #include "precompiled.hpp"
-#include "classfile/symbolTable.hpp"
 #include "compiler/compileBroker.hpp"
 #include "jvmci/jniAccessMark.inline.hpp"
 #include "jvmci/jvmciCompilerToVM.hpp"
 #include "jvmci/jvmciRuntime.hpp"
 #include "logging/log.hpp"
 #include "memory/oopFactory.hpp"
-#include "memory/universe.hpp"
 #include "oops/constantPool.inline.hpp"
 #include "oops/method.inline.hpp"
-#include "oops/objArrayKlass.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/biasedLocking.hpp"
 #include "runtime/deoptimization.hpp"
-#include "runtime/fieldDescriptor.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/sharedRuntime.hpp"
 #if INCLUDE_G1GC
@@ -307,7 +303,6 @@ JRT_ENTRY_NO_ASYNC(static address, exception_handler_for_pc_helper(JavaThread* t
     if (log_is_enabled(Info, exceptions)) {
       ResourceMark rm;
       stringStream tempst;
-      assert(cm->method() != NULL, "Unexpected null method()");
       tempst.print("compiled method <%s>\n"
                    " at PC" INTPTR_FORMAT " for thread " INTPTR_FORMAT,
                    cm->method()->print_value_string(), p2i(pc), p2i(thread));
@@ -523,12 +518,12 @@ JRT_END
 
 JRT_LEAF(jboolean, JVMCIRuntime::validate_object(JavaThread* thread, oopDesc* parent, oopDesc* child))
   bool ret = true;
-  if(!Universe::heap()->is_in(parent)) {
+  if(!Universe::heap()->is_in_closed_subset(parent)) {
     tty->print_cr("Parent Object " INTPTR_FORMAT " not in heap", p2i(parent));
     parent->print();
     ret=false;
   }
-  if(!Universe::heap()->is_in(child)) {
+  if(!Universe::heap()->is_in_closed_subset(child)) {
     tty->print_cr("Child Object " INTPTR_FORMAT " not in heap", p2i(child));
     child->print();
     ret=false;
@@ -669,7 +664,7 @@ JVM_END
 
 void JVMCIRuntime::call_getCompiler(TRAPS) {
   THREAD_JVMCIENV(JavaThread::current());
-  JVMCIObject jvmciRuntime = get_HotSpotJVMCIRuntime(JVMCI_CHECK);
+  JVMCIObject jvmciRuntime = JVMCIRuntime::get_HotSpotJVMCIRuntime(JVMCI_CHECK);
   initialize(JVMCIENV);
   JVMCIENV->call_HotSpotJVMCIRuntime_getCompiler(jvmciRuntime, JVMCI_CHECK);
 }
@@ -705,8 +700,7 @@ oop JVMCINMethodData::get_nmethod_mirror(nmethod* nm, bool phantom_ref) {
     return NULL;
   }
   if (phantom_ref) {
-    return nm->oop_at(_nmethod_mirror_index);
-    // XXX return nm->oop_at_phantom(_nmethod_mirror_index);
+    return nm->oop_at_phantom(_nmethod_mirror_index);
   } else {
     return nm->oop_at(_nmethod_mirror_index);
   }
@@ -1014,8 +1008,8 @@ Klass* JVMCIRuntime::get_klass_by_name_impl(Klass*& accessing_klass,
     // This is a name from a signature.  Strip off the trimmings.
     // Call recursive to keep scope of strippedsym.
     TempNewSymbol strippedsym = SymbolTable::new_symbol(sym->as_utf8()+1,
-                                                        sym->utf8_length()-2,
-                                                        CHECK_NULL);
+                    sym->utf8_length()-2,
+                    CHECK_NULL);
     return get_klass_by_name_impl(accessing_klass, cpool, strippedsym, require_local);
   }
 
@@ -1048,8 +1042,8 @@ Klass* JVMCIRuntime::get_klass_by_name_impl(Klass*& accessing_klass,
     // We have an unloaded array.
     // Build it on the fly if the element class exists.
     TempNewSymbol elem_sym = SymbolTable::new_symbol(sym->as_utf8()+1,
-                                                     sym->utf8_length()-1,
-                                                     CHECK_NULL);
+                                                 sym->utf8_length()-1,
+                                                 CHECK_NULL);
 
     // Get element Klass recursively.
     Klass* elem_klass =
@@ -1059,7 +1053,7 @@ Klass* JVMCIRuntime::get_klass_by_name_impl(Klass*& accessing_klass,
                              require_local);
     if (elem_klass != NULL) {
       // Now make an array for it
-      return elem_klass->array_klass(THREAD);
+      return elem_klass->array_klass(CHECK_NULL);
     }
   }
 
@@ -1551,26 +1545,26 @@ JVMCI::CodeInstallResult JVMCIRuntime::register_method(JVMCIEnv* JVMCIENV,
                 old->make_not_entrant();
               }
             }
-
-            // XXX
-            // LogTarget(Info, nmethod, install) lt;
-            // if (lt.is_enabled()) {
-            //   ResourceMark rm;
-            //   char *method_name = method->name_and_sig_as_C_string();
-            //   lt.print("Installing method (%d) %s [entry point: %p]",
-            //             comp_level, method_name, nm->entry_point());
-            // }
+            if (TraceNMethodInstalls) {
+              ResourceMark rm;
+              char *method_name = method->name_and_sig_as_C_string();
+              ttyLocker ttyl;
+              tty->print_cr("Installing method (%d) %s [entry point: %p]",
+                            comp_level,
+                            method_name, nm->entry_point());
+            }
             // Allow the code to be executed
             method->set_code(method, nm);
           } else {
-            // XXX
-            // LogTarget(Info, nmethod, install) lt;
-            // if (lt.is_enabled()) {
-            //   ResourceMark rm;
-            //   char *method_name = method->name_and_sig_as_C_string();
-            //   lt.print("Installing osr method (%d) %s @ %d",
-            //             comp_level, method_name, entry_bci);
-            // }
+            if (TraceNMethodInstalls ) {
+              ResourceMark rm;
+              char *method_name = method->name_and_sig_as_C_string();
+              ttyLocker ttyl;
+              tty->print_cr("Installing osr method (%d) %s @ %d",
+                            comp_level,
+                            method_name,
+                            entry_bci);
+            }
             InstanceKlass::cast(method->method_holder())->add_osr_nmethod(nm);
           }
         } else {

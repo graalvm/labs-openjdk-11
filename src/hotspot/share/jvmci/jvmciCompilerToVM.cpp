@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 
 #include "precompiled.hpp"
+#include "classfile/classLoaderData.inline.hpp"
 #include "classfile/javaClasses.inline.hpp"
 #include "classfile/stringTable.hpp"
 #include "classfile/symbolTable.hpp"
@@ -34,15 +35,12 @@
 #include "jvmci/jvmciCodeInstaller.hpp"
 #include "jvmci/jvmciRuntime.hpp"
 #include "memory/oopFactory.hpp"
-#include "memory/universe.hpp"
 #include "oops/constantPool.inline.hpp"
 #include "oops/method.inline.hpp"
-#include "oops/typeArrayOop.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
+#include "oops/typeArrayOop.inline.hpp"
 #include "prims/nativeLookup.hpp"
-#include "classfile/classLoaderData.inline.hpp"
 #include "runtime/deoptimization.hpp"
-#include "runtime/fieldDescriptor.hpp"
 #include "runtime/frame.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
@@ -53,14 +51,14 @@ JVMCIKlassHandle::JVMCIKlassHandle(Thread* thread, Klass* klass) {
   _thread = thread;
   _klass = klass;
   if (klass != NULL) {
-    _holder = Handle(_thread, klass->klass_holder());
+    _holder = Handle(_thread, klass->holder_phantom());
   }
 }
 
 JVMCIKlassHandle& JVMCIKlassHandle::operator=(Klass* klass) {
   _klass = klass;
   if (klass != NULL) {
-    _holder = Handle(_thread, klass->klass_holder());
+    _holder = Handle(_thread, klass->holder_phantom());
   }
   return *this;
 }
@@ -455,9 +453,6 @@ C2V_VMENTRY_NULL(jobject, findUniqueConcreteMethod, (JNIEnv* env, jobject, jobje
   if (holder->is_interface()) {
     JVMCI_THROW_MSG_NULL(InternalError, err_msg("Interface %s should be handled in Java code", holder->external_name()));
   }
-  if (method->can_be_statically_bound()) {
-    JVMCI_THROW_MSG_NULL(InternalError, err_msg("Effectively static method %s.%s should be handled in Java code", method->method_holder()->external_name(), method->external_name()));
-  }
 
   methodHandle ucm;
   {
@@ -511,7 +506,7 @@ C2V_END
 C2V_VMENTRY_NULL(jobject, lookupType, (JNIEnv* env, jobject, jstring jname, jclass accessing_class, jboolean resolve))
   JVMCIObject name = JVMCIENV->wrap(jname);
   const char* str = JVMCIENV->as_utf8_string(name);
-  TempNewSymbol class_name = SymbolTable::new_symbol(str, CHECK_0);
+  TempNewSymbol class_name = SymbolTable::new_symbol(str, CHECK_NULL);
 
   if (class_name->utf8_length() <= 1) {
     JVMCI_THROW_MSG_0(InternalError, err_msg("Primitive type %s should be handled in Java code", class_name->as_C_string()));
@@ -554,7 +549,6 @@ C2V_VMENTRY_NULL(jobject, lookupType, (JNIEnv* env, jobject, jstring jname, jcla
         TempNewSymbol strippedsym = SymbolTable::new_symbol(class_name->as_utf8()+1+fd.dimension(),
                                                             class_name->utf8_length()-2-fd.dimension(),
                                                             CHECK_0);
-        // naked oop "k" is OK here -- we assign back into it
         resolved_klass = SystemDictionary::find(strippedsym,
                                                              class_loader,
                                                              protection_domain,
@@ -1417,6 +1411,7 @@ C2V_VMENTRY_0(jint, isResolvedInvokeHandleInPool, (JNIEnv* env, jobject, jobject
       vmassert(MethodHandles::is_signature_polymorphic_method(resolved_method()),"!");
       vmassert(!MethodHandles::is_signature_polymorphic_static(resolved_method->intrinsic_id()), "!");
       vmassert(cp_cache_entry->appendix_if_resolved(cp) == NULL, "!");
+      vmassert(cp_cache_entry->method_type_if_resolved(cp) == NULL, "!");
 
       methodHandle m(LinkResolver::linktime_resolve_virtual_method_or_null(link_info));
       vmassert(m == resolved_method, "!!");
@@ -2334,7 +2329,6 @@ C2V_VMENTRY_PREFIX(jboolean, isCurrentThreadAttached, (JNIEnv* env, jobject c2vm
   }
   return true;
 C2V_END
-
 
 C2V_VMENTRY_PREFIX(jlong, getCurrentJavaThread, (JNIEnv* env, jobject c2vm))
   if (base_thread == NULL) {

@@ -55,6 +55,9 @@
 #include "utilities/copy.hpp"
 #include "utilities/events.hpp"
 #include "utilities/stack.inline.hpp"
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 
 void GenMarkSweep::invoke_at_safepoint(ReferenceProcessor* rp, bool clear_all_softrefs) {
   assert(SafepointSynchronize::is_at_safepoint(), "must be at a safepoint");
@@ -236,6 +239,9 @@ void GenMarkSweep::mark_sweep_phase1(bool clear_all_softrefs) {
 
     // Prune dead klasses from subklass/sibling/implementor lists.
     Klass::clean_weak_klass_links(purged_class);
+
+    // Clean JVMCI metadata handles.
+    JVMCI_ONLY(JVMCI::do_unloading(purged_class));
   }
 
   {
