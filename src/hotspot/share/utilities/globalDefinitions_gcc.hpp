@@ -218,8 +218,13 @@ inline int g_isnan(double f) { return isnan(f); }
 
 // Checking for finiteness
 
+#ifdef TARGET_IOS
+inline int g_isfinite(jfloat  f)                 { return isfinite(f); }
+inline int g_isfinite(jdouble f)                 { return isfinite(f); }
+#else
 inline int g_isfinite(jfloat  f)                 { return finite(f); }
 inline int g_isfinite(jdouble f)                 { return finite(f); }
+#endif
 
 
 // Wide characters
