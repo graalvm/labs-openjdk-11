@@ -829,7 +829,7 @@ void GenCollectedHeap::process_roots(StrongRootsScope* scope,
 #endif
 
 #if INCLUDE_JVMCI
-  if (EnableJVMCI && _process_strong_tasks->is_task_claimed(GCH_PS_jvmci_oops_do)) {
+  if (EnableJVMCI && !_process_strong_tasks->is_task_claimed(GCH_PS_jvmci_oops_do)) {
     JVMCI::oops_do(strong_roots);
   }
 #endif
