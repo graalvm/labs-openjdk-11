@@ -105,7 +105,9 @@
             MAKE : "make",
         },
         packages+: {
-            "pip:astroid" : "==1.1.0",
+            # GR-19828
+            "00:pip:logilab-common ": "==1.4.4",
+            "01:pip:astroid" : "==1.1.0",
             "pip:pylint" : "==1.1.0",
         },
         name: "gate",
