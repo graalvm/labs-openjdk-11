@@ -146,19 +146,6 @@ Mutex*   UnsafeJlong_lock             = NULL;
 Monitor* CodeHeapStateAnalytics_lock  = NULL;
 
 Mutex*   MetaspaceExpand_lock         = NULL;
-Mutex*   ClassLoaderDataGraph_lock    = NULL;
-Monitor* ThreadsSMRDelete_lock        = NULL;
-Mutex*   SharedDecoder_lock           = NULL;
-Mutex*   DCmdFactory_lock             = NULL;
-#if INCLUDE_NMT
-Mutex*   NMTQuery_lock                = NULL;
-#endif
-#if INCLUDE_CDS
-#if INCLUDE_JVMTI
-Mutex*   CDSClassFileStream_lock      = NULL;
-#endif
-Mutex*   DumpTimeTable_lock           = NULL;
-#endif // INCLUDE_CDS
 
 #if INCLUDE_JVMCI
 Monitor* JVMCI_lock                   = NULL;

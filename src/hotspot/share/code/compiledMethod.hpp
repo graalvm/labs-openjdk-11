@@ -202,7 +202,7 @@ public:
 
   virtual address verified_entry_point() const = 0;
   virtual void log_identity(xmlStream* log) const = 0;
-  virtual void log_state_change() const = 0;
+  virtual void log_state_change(oop cause = NULL) const = 0;
   virtual bool make_not_used() = 0;
   virtual bool make_not_entrant() = 0;
   virtual bool make_entrant() = 0;
@@ -341,6 +341,7 @@ public:
   // Inline cache support for class unloading and nmethod unloading
  private:
   bool cleanup_inline_caches_impl(bool parallel, bool unloading_occurred, bool clean_all);
+
   address continuation_for_implicit_exception(address pc, bool for_div0_check);
 
  public:

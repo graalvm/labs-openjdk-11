@@ -44,7 +44,6 @@ class Abstract_VM_Version: AllStatic {
   friend class JVMCIVMStructs;
 
  protected:
-  static const char*  _s_vm_name;
   static const char*  _s_vm_release;
   static const char*  _s_internal_vm_info_string;
 
@@ -74,16 +73,6 @@ class Abstract_VM_Version: AllStatic {
   static unsigned int nof_parallel_worker_threads(unsigned int num,
                                                   unsigned int dem,
                                                   unsigned int switch_pt);
-
-  // Reads "name" and "version" properties from vm.properties
-  // if it exists as a sibling of libjvm. Default values
-  // are returned if they are not available in this file.
-  // @param name returns the value of the "name" property
-  // @param version returns the value of the "version" property
-  // @return number of properties initialized from the file
-  static int init_vm_properties(const char*& name, const char*& version);
-
-  static const char* init_internal_vm_info_string();
  public:
   // Called as part of the runtime services initialization which is
   // called from the management module initialization (via init_globals())
@@ -98,9 +87,7 @@ class Abstract_VM_Version: AllStatic {
   // full VM_Version initialization is possible. It can not depend on any
   // other part of the VM being initialized when called. Platforms that
   // need to specialize this define VM_Version::early_initialize().
-  // Any definition of VM_Version::early_initialize() must include
-  // a call to Abstract_VM_Version::early_initialize().
-  static void early_initialize();
+  static void early_initialize() { }
 
   // Called to initialize VM variables needing initialization
   // after command line parsing. Platforms that need to specialize

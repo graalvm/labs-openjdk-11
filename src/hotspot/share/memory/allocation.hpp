@@ -120,6 +120,7 @@ enum MemoryType {
   mtCode,              // memory for generated code
   mtGC,                // memory for GC
   mtCompiler,          // memory for compiler
+  mtJVMCI,             // memory for JVMCI
   mtInternal,          // memory used by VM, but does not belong to
                        // any of above categories, and not used for
                        // native memory tracking
@@ -139,8 +140,6 @@ enum MemoryType {
   mt_number_of_types   // number of memory types (mtDontTrack
                        // is not included as validate type)
 };
-
-const MemoryType mtJVMCI = mtCompiler;
 
 typedef MemoryType MEMFLAGS;
 

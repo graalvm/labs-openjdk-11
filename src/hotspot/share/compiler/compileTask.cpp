@@ -76,6 +76,7 @@ void CompileTask::free(CompileTask* task) {
      JNIHandles::destroy_global(task->_method_holder);
      JNIHandles::destroy_global(task->_hot_method_holder);
     }
+
     if (task->_failure_reason_on_C_heap && task->_failure_reason != NULL) {
       os::free((void*) task->_failure_reason);
     }
@@ -416,7 +417,7 @@ void CompileTask::log_task_done(CompileLog* log) {
   log->end_elem();
   log->clear_identities();   // next task will have different CI
   log->tail("task");
-    log->flush();
+  log->flush();
   log->mark_file_end();
 }
 

@@ -387,6 +387,19 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
   fi
   AC_SUBST(FDLIBM_CFLAGS)
 
+  # Extra flags needed when building optional static versions of certain
+  # JDK libraries.
+  STATIC_LIBS_CFLAGS="-DSTATIC_BUILD=1"
+  if test "x$TOOLCHAIN_TYPE" = xgcc || test "x$TOOLCHAIN_TYPE" = xclang; then
+    STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -ffunction-sections -fdata-sections"
+  fi
+  if test "x$TOOLCHAIN_TYPE" = xgcc; then
+    # Disable relax-relocation to enable compatibility with older linkers
+    FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [-Xassembler -mrelax-relocations=no],
+	IF_TRUE: [STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -Xassembler -mrelax-relocations=no"])
+  fi
+  AC_SUBST(STATIC_LIBS_CFLAGS)
+
   # Tests are only ever compiled for TARGET
   CFLAGS_TESTLIB="$CFLAGS_JDKLIB"
   CXXFLAGS_TESTLIB="$CXXFLAGS_JDKLIB"
@@ -817,17 +830,6 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS_CPU_DEP],
   $2CXXFLAGS_JDKEXE="$CFLAGS_JDK_COMMON $CFLAGS_JDK_COMMON_CXXONLY ${$1_CFLAGS_JDK}"
   $2CFLAGS_JDKLIB="${$2CFLAGS_JDKEXE} $JDK_PICFLAG ${$1_CFLAGS_CPU_JDK_LIBONLY}"
   $2CXXFLAGS_JDKLIB="${$2CXXFLAGS_JDKEXE} $JDK_PICFLAG ${$1_CFLAGS_CPU_JDK_LIBONLY}"
-
-  if test "x$STATIC_LIB_BUILD" = xtrue; then
-    STATIC_BUILD_CFLAG="-DSTATIC_BUILD=1"
-    $2CFLAGS_JDKLIB="${$2CFLAGS_JDKLIB} $STATIC_BUILD_CFLAG"
-    $2CXXFLAGS_JDKLIB="${$2CXXFLAGS_JDKLIB} $STATIC_BUILD_CFLAG"
-    if test "x$TOOLCHAIN_TYPE" = xgcc || test "x$TOOLCHAIN_TYPE" = xclang; then
-      CFLAGS_SECTIONS="-ffunction-sections -fdata-sections"
-      $2CFLAGS_JDKLIB="${$2CFLAGS_JDKLIB} $CFLAGS_SECTIONS"
-      $2CXXFLAGS_JDKLIB="${$2CXXFLAGS_JDKLIB} $CFLAGS_SECTIONS"
-    fi
-  fi
 
   AC_SUBST($2JVM_CFLAGS)
   AC_SUBST($2CFLAGS_JDKLIB)

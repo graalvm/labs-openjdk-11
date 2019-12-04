@@ -31,7 +31,6 @@
 #include "jvmci/vmStructs_compiler_runtime.hpp"
 #include "jvmci/vmStructs_jvmci.hpp"
 #include "oops/objArrayKlass.hpp"
-#include "runtime/deoptimization.hpp"
 #include "runtime/sharedRuntime.hpp"
 #if INCLUDE_G1GC
 #include "gc/g1/g1CardTable.hpp"
@@ -180,8 +179,8 @@
   nonstatic_field(JavaThread,                  _pending_transfer_to_interpreter,              bool)                                  \
   nonstatic_field(JavaThread,                  _jvmci_counters,                               jlong*)                                \
   nonstatic_field(JavaThread,                  _should_post_on_exceptions_flag,               int)                                   \
-  nonstatic_field(JavaThread,                  _reserved_stack_activation,                    address)                               \
   nonstatic_field(JavaThread,                  _jni_environment,                              JNIEnv)                                \
+  nonstatic_field(JavaThread,                  _reserved_stack_activation,                    address)                               \
                                                                                                                                      \
   static_field(java_lang_Class,                _klass_offset,                                 int)                                   \
   static_field(java_lang_Class,                _array_klass_offset,                           int)                                   \
@@ -692,8 +691,7 @@
 
 #endif
 
-// AARCH64 is defined in closed port, too. TARGET_ARCH_aarch64 is not.
-#ifdef TARGET_ARCH_aarch64
+#ifdef AARCH64
 
 #define VM_STRUCTS_CPU(nonstatic_field, static_field, unchecked_nonstatic_field, volatile_nonstatic_field, nonproduct_nonstatic_field, c2_nonstatic_field, unchecked_c1_static_field, unchecked_c2_static_field) \
   static_field(VM_Version, _psr_info.dczid_el0, uint32_t)               \

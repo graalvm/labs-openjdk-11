@@ -69,7 +69,6 @@
 #include "utilities/xmlstream.hpp"
 
 
-
 bool DeoptimizationMarker::_is_active = false;
 
 Deoptimization::UnrollBlock::UnrollBlock(int  size_of_deoptimized_frame,
@@ -788,6 +787,8 @@ int Deoptimization::deoptimize_dependents() {
 Deoptimization::DeoptAction Deoptimization::_unloaded_action
   = Deoptimization::Action_reinterpret;
 
+
+
 #if INCLUDE_JVMCI || INCLUDE_AOT
 template<typename CacheType>
 class BoxCacheBase : public CHeapObj<mtCompiler> {
@@ -803,6 +804,7 @@ protected:
     return ik;
   }
 };
+
 template<typename PrimitiveType, typename CacheType, typename BoxType> class BoxCache  : public BoxCacheBase<CacheType> {
   PrimitiveType _low;
   PrimitiveType _high;
@@ -837,17 +839,29 @@ public:
     }
     return NULL;
   }
+  oop lookup_raw(intptr_t raw_value) {
+    // Have to cast to avoid little/big-endian problems.
+    if (sizeof(PrimitiveType) > sizeof(jint)) {
+      jlong value = (jlong)raw_value;
+      return lookup(value);
+    }
+    PrimitiveType value = (PrimitiveType)*((jint*)&raw_value);
+    return lookup(value);
+  }
 };
+
 typedef BoxCache<jint, java_lang_Integer_IntegerCache, java_lang_Integer> IntegerBoxCache;
 typedef BoxCache<jlong, java_lang_Long_LongCache, java_lang_Long> LongBoxCache;
 typedef BoxCache<jchar, java_lang_Character_CharacterCache, java_lang_Character> CharacterBoxCache;
 typedef BoxCache<jshort, java_lang_Short_ShortCache, java_lang_Short> ShortBoxCache;
 typedef BoxCache<jbyte, java_lang_Byte_ByteCache, java_lang_Byte> ByteBoxCache;
+
 template<> BoxCache<jint, java_lang_Integer_IntegerCache, java_lang_Integer>* BoxCache<jint, java_lang_Integer_IntegerCache, java_lang_Integer>::_singleton = NULL;
 template<> BoxCache<jlong, java_lang_Long_LongCache, java_lang_Long>* BoxCache<jlong, java_lang_Long_LongCache, java_lang_Long>::_singleton = NULL;
 template<> BoxCache<jchar, java_lang_Character_CharacterCache, java_lang_Character>* BoxCache<jchar, java_lang_Character_CharacterCache, java_lang_Character>::_singleton = NULL;
 template<> BoxCache<jshort, java_lang_Short_ShortCache, java_lang_Short>* BoxCache<jshort, java_lang_Short_ShortCache, java_lang_Short>::_singleton = NULL;
 template<> BoxCache<jbyte, java_lang_Byte_ByteCache, java_lang_Byte>* BoxCache<jbyte, java_lang_Byte_ByteCache, java_lang_Byte>::_singleton = NULL;
+
 class BooleanBoxCache : public BoxCacheBase<java_lang_Boolean> {
   jobject _true_cache;
   jobject _false_cache;
@@ -872,6 +886,11 @@ public:
     }
     return _singleton;
   }
+  oop lookup_raw(intptr_t raw_value) {
+    // Have to cast to avoid little/big-endian problems.
+    jboolean value = (jboolean)*((jint*)&raw_value);
+    return lookup(value);
+  }
   oop lookup(jboolean value) {
     if (value != 0) {
       return JNIHandles::resolve_non_null(_true_cache);
@@ -879,29 +898,28 @@ public:
     return JNIHandles::resolve_non_null(_false_cache);
   }
 };
+
 BooleanBoxCache* BooleanBoxCache::_singleton = NULL;
+
 oop Deoptimization::get_cached_box(AutoBoxObjectValue* bv, frame* fr, RegisterMap* reg_map, TRAPS) {
    Klass* k = java_lang_Class::as_Klass(bv->klass()->as_ConstantOopReadValue()->value()());
    BasicType box_type = SystemDictionary::box_klass_type(k);
    if (box_type != T_OBJECT) {
-     StackValue* value = StackValue::create_stack_value(fr, reg_map, bv->field_at(0));
+     StackValue* value = StackValue::create_stack_value(fr, reg_map, bv->field_at(box_type == T_LONG ? 1 : 0));
      switch(box_type) {
-       case T_INT:     return IntegerBoxCache::singleton(THREAD)->lookup(value->get_int());
-       case T_LONG: {
-                       StackValue* low = StackValue::create_stack_value(fr, reg_map, bv->field_at(1));
-                       jlong res = (jlong)low->get_int();
-                       return LongBoxCache::singleton(THREAD)->lookup(res);
-                     }
-       case T_CHAR:    return CharacterBoxCache::singleton(THREAD)->lookup(value->get_int());
-       case T_SHORT:   return ShortBoxCache::singleton(THREAD)->lookup(value->get_int());
-       case T_BYTE:    return ByteBoxCache::singleton(THREAD)->lookup(value->get_int());
-       case T_BOOLEAN: return BooleanBoxCache::singleton(THREAD)->lookup(value->get_int());
+       case T_INT:     return IntegerBoxCache::singleton(THREAD)->lookup_raw(value->get_int());
+       case T_CHAR:    return CharacterBoxCache::singleton(THREAD)->lookup_raw(value->get_int());
+       case T_SHORT:   return ShortBoxCache::singleton(THREAD)->lookup_raw(value->get_int());
+       case T_BYTE:    return ByteBoxCache::singleton(THREAD)->lookup_raw(value->get_int());
+       case T_BOOLEAN: return BooleanBoxCache::singleton(THREAD)->lookup_raw(value->get_int());
+       case T_LONG:    return LongBoxCache::singleton(THREAD)->lookup_raw(value->get_int());
        default:;
      }
    }
    return NULL;
 }
 #endif // INCLUDE_JVMCI || INCLUDE_AOT
+
 #if COMPILER2_OR_JVMCI
 bool Deoptimization::realloc_objects(JavaThread* thread, frame* fr, RegisterMap* reg_map, GrowableArray<ScopeValue*>* objects, TRAPS) {
   Handle pending_exception(THREAD, thread->pending_exception());
@@ -925,6 +943,7 @@ bool Deoptimization::realloc_objects(JavaThread* thread, frame* fr, RegisterMap*
         AutoBoxObjectValue* abv = (AutoBoxObjectValue*) sv;
         obj = get_cached_box(abv, fr, reg_map, THREAD);
         if (obj != NULL) {
+          // Set the flag to indicate the box came from a cache, so that we can skip the field reassignment for it.
           abv->set_cached(true);
         }
       }

@@ -30,7 +30,6 @@
 #include "memory/resourceArea.hpp"
 #include "oops/oop.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
-#include "runtime/fieldDescriptor.hpp"
 
 // ------------------------------------------------------------------
 

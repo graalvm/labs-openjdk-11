@@ -143,7 +143,9 @@ AC_DEFUN_ONCE([JDKVER_SETUP_JDK_VERSION_NUMBERS],
     AC_MSG_ERROR([--with-vendor-url must have a value])
   elif [ ! [[ $with_vendor_url =~ ^[[:print:]]*$ ]] ]; then
     AC_MSG_ERROR([--with-vendor-url contains non-printing characters: $with_vendor_url])
-  else
+  elif test "x$with_vendor_url" != x; then
+    # Only set VENDOR_URL if '--with-vendor-url' was used and is not empty.
+    # Otherwise we will use the value from "version-numbers" included above.
     VENDOR_URL="$with_vendor_url"
   fi
   AC_SUBST(VENDOR_URL)
@@ -155,7 +157,9 @@ AC_DEFUN_ONCE([JDKVER_SETUP_JDK_VERSION_NUMBERS],
     AC_MSG_ERROR([--with-vendor-bug-url must have a value])
   elif [ ! [[ $with_vendor_bug_url =~ ^[[:print:]]*$ ]] ]; then
     AC_MSG_ERROR([--with-vendor-bug-url contains non-printing characters: $with_vendor_bug_url])
-  else
+  elif test "x$with_vendor_bug_url" != x; then
+    # Only set VENDOR_URL_BUG if '--with-vendor-bug-url' was used and is not empty.
+    # Otherwise we will use the value from "version-numbers" included above.
     VENDOR_URL_BUG="$with_vendor_bug_url"
   fi
   AC_SUBST(VENDOR_URL_BUG)
@@ -167,7 +171,9 @@ AC_DEFUN_ONCE([JDKVER_SETUP_JDK_VERSION_NUMBERS],
     AC_MSG_ERROR([--with-vendor-vm-bug-url must have a value])
   elif [ ! [[ $with_vendor_vm_bug_url =~ ^[[:print:]]*$ ]] ]; then
     AC_MSG_ERROR([--with-vendor-vm-bug-url contains non-printing characters: $with_vendor_vm_bug_url])
-  else
+  elif test "x$with_vendor_vm_bug_url" != x; then
+    # Only set VENDOR_URL_VM_BUG if '--with-vendor-vm-bug-url' was used and is not empty.
+    # Otherwise we will use the value from "version-numbers" included above.
     VENDOR_URL_VM_BUG="$with_vendor_vm_bug_url"
   fi
   AC_SUBST(VENDOR_URL_VM_BUG)
@@ -268,14 +274,10 @@ AC_DEFUN_ONCE([JDKVER_SETUP_JDK_VERSION_NUMBERS],
     fi
   else
     if test "x$NO_DEFAULT_VERSION_PARTS" != xtrue; then
-      if test "x$DEFAULT_VERSION_OPT" != x; then
-        VERSION_OPT=$DEFAULT_VERSION_OPT
-      else
-        # Default is to calculate a string like this 'adhoc.<username>.<base dir name>'
-        # Outer [ ] to quote m4.
-        [ basedirname=`$BASENAME "$TOPDIR" | $TR -d -c '[a-z][A-Z][0-9].-'` ]
-        VERSION_OPT="adhoc.$USERNAME.$basedirname"
-     fi
+      # Default is to calculate a string like this 'adhoc.<username>.<base dir name>'
+      # Outer [ ] to quote m4.
+      [ basedirname=`$BASENAME "$TOPDIR" | $TR -d -c '[a-z][A-Z][0-9].-'` ]
+      VERSION_OPT="adhoc.$USERNAME.$basedirname"
     fi
   fi
 
@@ -458,11 +460,7 @@ AC_DEFUN_ONCE([JDKVER_SETUP_JDK_VERSION_NUMBERS],
   if test "x$VERSION_PRE" = x; then
     VERSION_IS_GA=true
   else
-    if test "x$DEFAULT_VERSION_IS_GA" != x; then
-      VERSION_IS_GA=$DEFAULT_VERSION_IS_GA
-    else
-      VERSION_IS_GA=false
-    fi
+    VERSION_IS_GA=false
   fi
 
   # VERSION_NUMBER but always with exactly 4 positions, with 0 for empty positions.

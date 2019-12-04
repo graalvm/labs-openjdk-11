@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,10 @@
  *
  */
 
-#ifndef SHARE_JVMCI_JVMCI_GLOBALS_HPP
-#define SHARE_JVMCI_JVMCI_GLOBALS_HPP
+#ifndef SHARE_VM_JVMCI_JVMCIGLOBALS_HPP
+#define SHARE_VM_JVMCI_JVMCIGLOBALS_HPP
 
-#include "runtime/globals.hpp"
-class fileStream;
+#include "utilities/ostream.hpp"
 
 //
 // Defines all global flags used by the JVMCI compiler. Only flags that need
@@ -44,35 +43,36 @@ class fileStream;
                     constraint, \
                     writeable) \
                                                                             \
-  product(bool, EnableJVMCI, true,                                          \
+  experimental(bool, EnableJVMCI, false,                                    \
           "Enable JVMCI")                                                   \
                                                                             \
-  product(bool, UseJVMCICompiler, false,                                    \
-          "Use JVMCI as the default compiler. Will be true by default "     \
-          "if jvmci.Compiler property is set (either on command line or "   \
-          "from contents of <java.home>/lib/jvmci/compiler-name")           \
+  experimental(bool, EnableJVMCIProduct, false,                             \
+          "Allow JVMCI to be used in product mode")                         \
                                                                             \
-  product(bool, JVMCIPrintProperties, false,                                \
+  experimental(bool, UseJVMCICompiler, false,                               \
+          "Use JVMCI as the default compiler")                              \
+                                                                            \
+  experimental(bool, JVMCIPrintProperties, false,                           \
           "Prints properties used by the JVMCI compiler and exits")         \
                                                                             \
-  product(bool, BootstrapJVMCI, false,                                      \
+  experimental(bool, BootstrapJVMCI, false,                                 \
           "Bootstrap JVMCI before running Java main method. This "          \
           "initializes the compile queue with a small set of methods "      \
           "and processes the queue until it is empty. Combining this with " \
           "-XX:-TieredCompilation makes JVMCI compile more of itself.")     \
                                                                             \
-  product(bool, EagerJVMCI, false,                                          \
+  experimental(bool, EagerJVMCI, false,                                     \
           "Force eager JVMCI initialization")                               \
                                                                             \
-  product(bool, PrintBootstrap, true,                                       \
+  experimental(bool, PrintBootstrap, true,                                  \
           "Print JVMCI bootstrap progress and summary")                     \
                                                                             \
-  product(intx, JVMCIThreads, 1,                                            \
+  experimental(intx, JVMCIThreads, 1,                                       \
           "Force number of JVMCI compiler threads to use. Ignored if "      \
           "UseJVMCICompiler is false.")                                     \
           range(1, max_jint)                                                \
                                                                             \
-  product(intx, JVMCIHostThreads, 1,                                        \
+  experimental(intx, JVMCIHostThreads, 1,                                   \
           "Force number of C1 compiler threads. Ignored if "                \
           "UseJVMCICompiler is false.")                                     \
           range(1, max_jint)                                                \
@@ -84,35 +84,35 @@ class fileStream;
   NOT_COMPILER2(product(bool, ReduceInitialCardMarks, true,                 \
           "Defer write barriers of young objects"))                         \
                                                                             \
-  product(intx, JVMCITraceLevel, 0,                                         \
+  experimental(intx, JVMCITraceLevel, 0,                                    \
           "Trace level for JVMCI: "                                         \
           "1 means emit a message for each CompilerToVM call,"              \
           "levels greater than 1 provide progressively greater detail")     \
                                                                             \
-  product(intx, JVMCICounterSize, 0,                                        \
+  experimental(intx, JVMCICounterSize, 0,                                   \
           "Reserved size for benchmark counters")                           \
           range(0, max_jint)                                                \
                                                                             \
-  product(bool, JVMCICountersExcludeCompiler, true,                         \
+  experimental(bool, JVMCICountersExcludeCompiler, true,                    \
           "Exclude JVMCI compiler threads from benchmark counters")         \
                                                                             \
   develop(bool, JVMCIUseFastLocking, true,                                  \
           "Use fast inlined locking code")                                  \
                                                                             \
-  product(intx, JVMCINMethodSizeLimit, (80*K)*wordSize,                     \
+  experimental(intx, JVMCINMethodSizeLimit, (80*K)*wordSize,                \
           "Maximum size of a compiled method.")                             \
                                                                             \
-  product(intx, MethodProfileWidth, 0,                                      \
+  experimental(intx, MethodProfileWidth, 0,                                 \
           "Number of methods to record in call profile")                    \
                                                                             \
-  product(ccstr, JVMCILibPath, NULL,                                        \
+  experimental(ccstr, JVMCILibPath, NULL,                                   \
           "LD path for loading the JVMCI shared library")                   \
                                                                             \
-  product(ccstr, JVMCILibDumpJNIConfig, NULL,                               \
+  experimental(ccstr, JVMCILibDumpJNIConfig, NULL,                          \
           "Dumps to the given file a description of the classes, fields "   \
           "and methods the JVMCI shared library must provide")              \
                                                                             \
-  product(bool, UseJVMCINativeLibrary, false,                               \
+  experimental(bool, UseJVMCINativeLibrary, false,                          \
           "Execute JVMCI Java code from a shared library "                  \
           "instead of loading it from class files and executing it "        \
           "on the HotSpot heap")                                            \
@@ -131,6 +131,9 @@ class fileStream;
                                                                             \
   NOT_COMPILER2(diagnostic(bool, UseMontgomerySquareIntrinsic, false,       \
           "Enables intrinsification of BigInteger.montgomerySquare()"))
+
+
+// Read default values for JVMCI globals
 
 JVMCI_FLAGS(DECLARE_DEVELOPER_FLAG, \
             DECLARE_PD_DEVELOPER_FLAG, \
@@ -157,9 +160,12 @@ class JVMCIGlobals {
   // returning false.
   static bool check_jvmci_flags_are_consistent();
 
+  // Convert JVMCI experimental flags to product
+  static bool enable_jvmci_product_mode(JVMFlag::Flags);
+
   // Check and exit VM with error if selected GC is not supported by JVMCI.
   static void check_jvmci_supported_gc();
 
   static fileStream* get_jni_config_file() { return _jni_config_file; }
 };
-#endif // SHARE_JVMCI_JVMCI_GLOBALS_HPP
+#endif // SHARE_VM_JVMCI_JVMCIGLOBALS_HPP

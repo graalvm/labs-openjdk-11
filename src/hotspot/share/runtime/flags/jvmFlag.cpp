@@ -360,6 +360,12 @@ void JVMFlag::clear_diagnostic() {
   assert(!is_diagnostic(), "sanity");
 }
 
+void JVMFlag::clear_experimental() {
+  assert(is_experimental(), "sanity");
+  _flags = Flags(_flags & ~KIND_EXPERIMENTAL);
+  assert(!is_experimental(), "sanity");
+}
+
 // Get custom message for this locked flag, or NULL if
 // none is available. Returns message type produced.
 JVMFlag::MsgType JVMFlag::get_locked_message(char* buf, int buflen) const {
@@ -698,6 +704,8 @@ void JVMFlag::print_origin(outputStream* st, unsigned int width) {
       st->print("attach"); break;
     case INTERNAL:
       st->print("internal"); break;
+    case JIMAGE_RESOURCE:
+      st->print("jimage"); break;
   }
   st->print("}");
 }

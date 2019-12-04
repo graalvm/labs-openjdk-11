@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -847,12 +847,16 @@ bool MethodData::is_speculative_trap_bytecode(Bytecodes::Code code) {
 }
 
 #if INCLUDE_JVMCI
+
 void* FailedSpeculation::operator new(size_t size, size_t fs_size) throw() {
   return CHeapObj<mtCompiler>::operator new(fs_size, std::nothrow);
 }
+
 FailedSpeculation::FailedSpeculation(address speculation, int speculation_len) : _data_len(speculation_len), _next(NULL) {
   memcpy(data(), speculation, speculation_len);
 }
+
+// A heuristic check to detect nmethods that outlive a failed speculations list.
 static void guarantee_failed_speculations_alive(nmethod* nm, FailedSpeculation** failed_speculations_address) {
   jlong head = (jlong)(address) *failed_speculations_address;
   if ((head & 0x1) == 0x1) {
@@ -876,20 +880,25 @@ static void guarantee_failed_speculations_alive(nmethod* nm, FailedSpeculation**
     fatal("Adding to failed speculations list that appears to have been freed. Source: %s", st.as_string());
   }
 }
+
 bool FailedSpeculation::add_failed_speculation(nmethod* nm, FailedSpeculation** failed_speculations_address, address speculation, int speculation_len) {
   assert(failed_speculations_address != NULL, "must be");
   size_t fs_size = sizeof(FailedSpeculation) + speculation_len;
   FailedSpeculation* fs = new (fs_size) FailedSpeculation(speculation, speculation_len);
   if (fs == NULL) {
+    // no memory -> ignore failed speculation
     return false;
   }
+
   guarantee(is_aligned(fs, sizeof(FailedSpeculation*)), "FailedSpeculation objects must be pointer aligned");
   guarantee_failed_speculations_alive(nm, failed_speculations_address);
+
   FailedSpeculation** cursor = failed_speculations_address;
   do {
     if (*cursor == NULL) {
       FailedSpeculation* old_fs = Atomic::cmpxchg(fs, cursor, (FailedSpeculation*) NULL);
       if (old_fs == NULL) {
+        // Successfully appended fs to end of the list
         return true;
       }
       cursor = old_fs->next_adr();
@@ -898,6 +907,7 @@ bool FailedSpeculation::add_failed_speculation(nmethod* nm, FailedSpeculation** 
     }
   } while (true);
 }
+
 void FailedSpeculation::free_failed_speculations(FailedSpeculation** failed_speculations_address) {
   assert(failed_speculations_address != NULL, "must be");
   FailedSpeculation* fs = *failed_speculations_address;
@@ -915,6 +925,7 @@ void FailedSpeculation::free_failed_speculations(FailedSpeculation** failed_spec
   (*head) = (*head) | 0x1;
 }
 #endif // INCLUDE_JVMCI
+
 int MethodData::compute_extra_data_count(int data_size, int empty_bc_count, bool needs_speculative_traps) {
 #if INCLUDE_JVMCI
   if (ProfileTraps) {

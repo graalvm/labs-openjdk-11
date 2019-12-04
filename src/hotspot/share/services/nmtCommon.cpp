@@ -33,6 +33,7 @@ const char* NMTUtil::_memory_type_names[] = {
   "Code",
   "GC",
   "Compiler",
+  "JVMCI",
   "Internal",
   "Other",
   "Symbol",

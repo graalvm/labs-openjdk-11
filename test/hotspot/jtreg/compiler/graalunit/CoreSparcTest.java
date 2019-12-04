@@ -34,5 +34,5 @@
  *
  * @run driver jdk.test.lib.FileInstaller ../../ProblemList-graal.txt ExcludeList.txt
  *
- * @run main/othervm compiler.graalunit.common.GraalUnitTestLauncher -prefix org.graalvm.compiler.core.sparc.test -exclude ExcludeList.txt
+ * @run main/othervm compiler.graalunit.common.GraalUnitTestLauncher -prefix org.graalvm.compiler.hotspot.sparc.test -exclude ExcludeList.txt
  */

@@ -51,6 +51,7 @@ private:
   int _scopes_begin;
   int _reloc_begin;
   int _exception_table_begin;
+  int _nul_chk_table_begin;
   int _oopmap_begin;
   address at_offset(size_t offset) const { return ((address) this) + offset; }
 public:
@@ -63,9 +64,9 @@ public:
   relocInfo* relocation_begin() const { return (relocInfo*) at_offset(_reloc_begin); }
   relocInfo* relocation_end() const { return (relocInfo*) at_offset(_exception_table_begin); }
   address handler_table_begin   () const { return at_offset(_exception_table_begin); }
-  address handler_table_end() const { return at_offset(_oopmap_begin); }
+  address handler_table_end() const { return at_offset(_nul_chk_table_begin); }
 
-  address nul_chk_table_begin() const { return at_offset(_oopmap_begin); }
+  address nul_chk_table_begin() const { return at_offset(_nul_chk_table_begin); }
   address nul_chk_table_end() const { return at_offset(_oopmap_begin); }
 
   ImmutableOopMapSet* oopmap_set() const { return (ImmutableOopMapSet*) at_offset(_oopmap_begin); }
@@ -193,7 +194,7 @@ private:
   virtual int comp_level() const { return CompLevel_aot; }
   virtual address verified_entry_point() const { return _code + _meta->verified_entry_offset(); }
   virtual void log_identity(xmlStream* stream) const;
-  virtual void log_state_change() const;
+  virtual void log_state_change(oop cause = NULL) const;
   virtual bool make_entrant() NOT_TIERED({ ShouldNotReachHere(); return false; });
   virtual bool make_not_entrant() { return make_not_entrant_helper(not_entrant); }
   virtual bool make_not_used() { return make_not_entrant_helper(not_used); }
@@ -285,7 +286,6 @@ private:
 
 protected:
   virtual bool do_unloading_oops(address low_boundary, BoolObjectClosure* is_alive);
-  virtual bool do_unloading_jvmci() { return false; }
 
 };
 

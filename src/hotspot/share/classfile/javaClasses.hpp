@@ -1377,6 +1377,7 @@ class java_lang_StackTraceElement: AllStatic {
 
   static void compute_offsets();
   static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+
 #if INCLUDE_JVMCI
   static void decode(Handle mirror, int method, int version, int bci, int cpref, Symbol*& methodName, Symbol*& fileName, int& lineNumber);
   static void decode(Handle mirror, methodHandle method, int bci, Symbol*& methodName, Symbol*& fileName, int& lineNumber);
@@ -1501,22 +1502,27 @@ class java_lang_Integer : AllStatic {
 public:
   static jint value(oop obj);
 };
+
 class java_lang_Long : AllStatic {
 public:
   static jlong value(oop obj);
 };
+
 class java_lang_Character : AllStatic {
 public:
   static jchar value(oop obj);
 };
+
 class java_lang_Short : AllStatic {
 public:
   static jshort value(oop obj);
 };
+
 class java_lang_Byte : AllStatic {
 public:
   static jbyte value(oop obj);
 };
+
 class java_lang_Boolean : AllStatic {
  private:
   static int _static_TRUE_offset;
@@ -1529,6 +1535,7 @@ class java_lang_Boolean : AllStatic {
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
   static jboolean value(oop obj);
 };
+
 class java_lang_Integer_IntegerCache : AllStatic {
  private:
   static int _static_cache_offset;
@@ -1538,6 +1545,7 @@ class java_lang_Integer_IntegerCache : AllStatic {
   static objArrayOop  cache(InstanceKlass *k);
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
+
 class java_lang_Long_LongCache : AllStatic {
  private:
   static int _static_cache_offset;
@@ -1547,6 +1555,7 @@ class java_lang_Long_LongCache : AllStatic {
   static objArrayOop  cache(InstanceKlass *k);
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
+
 class java_lang_Character_CharacterCache : AllStatic {
  private:
   static int _static_cache_offset;
@@ -1556,6 +1565,7 @@ class java_lang_Character_CharacterCache : AllStatic {
   static objArrayOop  cache(InstanceKlass *k);
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
+
 class java_lang_Short_ShortCache : AllStatic {
  private:
   static int _static_cache_offset;
@@ -1565,6 +1575,7 @@ class java_lang_Short_ShortCache : AllStatic {
   static objArrayOop  cache(InstanceKlass *k);
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
+
 class java_lang_Byte_ByteCache : AllStatic {
  private:
   static int _static_cache_offset;

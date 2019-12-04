@@ -93,14 +93,14 @@ enum { LOCATION_CODE = 0, CONSTANT_INT_CODE = 1,  CONSTANT_OOP_CODE = 2,
 ScopeValue* ScopeValue::read_from(DebugInfoReadStream* stream) {
   ScopeValue* result = NULL;
   switch(stream->read_int()) {
-   case LOCATION_CODE:        result = new LocationValue(stream);        break;
-   case CONSTANT_INT_CODE:    result = new ConstantIntValue(stream);     break;
-   case CONSTANT_OOP_CODE:    result = new ConstantOopReadValue(stream); break;
-   case CONSTANT_LONG_CODE:   result = new ConstantLongValue(stream);    break;
-   case CONSTANT_DOUBLE_CODE: result = new ConstantDoubleValue(stream);  break;
+   case LOCATION_CODE:        result = new LocationValue(stream);                        break;
+   case CONSTANT_INT_CODE:    result = new ConstantIntValue(stream);                     break;
+   case CONSTANT_OOP_CODE:    result = new ConstantOopReadValue(stream);                 break;
+   case CONSTANT_LONG_CODE:   result = new ConstantLongValue(stream);                    break;
+   case CONSTANT_DOUBLE_CODE: result = new ConstantDoubleValue(stream);                  break;
    case OBJECT_CODE:          result = stream->read_object_value(false /*is_auto_box*/); break;
    case AUTO_BOX_OBJECT_CODE: result = stream->read_object_value(true /*is_auto_box*/);  break;
-   case OBJECT_ID_CODE:       result = stream->get_cached_object();      break;
+   case OBJECT_ID_CODE:       result = stream->get_cached_object();                      break;
    default: ShouldNotReachHere();
   }
   return result;
@@ -155,7 +155,7 @@ void ObjectValue::write_on(DebugInfoWriteStream* stream) {
 }
 
 void ObjectValue::print_on(outputStream* st) const {
-  st->print("obj[%d]", _id);
+  st->print("%s[%d]", is_auto_box() ? "box_obj" : "obj", _id);
 }
 
 void ObjectValue::print_fields_on(outputStream* st) const {

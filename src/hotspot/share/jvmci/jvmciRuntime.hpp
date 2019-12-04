@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2012, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,8 +21,8 @@
  * questions.
  */
 
-#ifndef SHARE_JVMCI_JVMCIRUNTIME_HPP
-#define SHARE_JVMCI_JVMCIRUNTIME_HPP
+#ifndef SHARE_VM_JVMCI_JVMCI_RUNTIME_HPP
+#define SHARE_VM_JVMCI_JVMCI_RUNTIME_HPP
 
 #include "code/nmethod.hpp"
 #include "jvmci/jvmci.hpp"
@@ -32,7 +32,6 @@
 class JVMCIEnv;
 class JVMCICompiler;
 class JVMCICompileState;
-class FailedSpeculation;
 
 // Encapsulates the JVMCI metadata for an nmethod.
 // JVMCINMethodData objects are inlined into nmethods
@@ -357,4 +356,4 @@ class JVMCIRuntime: public CHeapObj<mtJVMCI> {
 #define TRACE_jvmci_4 if (!(JVMCITraceLevel >= 4 && (tty->print(PTR_FORMAT "          JVMCITrace-4: ", p2i(JavaThread::current())), true))) ; else tty->print_cr
 #define TRACE_jvmci_5 if (!(JVMCITraceLevel >= 5 && (tty->print(PTR_FORMAT "             JVMCITrace-5: ", p2i(JavaThread::current())), true))) ; else tty->print_cr
 
-#endif // SHARE_JVMCI_JVMCIRUNTIME_HPP
+#endif // SHARE_VM_JVMCI_JVMCI_RUNTIME_HPP

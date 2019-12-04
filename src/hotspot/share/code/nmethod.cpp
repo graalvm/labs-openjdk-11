@@ -734,21 +734,22 @@ nmethod::nmethod(
       } else {
         _deopt_mh_handler_begin = NULL;
       }
-    } else
+    } else {
 #endif
-    {
-      // Exception handler and deopt handler are in the stub section
-      assert(offsets->value(CodeOffsets::Exceptions) != -1, "must be set");
-      assert(offsets->value(CodeOffsets::Deopt     ) != -1, "must be set");
+    // Exception handler and deopt handler are in the stub section
+    assert(offsets->value(CodeOffsets::Exceptions) != -1, "must be set");
+    assert(offsets->value(CodeOffsets::Deopt     ) != -1, "must be set");
 
-      _exception_offset       = _stub_offset          + offsets->value(CodeOffsets::Exceptions);
-      _deopt_handler_begin    = (address) this + _stub_offset          + offsets->value(CodeOffsets::Deopt);
-      if (offsets->value(CodeOffsets::DeoptMH) != -1) {
-        _deopt_mh_handler_begin  = (address) this + _stub_offset          + offsets->value(CodeOffsets::DeoptMH);
-      } else {
-        _deopt_mh_handler_begin  = NULL;
-      }
+    _exception_offset       = _stub_offset          + offsets->value(CodeOffsets::Exceptions);
+    _deopt_handler_begin    = (address) this + _stub_offset          + offsets->value(CodeOffsets::Deopt);
+    if (offsets->value(CodeOffsets::DeoptMH) != -1) {
+      _deopt_mh_handler_begin  = (address) this + _stub_offset          + offsets->value(CodeOffsets::DeoptMH);
+    } else {
+      _deopt_mh_handler_begin  = NULL;
     }
+#if INCLUDE_JVMCI
+    }
+#endif
     if (offsets->value(CodeOffsets::UnwindHandler) != -1) {
       _unwind_handler_offset = code_offset()         + offsets->value(CodeOffsets::UnwindHandler);
     } else {
@@ -1128,7 +1129,7 @@ void nmethod::make_unloaded(oop cause) {
   _state = unloaded;
 
   // Log the unloading.
-  log_state_change();
+  log_state_change(cause);
 
   // The Method* is gone at this point
   assert(_method == NULL, "Tautology");
@@ -1154,7 +1155,7 @@ void nmethod::invalidate_osr_method() {
   }
 }
 
-void nmethod::log_state_change() const {
+void nmethod::log_state_change(oop cause) const {
   if (LogCompilation) {
     if (xtty != NULL) {
       ttyLocker ttyl;  // keep the following output all in one block
@@ -1167,6 +1168,9 @@ void nmethod::log_state_change() const {
                          (_state == zombie ? " zombie='1'" : ""));
       }
       log_identity(xtty);
+      if (cause != NULL) {
+        xtty->print(" cause='%s'", cause->klass()->external_name());
+      }
       xtty->stamp();
       xtty->end_elem();
     }
@@ -1197,7 +1201,8 @@ bool nmethod::make_not_entrant_or_zombie(int state) {
   // Make sure neither the nmethod nor the method is flushed in case of a safepoint in code below.
   nmethodLocker nml(this);
   methodHandle the_method(method());
-  NoSafepointVerifier nsv;
+  // This can be called while the system is already at a safepoint which is ok
+  NoSafepointVerifier nsv(true, !SafepointSynchronize::is_at_safepoint());
 
   // during patching, depending on the nmethod state we must notify the GC that
   // code has been unloaded, unregistering it. We cannot do this right while
@@ -1334,7 +1339,7 @@ bool nmethod::make_not_entrant_or_zombie(int state) {
     assert(state == not_entrant, "other cases may need to be handled differently");
   }
 
-  if (TraceCreateZombies) {
+  if (TraceCreateZombies && state == zombie) {
     ResourceMark m;
     tty->print_cr("nmethod <" INTPTR_FORMAT "> %s code made %s", p2i(this), this->method() ? this->method()->name_and_sig_as_C_string() : "null", (state == not_entrant) ? "not entrant" : "zombie");
   }
@@ -1374,7 +1379,6 @@ void nmethod::flush() {
   if (on_scavenge_root_list()) {
     CodeCache::drop_scavenge_root_nmethod(this);
   }
-
   CodeBlob::flush();
   CodeCache::free(this);
 }
@@ -2040,7 +2044,7 @@ void nmethodLocker::lock_nmethod(CompiledMethod* cm, bool zombie_ok) {
   if (cm->is_aot()) return;  // FIXME: Revisit once _lock_count is added to aot_method
   nmethod* nm = cm->as_nmethod();
   Atomic::inc(&nm->_lock_count);
-  assert(zombie_ok || !nm->is_zombie(), "cannot lock a zombie method");
+  assert(zombie_ok || !nm->is_zombie(), "cannot lock a zombie method: %p", nm);
 }
 
 void nmethodLocker::unlock_nmethod(CompiledMethod* cm) {
@@ -2627,7 +2631,7 @@ void nmethod::print_code_comment_on(outputStream* st, int column, u_char* begin,
   int cont_offset = implicit_table.continuation_offset(pc_offset);
   bool oop_map_required = false;
   if (cont_offset != 0) {
-    st->move_to(column);
+    st->move_to(column, 6, 0);
     if (pc_offset == cont_offset) {
       st->print("; implicit exception: deoptimizes");
       oop_map_required = true;

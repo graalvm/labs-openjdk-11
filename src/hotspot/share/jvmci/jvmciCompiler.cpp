@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@
 #include "jvmci/jvmciEnv.hpp"
 #include "jvmci/jvmciRuntime.hpp"
 #include "oops/objArrayOop.inline.hpp"
+#include "runtime/compilationPolicy.hpp"
 #include "runtime/handles.inline.hpp"
 
 JVMCICompiler* JVMCICompiler::_instance = NULL;
@@ -47,6 +48,10 @@ void JVMCICompiler::initialize() {
   }
 
   set_state(initialized);
+
+  // JVMCI is considered as application code so we need to
+  // stop the VM deferring compilation now.
+  CompilationPolicy::completed_vm_startup();
 }
 
 void JVMCICompiler::bootstrap(TRAPS) {
@@ -54,6 +59,12 @@ void JVMCICompiler::bootstrap(TRAPS) {
     // Nothing to do in -Xint mode
     return;
   }
+#ifndef PRODUCT
+  // We turn off CompileTheWorld so that compilation requests are not
+  // ignored during bootstrap or that JVMCI can be compiled by C1/C2.
+  FlagSetting ctwOff(CompileTheWorld, false);
+#endif
+
   _bootstrapping = true;
   ResourceMark rm;
   HandleMark hm;

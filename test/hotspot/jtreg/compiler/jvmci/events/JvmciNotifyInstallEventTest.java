@@ -24,7 +24,7 @@
 /*
  * @test
  * @bug 8136421
- * @requires vm.jvmci & !vm.graal.enabled & vm.compMode == "Xmixed"
+ * @requires vm.jvmci
  * @library / /test/lib
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
@@ -47,11 +47,15 @@
  *      compiler.jvmci.common.JVMCIHelpers$EmptyCompilationRequestResult
  *      compiler.jvmci.common.JVMCIHelpers$EmptyVMEventListener
  * @run main/othervm -XX:+UnlockExperimentalVMOptions
- *     -Djvmci.Compiler=EmptyCompiler -Xbootclasspath/a:.
+ *     -Djvmci.Compiler=graal -Xbootclasspath/a:. -Xmixed
  *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
  * @run main/othervm -XX:+UnlockExperimentalVMOptions
- *     -Djvmci.Compiler=EmptyCompiler -Xbootclasspath/a:.
+ *     -Djvmci.Compiler=EmptyCompiler -Xbootclasspath/a:. -Xmixed
+ *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI
+ *     compiler.jvmci.events.JvmciNotifyInstallEventTest
+ * @run main/othervm -XX:+UnlockExperimentalVMOptions
+ *     -Djvmci.Compiler=EmptyCompiler -Xbootclasspath/a:. -Xmixed
  *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI -XX:JVMCINMethodSizeLimit=0
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
  */

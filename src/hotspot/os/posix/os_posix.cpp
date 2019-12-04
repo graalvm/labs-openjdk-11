@@ -784,10 +784,10 @@ static const struct {
 #endif
   {  SIGHUP,      "SIGHUP" },
   {  SIGILL,      "SIGILL" },
-  {  SIGINT,      "SIGINT" },
 #ifdef SIGINFO
   {  SIGINFO,     "SIGINFO" },
 #endif
+  {  SIGINT,      "SIGINT" },
 #ifdef SIGIO
   {  SIGIO,       "SIGIO" },
 #endif

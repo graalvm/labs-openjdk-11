@@ -101,7 +101,6 @@ class ObjectValue: public ScopeValue {
   GrowableArray<ScopeValue*> _field_values;
   Handle                     _value;
   bool                       _visited;
-
  public:
   ObjectValue(int id, ScopeValue* klass)
      : _id(id)
@@ -140,6 +139,7 @@ class ObjectValue: public ScopeValue {
   void print_on(outputStream* st) const;
   void print_fields_on(outputStream* st) const;
 };
+
 class AutoBoxObjectValue : public ObjectValue {
   bool                       _cached;
 public:

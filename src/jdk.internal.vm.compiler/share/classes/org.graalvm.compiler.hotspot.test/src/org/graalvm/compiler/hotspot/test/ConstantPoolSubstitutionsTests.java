@@ -76,8 +76,7 @@ public class ConstantPoolSubstitutionsTests extends GraalCompilerTest {
     }
 
     private static Object getConstantPoolForObject() {
-        String miscPackage = JavaVersionUtil.JAVA_SPEC <= 8 ? "sun.misc"
-                        : (JavaVersionUtil.JAVA_SPEC <= 11 ? "jdk.internal.misc" : "jdk.internal.access");
+        String miscPackage = JavaVersionUtil.JAVA_SPEC <= 8 ? "sun.misc" : "jdk.internal.misc";
         try {
             Class<?> sharedSecretsClass = Class.forName(miscPackage + ".SharedSecrets");
             Class<?> javaLangAccessClass = Class.forName(miscPackage + ".JavaLangAccess");
@@ -116,11 +115,7 @@ public class ConstantPoolSubstitutionsTests extends GraalCompilerTest {
             Object javaBaseModule = JLModule.fromClass(String.class);
             Object cModule = JLModule.fromClass(c);
             uncheckedAddExports(javaBaseModule, "jdk.internal.reflect", cModule);
-            if (JavaVersionUtil.JAVA_SPEC <= 11) {
-                uncheckedAddExports(javaBaseModule, "jdk.internal.misc", cModule);
-            } else {
-                uncheckedAddExports(javaBaseModule, "jdk.internal.access", cModule);
-            }
+            uncheckedAddExports(javaBaseModule, "jdk.internal.misc", cModule);
         }
     }
 

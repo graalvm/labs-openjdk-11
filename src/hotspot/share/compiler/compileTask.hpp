@@ -105,6 +105,7 @@ class CompileTask : public CHeapObj<mtCompiler> {
   int          _hot_count;    // information about its invocation counter
   CompileReason _compile_reason;      // more info about the task
   const char*  _failure_reason;
+  // Specifies if _failure_reason is on the C heap.
   bool         _failure_reason_on_C_heap;
 
  public:

@@ -37,7 +37,7 @@ import sys
 conf = sys.argv[1]
 
 # Check for the existence of static libs
-static_libs = glob.glob(os.path.join('build', '*' + conf, 'jdk', 'lib', 'static', '*'))
+static_libs = glob.glob(os.path.join('build', '*' + conf, 'images', 'static-libs', 'lib', '*'))
 
 if not len(static_libs):
     sys.exit('Building static jdk-libs did not succeed.')

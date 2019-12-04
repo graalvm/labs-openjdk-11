@@ -211,10 +211,8 @@ Java_java_lang_System_initProperties(JNIEnv *env, jclass cla, jobject props)
     PUTPROP(props, "java.specification.vendor",
             JAVA_SPECIFICATION_VENDOR);
 
-    PUTPROP(props, "java.version", VERSION_SHORT);
     PUTPROP(props, "java.vendor", VENDOR);
     PUTPROP(props, "java.vendor.url", VENDOR_URL);
-    PUTPROP(props, "java.vendor.url.bug", VENDOR_URL_BUG);
 
     jio_snprintf(buf, sizeof(buf), "%d.%d", JVM_CLASSFILE_MAJOR_VERSION,
                                             JVM_CLASSFILE_MINOR_VERSION);
