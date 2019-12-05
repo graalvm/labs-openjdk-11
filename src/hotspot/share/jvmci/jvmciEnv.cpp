@@ -894,8 +894,7 @@ JVMCIObject JVMCIEnv::new_StackTraceElement(const methodHandle& method, int bci,
   Symbol* method_name_sym;
   Symbol* file_name_sym;
   int line_number;
-  Handle mirror (THREAD, method->method_holder()->java_mirror());
-  java_lang_StackTraceElement::decode(mirror, method, bci, method_name_sym, file_name_sym, line_number);
+  java_lang_StackTraceElement::decode(method, bci, method_name_sym, file_name_sym, line_number, CHECK_(JVMCIObject()));
 
   InstanceKlass* holder = method->method_holder();
   const char* declaring_class_str = holder->external_name();
