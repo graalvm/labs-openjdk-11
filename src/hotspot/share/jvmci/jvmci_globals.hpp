@@ -44,13 +44,16 @@
                     writeable) \
                                                                             \
   experimental(bool, EnableJVMCI, false,                                    \
-          "Enable JVMCI")                                                   \
+          "Enable JVMCI. Defaults to true if EnableJVMCIProduct is true.")  \
                                                                             \
   experimental(bool, EnableJVMCIProduct, false,                             \
-          "Allow JVMCI to be used in product mode")                         \
+          "Allow JVMCI to be used in product mode. This alters a subset of "\
+          "JVMCI flags to be non-experimental and defaults "                \
+          "UseJVMCICompiler and EnableJVMCI to true.")                      \
                                                                             \
   experimental(bool, UseJVMCICompiler, false,                               \
-          "Use JVMCI as the default compiler")                              \
+          "Use JVMCI as the default compiler. Defaults to true if "         \
+          "EnableJVMCIProduct is true.")                                    \
                                                                             \
   experimental(bool, JVMCIPrintProperties, false,                           \
           "Prints properties used by the JVMCI compiler and exits")         \
@@ -115,7 +118,8 @@
   experimental(bool, UseJVMCINativeLibrary, false,                          \
           "Execute JVMCI Java code from a shared library "                  \
           "instead of loading it from class files and executing it "        \
-          "on the HotSpot heap")                                            \
+          "on the HotSpot heap. Defaults to true if UseJVMCICompiler is "   \
+          "true and a JVMCI native library is available.")                  \
                                                                             \
   NOT_COMPILER2(diagnostic(bool, UseMultiplyToLenIntrinsic, false,          \
           "Enables intrinsification of BigInteger.multiplyToLen()"))        \
