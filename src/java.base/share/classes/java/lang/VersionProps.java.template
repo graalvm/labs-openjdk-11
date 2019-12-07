@@ -63,7 +63,7 @@ class VersionProps {
         "@@VERSION_OPT@@";
 
     private static final boolean isLTS =
-        "@@VERSION_OPT@@".startsWith("LTS") || "@@VERSION_OPT@@".endsWith("LTS");
+        "@@VERSION_OPT@@".startsWith("LTS");
 
     // The remaining fields must not be final,
     // so that they can be redefined by jlink plugins
