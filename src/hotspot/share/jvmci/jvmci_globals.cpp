@@ -67,6 +67,15 @@ bool JVMCIGlobals::check_jvmci_flags_are_consistent() {
     return false;                                      \
   }
 
+  if (EnableJVMCIProduct) {
+    if (FLAG_IS_DEFAULT(EnableJVMCI)) {
+      FLAG_SET_DEFAULT(EnableJVMCI, true);
+    }
+    if (EnableJVMCI && FLAG_IS_DEFAULT(UseJVMCICompiler)) {
+      FLAG_SET_DEFAULT(UseJVMCICompiler, true);
+    }
+  }
+
   JVMCI_FLAG_CHECKED(UseJVMCICompiler)
   JVMCI_FLAG_CHECKED(EnableJVMCI)
   JVMCI_FLAG_CHECKED(EnableJVMCIProduct)
@@ -167,16 +176,18 @@ bool JVMCIGlobals::enable_jvmci_product_mode(JVMFlag::Flags origin) {
       return false;
     }
     jvmciFlag->clear_experimental();
+    jvmciFlag->set_product();
   }
 
   bool value = true;
   if (JVMFlag::boolAtPut("EnableJVMCIProduct", &value, origin) != JVMFlag::SUCCESS) {
     return false;
   }
-  value = true;
-  if (JVMFlag::boolAtPut("UseJVMCICompiler", &value, origin) != JVMFlag::SUCCESS) {
-    return false;
-  }
+
+  // Effect of EnableJVMCIProduct on changing defaults of EnableJVMCI
+  // and UseJVMCICompiler is deferred to check_jvmci_flags_are_consistent
+  // so that setting these flags explicitly (e.g. on the command line)
+  // takes precedence.
 
   return true;
 }

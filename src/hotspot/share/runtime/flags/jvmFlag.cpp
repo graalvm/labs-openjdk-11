@@ -366,6 +366,12 @@ void JVMFlag::clear_experimental() {
   assert(!is_experimental(), "sanity");
 }
 
+void JVMFlag::set_product() {
+  assert(!is_product(), "sanity");
+ _flags = Flags(_flags | KIND_PRODUCT);
+  assert(is_product(), "sanity");
+}
+
 // Get custom message for this locked flag, or NULL if
 // none is available. Returns message type produced.
 JVMFlag::MsgType JVMFlag::get_locked_message(char* buf, int buflen) const {
