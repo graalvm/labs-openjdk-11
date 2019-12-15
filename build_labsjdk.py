@@ -303,7 +303,14 @@ def main():
         rmtree(new_bundles_dir)
         os.rename(bundles_dir, new_bundles_dir)
         bundles_dir = new_bundles_dir
+        check_call(['du', '-sh', build_dir])
+        for e in os.listdir(build_dir):
+            check_call(['du', '-sh', join(build_dir, e)])
         rmtree(join(build_dir, conf_name))
+        check_call(['find', build_dir])
+        check_call(['rm', '-rf', join(build_dir, conf_name)])
+        check_call(['du', '-sh', build_dir])
+        check_call(['find', build_dir])
 
     # Create labsjdk bundles and image
     jdk_bundle_ext = '.zip' if 'windows' in conf_name else '.tar.gz'

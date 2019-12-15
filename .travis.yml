@@ -25,12 +25,12 @@ jdk:
 
 matrix:
   include:
-  - os: osx
-    osx_image: xcode10.1
+#  - os: osx
+#    osx_image: xcode10.1
   - os: linux
     arch: arm64
-  - os: linux
-    arch: amd64
+#  - os: linux
+#    arch: amd64
 
 script:
   - export JAVA_HOME=$(realpath $(dirname $(which java | xargs realpath))/../)
