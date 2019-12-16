@@ -1,0 +1,41 @@
+language: java
+python:
+  - "3.5"
+addons:
+  apt:
+    packages:
+      - python-pip
+      - python-virtualenv
+      - wget
+      - mercurial
+      - zip
+      - build-essential
+      - libx11-dev
+      - libxext-dev
+      - libxrender-dev
+      - libxrandr-dev
+      - libxtst-dev
+      - libxt-dev
+      - libcups2-dev
+      - libasound2-dev
+      - libfontconfig1-dev
+
+jdk:
+    - openjdk11
+
+matrix:
+  include:
+#  - os: osx
+#    osx_image: xcode10.1
+  - os: linux
+    arch: arm64
+#  - os: linux
+#    arch: amd64
+
+script:
+  - export JAVA_HOME=$(realpath $(dirname $(which java | xargs realpath))/../)
+  - ${JAVA_HOME}/bin/java -version
+  - python3 --version
+  - python3 -u build_labsjdk.py --clean-after-build
+after_failure:
+  - cat hs_err*
