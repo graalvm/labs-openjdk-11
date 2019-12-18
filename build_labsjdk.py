@@ -324,7 +324,7 @@ def main():
     if build_os == 'darwin':
         java_home = join(java_home, 'Contents', 'Home')
 
-    java_home_symlink = os.relpath(join(target_dir, 'java_home'), target_dir)
+    java_home_symlink = os.path.relpath(join(target_dir, 'java_home'), target_dir)
     if exists(java_home_symlink):
         os.unlink(java_home_symlink)
     if 'windows' in conf_name:
