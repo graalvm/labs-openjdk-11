@@ -453,6 +453,12 @@ C2V_VMENTRY_NULL(jobject, findUniqueConcreteMethod, (JNIEnv* env, jobject, jobje
   if (holder->is_interface()) {
     JVMCI_THROW_MSG_NULL(InternalError, err_msg("Interface %s should be handled in Java code", holder->external_name()));
   }
+  // The is_private() check is needed as private methods only stopped being
+  // allocated vtable indexes as of JDK-8024368 and can_be_statically_bound()
+  // is based on vtable indexes.
+  if (method->can_be_statically_bound() || method->is_private()) {
+    JVMCI_THROW_MSG_NULL(InternalError, err_msg("Effectively static method %s should be handled in Java code", method->external_name()));
+  }
 
   methodHandle ucm;
   {
