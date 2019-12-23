@@ -49,7 +49,7 @@ public class MemoryAccessProviderData {
     private static final TestClass TEST_OBJECT = new TestClass();
     private static final JavaConstant TEST_CONSTANT = CONSTANT_REFLECTION.forObject(TEST_OBJECT);
     private static final JavaConstant TEST_CLASS_CONSTANT = CONSTANT_REFLECTION.forObject(TestClass.class);
-    private static KindData[] PRIMITIVE_KIND_DATA = {
+    private static final KindData[] PRIMITIVE_KIND_DATA = {
         new KindData(JavaKind.Boolean, TEST_OBJECT),
         new KindData(JavaKind.Byte, TEST_OBJECT),
         new KindData(JavaKind.Char, TEST_OBJECT),
