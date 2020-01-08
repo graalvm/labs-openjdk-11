@@ -42,6 +42,7 @@ ConstantIntValue*      CodeInstaller::_int_0_scope_value =  new (ResourceObj::C_
 ConstantIntValue*      CodeInstaller::_int_1_scope_value =  new (ResourceObj::C_HEAP, mtJVMCI) ConstantIntValue(1);
 ConstantIntValue*      CodeInstaller::_int_2_scope_value =  new (ResourceObj::C_HEAP, mtJVMCI) ConstantIntValue(2);
 LocationValue*         CodeInstaller::_illegal_value = new (ResourceObj::C_HEAP, mtJVMCI) LocationValue(Location());
+MarkerValue*           CodeInstaller::_virtual_byte_array_marker = new (ResourceObj::C_HEAP, mtJVMCI) MarkerValue();
 
 VMReg CodeInstaller::getVMRegFromLocation(JVMCIObject location, int total_frame_size, JVMCI_TRAPS) {
   if (location.is_null()) {
@@ -426,8 +427,24 @@ void CodeInstaller::record_object_value(ObjectValue* sv, JVMCIObject value, Grow
     ScopeValue* cur_second = NULL;
     JVMCIObject object = JVMCIENV->get_object_at(values, i);
     BasicType type = jvmci_env()->kindToBasicType(JVMCIENV->get_object_at(slotKinds, i), JVMCI_CHECK);
-    ScopeValue* value = get_scope_value(object, type, objects, cur_second, JVMCI_CHECK);
-
+    ScopeValue* value;
+    if (JVMCIENV->equals(object, jvmci_env()->get_Value_ILLEGAL())) {
+      if (isByteArray && type == T_ILLEGAL) {
+        /*
+         * The difference between a virtualized large access and a deferred write is the kind stored in the slotKinds
+         * of the virtual object: in the virtualization case, the kind is illegal, in the deferred write case, the kind
+         * is access stack kind (an int).
+         */
+        value = _virtual_byte_array_marker;
+      } else {
+        value = _illegal_value;
+        if (type == T_DOUBLE || type == T_LONG) {
+            cur_second = _illegal_value;
+        }
+      }
+    } else {
+      value = get_scope_value(object, type, objects, cur_second, JVMCI_CHECK);
+    }
     if (isLongArray && cur_second == NULL) {
       // we're trying to put ints into a long array... this isn't really valid, but it's used for some optimizations.
       // add an int 0 constant
