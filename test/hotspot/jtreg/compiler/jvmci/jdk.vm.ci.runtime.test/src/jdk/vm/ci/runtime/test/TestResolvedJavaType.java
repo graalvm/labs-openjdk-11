@@ -670,7 +670,7 @@ public class TestResolvedJavaType extends TypeUniverse {
                 for (Method m : c.getDeclaredMethods()) {
                     ResolvedJavaMethod decl = metaAccess.lookupJavaMethod(m);
                     ResolvedJavaMethod impl = type.resolveMethod(decl, declaringClass);
-                    ResolvedJavaMethod expected = (Modifier.isStatic(m.getModifiers()) && !Modifier.isPublic(m.getModifiers())) || isSignaturePolymorphic(decl) ? null : decl;
+                    ResolvedJavaMethod expected = Modifier.isStatic(m.getModifiers()) || isSignaturePolymorphic(decl) ? null : decl;
                     assertEquals(m.toString(), expected, impl);
                 }
             }
