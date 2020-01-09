@@ -204,7 +204,11 @@ inline int g_isnan(double f) { return isnand(f); }
 #elif defined(__APPLE__)
 inline int g_isnan(double f) { return isnan(f); }
 #elif defined(LINUX) || defined(_ALLBSD_SOURCE)
+#ifdef __GLIBC__
 inline int g_isnan(float  f) { return isnanf(f); }
+#else
+inline int g_isnan(float  f) { return isnan(f); }
+#endif
 inline int g_isnan(double f) { return isnan(f); }
 #else
 #error "missing platform-specific definition here"

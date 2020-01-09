@@ -23,9 +23,11 @@
 package requires;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -96,6 +98,7 @@ public class VMProps implements Callable<Map<String, String>> {
         map.put("vm.compiler1.enabled", isCompiler1Enabled());
         map.put("vm.compiler2.enabled", isCompiler2Enabled());
         map.put("docker.support", dockerSupport());
+        map.put("vm.musl", isMusl());
         map.put("release.implementor", implementor());
         vmGC(map); // vm.gc.X = true/false
         vmOptFinalFlags(map);
@@ -479,6 +482,25 @@ public class VMProps implements Callable<Map<String, String>> {
         return (p.exitValue() == 0);
     }
 
+    /**
+     * Check if we run with musl libc.
+     *
+     * @return true if we run with musl libc.
+     */
+    protected String isMusl() {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("ldd", "--version");
+            pb.redirectErrorStream(true);
+            final Process p = pb.start();
+            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line = br.readLine();
+            if (line != null && line.contains("musl")) {
+                return "true";
+            }
+        } catch (Exception e) {
+        }
+        return "false";
+    }
 
     private String implementor() {
         try (InputStream in = new BufferedInputStream(new FileInputStream(
@@ -491,7 +513,6 @@ public class VMProps implements Callable<Map<String, String>> {
         }
         return null;
     }
-
 
     /**
      * Dumps the map to the file if the file name is given as the property.

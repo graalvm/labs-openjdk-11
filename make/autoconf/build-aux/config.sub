@@ -29,6 +29,14 @@
 
 DIR=`dirname $0`
 
+# If we are compiling for or on musl, x86_64-unknown-linux-musl will be our target name.
+# In that case, there is no need to validate the configuration and we skip the call to
+# autoconf-config.sub.
+if [ "$1"x = "x86_64-unknown-linux-musl"x ]; then
+    echo $1
+    exit
+fi
+
 # First, filter out everything that doesn't begin with "aarch64-"
 if ! echo $* | grep '^aarch64-' >/dev/null ; then
     . $DIR/autoconf-config.sub "$@"

@@ -44,6 +44,7 @@ requires.properties= \
     vm.compiler1.enabled \
     vm.compiler2.enabled \
     vm.cds \
+    vm.musl \
     vm.hasSA \
     vm.hasSAandCanAttach \
     vm.hasJFR \
