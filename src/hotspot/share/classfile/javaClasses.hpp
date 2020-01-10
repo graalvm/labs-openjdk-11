@@ -1538,8 +1538,7 @@ class java_util_concurrent_locks_AbstractOwnableSynchronizer : AllStatic {
  public:
   static void compute_offsets();
   static oop  get_owner_threadObj(oop obj);
-<<<<<<< HEAD
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
+  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 };
 
 class java_lang_Integer : AllStatic {
@@ -1628,21 +1627,6 @@ class java_lang_Byte_ByteCache : AllStatic {
   static void compute_offsets(InstanceKlass* k);
   static objArrayOop  cache(InstanceKlass *k);
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
-};
-class jdk_internal_module_ArchivedModuleGraph: AllStatic {
- private:
-  static int _archivedSystemModules_offset;
-  static int _archivedModuleFinder_offset;
-  static int _archivedMainModule_offset;
- public:
-  static int  archivedSystemModules_offset()      { return _archivedSystemModules_offset; }
-  static int  archivedModuleFinder_offset()       { return _archivedModuleFinder_offset; }
-  static int  archivedMainModule_offset()         { return _archivedMainModule_offset; }
-  static void compute_offsets();
-  static void serialize(SerializeClosure* f) NOT_CDS_RETURN;
-=======
-  static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
->>>>>>> jdk-11.0.6+9
 };
 
 // Use to declare fields that need to be injected into Java classes

@@ -2619,31 +2619,10 @@ void java_lang_StackTraceElement::fill_in(Handle element,
     java_lang_StackTraceElement::set_fileName(element(), NULL);
     java_lang_StackTraceElement::set_lineNumber(element(), -1);
   } else {
-<<<<<<< HEAD
     Symbol* source;
     oop source_file;
     int line_number;
     decode_file_and_line(java_class, holder, version, method, bci, source, source_file, line_number, CHECK);
-=======
-    // Fill in source file name and line number.
-    Symbol* source = Backtrace::get_source_file_name(holder, version);
-    oop source_file = java_lang_Class::source_file(java_class());
-    if (source != NULL) {
-      // Class was not redefined. We can trust its cache if set,
-      // else we have to initialize it.
-      if (source_file == NULL) {
-        source_file = StringTable::intern(source, CHECK);
-        java_lang_Class::set_source_file(java_class(), source_file);
-      }
-    } else {
-      // Class was redefined. Dump the cache if it was set.
-      if (source_file != NULL) {
-        source_file = NULL;
-        java_lang_Class::set_source_file(java_class(), source_file);
-      }
-    }
-    java_lang_StackTraceElement::set_fileName(element(), source_file);
->>>>>>> jdk-11.0.6+9
 
     java_lang_StackTraceElement::set_fileName(element(), source_file);
     java_lang_StackTraceElement::set_lineNumber(element(), line_number);
@@ -2668,10 +2647,6 @@ void java_lang_StackTraceElement::decode_file_and_line(Handle java_class, Instan
     if (source_file != NULL) {
       source_file = NULL;
       java_lang_Class::set_source_file(java_class(), source_file);
-    }
-    if (ShowHiddenFrames) {
-      source = vmSymbols::unknown_class_name();
-      source_file = StringTable::intern(source, CHECK);
     }
   }
   line_number = Backtrace::get_line_number(method, bci);
@@ -4336,7 +4311,6 @@ int java_nio_Buffer::_limit_offset;
 int java_util_concurrent_locks_AbstractOwnableSynchronizer::_owner_offset;
 int reflect_ConstantPool::_oop_offset;
 int reflect_UnsafeStaticFieldAccessorImpl::_base_offset;
-<<<<<<< HEAD
 int java_lang_Integer_IntegerCache::_static_cache_offset;
 int java_lang_Long_LongCache::_static_cache_offset;
 int java_lang_Character_CharacterCache::_static_cache_offset;
@@ -4344,12 +4318,6 @@ int java_lang_Short_ShortCache::_static_cache_offset;
 int java_lang_Byte_ByteCache::_static_cache_offset;
 int java_lang_Boolean::_static_TRUE_offset;
 int java_lang_Boolean::_static_FALSE_offset;
-int jdk_internal_module_ArchivedModuleGraph::_archivedSystemModules_offset;
-int jdk_internal_module_ArchivedModuleGraph::_archivedModuleFinder_offset;
-int jdk_internal_module_ArchivedModuleGraph::_archivedMainModule_offset;
-=======
-
->>>>>>> jdk-11.0.6+9
 
 
 #define STACKTRACEELEMENT_FIELDS_DO(macro) \

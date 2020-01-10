@@ -27,29 +27,12 @@
 #include "code/codeCache.hpp"
 #include "memory/oopFactory.hpp"
 #include "memory/resourceArea.hpp"
-<<<<<<< HEAD
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
+#include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
 #include "runtime/javaCalls.hpp"
 #include "jvmci/jniAccessMark.inline.hpp"
-=======
-#include "memory/universe.hpp"
-#include "oops/constantPool.inline.hpp"
-#include "oops/cpCache.inline.hpp"
-#include "oops/method.inline.hpp"
-#include "oops/methodData.hpp"
-#include "oops/objArrayKlass.hpp"
-#include "oops/oop.inline.hpp"
-#include "prims/jvmtiExport.hpp"
-#include "runtime/fieldDescriptor.inline.hpp"
-#include "runtime/handles.inline.hpp"
-#include "runtime/init.hpp"
-#include "runtime/reflection.hpp"
-#include "runtime/sharedRuntime.hpp"
-#include "runtime/sweeper.hpp"
-#include "utilities/dtrace.hpp"
->>>>>>> jdk-11.0.6+9
 #include "jvmci/jvmciRuntime.hpp"
 
 JVMCICompileState::JVMCICompileState(CompileTask* task, int system_dictionary_modification_counter):

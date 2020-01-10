@@ -36,13 +36,8 @@ done
 
 $JAVA_HOME/bin/javac -d . $DIR/$TEST.java
 
-<<<<<<< HEAD
 JAOTC_OPTS="-J-ea -J-Xmx4g --compile-for-tiered --info"
 JAVA_OPTS="-Xmx4g -XX:+UseAOT -XX:+UnlockDiagnosticVMOptions -XX:+UseAOTStrictLoading"
-=======
-JAOTC_OPTS="-J-Xmx4g --compile-for-tiered --info"
-JAVA_OPTS="-Xmx4g -XX:+UnlockExperimentalVMOptions -XX:+UseAOT -XX:+UnlockDiagnosticVMOptions -XX:+UseAOTStrictLoading"
->>>>>>> jdk-11.0.6+9
 
 # Compile with: +UseCompressedOops +UseG1GC
 LIBRARIES=""

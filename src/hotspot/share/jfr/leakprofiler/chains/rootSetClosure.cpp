@@ -87,19 +87,6 @@ void RootSetClosure<Delegate>::process() {
   RootSetClosureMarkScope mark_scope;
   CLDToOopClosure cldt_closure(this);
   ClassLoaderDataGraph::always_strong_cld_do(&cldt_closure);
-<<<<<<< HEAD
-  CodeBlobToOopClosure blobs(closure, false);
-  Threads::oops_do(closure, &blobs);
-  ObjectSynchronizer::oops_do(closure);
-  Universe::oops_do(closure);
-  JNIHandles::oops_do(closure);
-  JvmtiExport::oops_do(closure);
-  SystemDictionary::oops_do(closure);
-  Management::oops_do(closure);
-  StringTable::oops_do(closure);
-  AOTLoader::oops_do(closure);
-  JVMCI_ONLY(JVMCI::oops_do(closure);)
-=======
   CodeBlobToOopClosure blobs(this, false);
   Threads::oops_do(this, &blobs);
   ObjectSynchronizer::oops_do(this);
@@ -110,7 +97,7 @@ void RootSetClosure<Delegate>::process() {
   Management::oops_do(this);
   StringTable::oops_do(this);
   AOTLoader::oops_do(this);
->>>>>>> jdk-11.0.6+9
+  JVMCI_ONLY(JVMCI::oops_do(this);)
 }
 
 template class RootSetClosure<BFSClosure>;

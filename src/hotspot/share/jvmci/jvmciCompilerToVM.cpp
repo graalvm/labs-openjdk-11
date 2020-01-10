@@ -34,7 +34,6 @@
 #include "jvmci/jvmciCompilerToVM.hpp"
 #include "jvmci/jvmciCodeInstaller.hpp"
 #include "jvmci/jvmciRuntime.hpp"
-<<<<<<< HEAD
 #include "memory/oopFactory.hpp"
 #include "oops/constantPool.inline.hpp"
 #include "oops/method.inline.hpp"
@@ -42,10 +41,8 @@
 #include "oops/typeArrayOop.inline.hpp"
 #include "prims/nativeLookup.hpp"
 #include "runtime/deoptimization.hpp"
-=======
 #include "runtime/fieldDescriptor.inline.hpp"
 #include "runtime/flags/jvmFlag.hpp"
->>>>>>> jdk-11.0.6+9
 #include "runtime/frame.inline.hpp"
 #include "runtime/interfaceSupport.inline.hpp"
 #include "runtime/jniHandles.inline.hpp"
