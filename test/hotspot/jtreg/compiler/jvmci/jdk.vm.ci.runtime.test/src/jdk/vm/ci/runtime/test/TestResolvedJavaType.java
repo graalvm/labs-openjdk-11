@@ -57,11 +57,11 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.function.Supplier;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.junit.Test;
 
@@ -77,13 +77,13 @@ import jdk.vm.ci.meta.ResolvedJavaType;
 /**
  * Tests for {@link ResolvedJavaType}.
  */
-@SuppressWarnings("unchecked")
 public class TestResolvedJavaType extends TypeUniverse {
     private static final Class<? extends Annotation> SIGNATURE_POLYMORPHIC_CLASS = findPolymorphicSignatureClass();
 
     public TestResolvedJavaType() {
     }
 
+    @SuppressWarnings("unchecked")
     private static Class<? extends Annotation> findPolymorphicSignatureClass() {
         Class<? extends Annotation> signaturePolyAnnotation = null;
         try {
@@ -168,8 +168,10 @@ public class TestResolvedJavaType extends TypeUniverse {
             }
         }
 
-        class LocalClass {}
-        Cloneable clone = new Cloneable() {};
+        class LocalClass {
+        }
+        Cloneable clone = new Cloneable() {
+        };
         assertNull(metaAccess.lookupJavaType(LocalClass.class).getHostClass());
         assertNull(metaAccess.lookupJavaType(clone.getClass()).getHostClass());
 
@@ -648,16 +650,28 @@ public class TestResolvedJavaType extends TypeUniverse {
                     for (Method decl : decls) {
                         ResolvedJavaMethod m = metaAccess.lookupJavaMethod(decl);
                         if (m.isPublic()) {
-                            ResolvedJavaMethod resolvedmethod = type.resolveMethod(m, context);
+                            ResolvedJavaMethod resolvedMethod = type.resolveMethod(m, context);
                             if (isSignaturePolymorphic(m)) {
                                 // Signature polymorphic methods must not be resolved
-                                assertNull(resolvedmethod);
+                                assertNull(resolvedMethod);
                             } else {
                                 ResolvedJavaMethod i = metaAccess.lookupJavaMethod(impl);
-                                assertEquals(m.toString(), i, resolvedmethod);
+                                assertEquals(m.toString(), i, resolvedMethod);
                             }
                         }
                     }
+                }
+                ResolvedJavaType declaringClass = metaAccess.lookupJavaType(c);
+                for (Constructor<?> m : c.getDeclaredConstructors()) {
+                    ResolvedJavaMethod decl = metaAccess.lookupJavaMethod(m);
+                    ResolvedJavaMethod impl = type.resolveMethod(decl, declaringClass);
+                    assertEquals(m.toString(), decl, impl);
+                }
+                for (Method m : c.getDeclaredMethods()) {
+                    ResolvedJavaMethod decl = metaAccess.lookupJavaMethod(m);
+                    ResolvedJavaMethod impl = type.resolveMethod(decl, declaringClass);
+                    ResolvedJavaMethod expected = Modifier.isStatic(m.getModifiers()) || isSignaturePolymorphic(decl) ? null : decl;
+                    assertEquals(m.toString(), expected, impl);
                 }
             }
         }
