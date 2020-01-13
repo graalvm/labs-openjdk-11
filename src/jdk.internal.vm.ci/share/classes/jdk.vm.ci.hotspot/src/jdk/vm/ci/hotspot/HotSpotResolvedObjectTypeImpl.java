@@ -436,19 +436,11 @@ final class HotSpotResolvedObjectTypeImpl extends HotSpotResolvedJavaType implem
             // Methods can only be resolved against concrete types
             return null;
         }
-        if (method.isStatic()) {
-            return null;
-        }
         if (method.isConcrete() && method.getDeclaringClass().equals(this) && method.isPublic() && !isSignaturePolymorphicHolder(method.getDeclaringClass())) {
             return method;
         }
         if (!method.getDeclaringClass().isAssignableFrom(this)) {
             return null;
-        }
-        if (method.isConstructor()) {
-            // Constructor calls should have be checked in the verifier and the declaring class
-            // isAssignableFrom this so treat it as resolved.
-            return method;
         }
         HotSpotResolvedJavaMethodImpl hotSpotMethod = (HotSpotResolvedJavaMethodImpl) method;
         HotSpotResolvedObjectTypeImpl hotSpotCallerType = (HotSpotResolvedObjectTypeImpl) callerType;
