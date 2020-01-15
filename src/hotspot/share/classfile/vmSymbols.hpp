@@ -125,7 +125,6 @@
   template(getBootClassPathEntryForClass_name,        "getBootClassPathEntryForClass")            \
   template(jdk_internal_vm_PostVMInitHook,            "jdk/internal/vm/PostVMInitHook")           \
   template(sun_net_www_ParseUtil,                     "sun/net/www/ParseUtil")                    \
-  template(jdk_internal_module_ArchivedModuleGraph,   "jdk/internal/module/ArchivedModuleGraph")  \
                                                                                                   \
   template(jdk_internal_loader_ClassLoaders_AppClassLoader,      "jdk/internal/loader/ClassLoaders$AppClassLoader")      \
   template(jdk_internal_loader_ClassLoaders_PlatformClassLoader, "jdk/internal/loader/ClassLoaders$PlatformClassLoader") \
@@ -658,12 +657,9 @@
                                                                                                                   \
   /* cds */                                                                                                       \
   template(jdk_internal_loader_ClassLoaders,       "jdk/internal/loader/ClassLoaders")                            \
-  template(jdk_vm_cds_SharedClassInfo,             "jdk/vm/cds/SharedClassInfo")                                  \
-  template(url_void_signature,                     "(Ljava/net/URL;)V")                                           \
   template(toFileURL_name,                         "toFileURL")                                                   \
   template(toFileURL_signature,                    "(Ljava/lang/String;)Ljava/net/URL;")                          \
-  template(moduleFinder_signature,                 "Ljava/lang/module/ModuleFinder;")                             \
-  template(systemModules_signature,                "Ljdk/internal/module/SystemModules;")                         \
+  template(url_void_signature,                     "(Ljava/net/URL;)V")                                           \
                                                                                                                   \
   /*end*/
 
