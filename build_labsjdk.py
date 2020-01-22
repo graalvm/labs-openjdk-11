@@ -198,6 +198,16 @@ def get_arch():
         return 'sparcv9'
     abort('unknown or unsupported architecture: os=' + get_os() + ', machine=' + machine)
 
+def is_musl(build_os):
+    if build_os == 'linux':
+        # To check, we run ldd with --version. In case of musl, --version does not exist but outputs the name of the dynamic linker which contains musl in the name.
+        try:
+            ldd_version_output = check_output(['ldd', '--version'], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            ldd_version_output = _decode(e.output)
+        return ldd_version_output.find('musl') != -1
+    return False
+
 def rmtree(path, ignore_errors=False):
     if not exists(path):
         return
@@ -279,6 +289,7 @@ def main():
 
     configure_options = [
         "--with-debug-level=" + jdk_debug_level,
+        "--with-extra-asflags=", # To prevent a compilation fail when building with libmusl
         "--enable-aot=no", # HotSpot AOT is omitted from labsjdk
         "--with-jvm-features=graal",
         "--with-jvm-variants=server",
@@ -292,6 +303,9 @@ def main():
     ]
     if build_arch != 'aarch64':
         configure_options.append("--disable-precompiled-headers")
+    if is_musl(build_os):
+        # If we are building on musl, some warnings are produced which would abort the compilation
+        configure_options.append("--disable-warnings-as-errors")
 
     check_call(["sh", "configure"] + configure_options, cwd=jdk_src_dir)
     check_call([opts.make, "LOG=info", "CONF=" + conf_name, "product-bundles", "static-libs-bundles"], cwd=jdk_src_dir)
