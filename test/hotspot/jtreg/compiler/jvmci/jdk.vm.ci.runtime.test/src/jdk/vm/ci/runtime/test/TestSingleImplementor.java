@@ -23,6 +23,8 @@
 
 /**
  * @test
+ * @bug 8238190
+ * @summary Verify single interface implementor recording supports diamond-shaped class hierarchies
  * @requires vm.jvmci
  * @library ../../../../../
  * @modules java.base/jdk.internal.reflect
