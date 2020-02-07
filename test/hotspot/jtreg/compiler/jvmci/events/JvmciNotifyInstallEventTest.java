@@ -52,11 +52,12 @@
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
  * @run main/othervm -XX:+UnlockExperimentalVMOptions
  *     -Djvmci.Compiler=EmptyCompiler -Xbootclasspath/a:. -Xmixed
- *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI
+ *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI -XX:-UseJVMCINativeLibrary
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
  * @run main/othervm -XX:+UnlockExperimentalVMOptions
  *     -Djvmci.Compiler=EmptyCompiler -Xbootclasspath/a:. -Xmixed
  *     -XX:+UseJVMCICompiler -XX:-BootstrapJVMCI -XX:JVMCINMethodSizeLimit=0
+ *     -XX:-UseJVMCINativeLibrary
  *     compiler.jvmci.events.JvmciNotifyInstallEventTest
  */
 
