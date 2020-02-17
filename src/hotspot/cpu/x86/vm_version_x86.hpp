@@ -289,6 +289,8 @@ protected:
   static int _model;
   static int _stepping;
 
+  static bool _has_intel_jcc_erratum;
+
   static address   _cpuinfo_segv_addr; // address of instruction which causes SEGV
   static address   _cpuinfo_cont_addr; // address of instruction after the one which causes SEGV
 
@@ -487,6 +489,8 @@ protected:
     uint result = threads_per_core();
     return result;
   }
+
+  static bool compute_has_intel_jcc_erratum();
 
   static uint64_t feature_flags() {
     uint64_t result = 0;
