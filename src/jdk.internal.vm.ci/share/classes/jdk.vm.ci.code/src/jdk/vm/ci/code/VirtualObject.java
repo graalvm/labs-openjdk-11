@@ -204,7 +204,6 @@ public final class VirtualObject implements JavaValue {
                     if (!CodeUtil.isPowerOf2(byteCount) || (slotkind.getStackKind() != JavaKind.Int && byteCount != slotkind.getByteCount()) || byteCount > JavaKind.Long.getByteCount()) {
                         throw new JVMCIError("Invalid number of illegals to reconstruct a byte array: %s in %s", byteCount, toString());
                     }
-                    i += byteCount;
                     continue;
                 }
                 i++;
