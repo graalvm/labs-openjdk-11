@@ -24,7 +24,7 @@
 /**
  * @test
  * @bug 8136421
- * @requires vm.jvmci & vm.compMode == "Xmixed"
+ * @requires vm.jvmci
  * @library /test/lib /
  * @library ../common/patches
  * @modules java.base/jdk.internal.misc
@@ -32,6 +32,8 @@
  *          java.base/jdk.internal.org.objectweb.asm.tree
  *          jdk.internal.vm.ci/jdk.vm.ci.hotspot
  *          jdk.internal.vm.ci/jdk.vm.ci.code
+ *          jdk.internal.vm.ci/jdk.vm.ci.meta
+ *          jdk.internal.vm.ci/jdk.vm.ci.runtime
  *
  * @build jdk.internal.vm.ci/jdk.vm.ci.hotspot.CompilerToVMHelper sun.hotspot.WhiteBox
  * @run driver ClassFileInstaller sun.hotspot.WhiteBox

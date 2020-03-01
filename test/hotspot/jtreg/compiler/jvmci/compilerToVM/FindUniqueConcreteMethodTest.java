@@ -79,7 +79,7 @@ public class FindUniqueConcreteMethodTest {
         // overriden method
         result.add(new TestCase(true, SingleSubclass.class, "overridenMethod"));
         // private method
-        result.add(new TestCase(InternalError.class, SingleSubclass.class, "privateMethod"));
+        result.add(new TestCase(true, SingleSubclass.class, "privateMethod"));
         // protected method
         result.add(new TestCase(true, SingleSubclass.class, "protectedMethod"));
         // default(package-private) method
@@ -92,7 +92,7 @@ public class FindUniqueConcreteMethodTest {
         // result.add(new TestCase(true, SingleImplementer.class,
         //                         SingleImplementerInterface.class, "defaultMethod"));
         // static method
-        result.add(new TestCase(InternalError.class, SingleSubclass.class, "staticMethod"));
+        result.add(new TestCase(false, SingleSubclass.class, "staticMethod"));
         // interface method
         result.add(new TestCase(false, MultipleSuperImplementers.class,
                                 DuplicateSimpleSingleImplementerInterface.class, "interfaceMethod"));
@@ -109,22 +109,10 @@ public class FindUniqueConcreteMethodTest {
         HotSpotResolvedObjectType resolvedType = CompilerToVMHelper
                 .lookupTypeHelper(Utils.toJVMTypeSignature(tcase.receiver), getClass(),
                 /* resolve = */ true);
-        if (tcase.exception != null) {
-            try {
-                HotSpotResolvedJavaMethod concreteMethod = CompilerToVMHelper
-                        .findUniqueConcreteMethod(resolvedType, testMethod);
-
-            } catch (Throwable t) {
-                Asserts.assertEQ(t.getClass(), tcase.exception, "Wrong exception thrown for " + tcase.methodName);
-                return;
-            }
-            Asserts.fail("Exception " + tcase.exception.getName() + " not thrown for " + tcase.methodName);
-        } else {
-            HotSpotResolvedJavaMethod concreteMethod = CompilerToVMHelper
-                    .findUniqueConcreteMethod(resolvedType, testMethod);
-            Asserts.assertEQ(concreteMethod, tcase.isPositive ? testMethod : null,
-                    "Unexpected concrete method for " + tcase.methodName);
-        }
+        HotSpotResolvedJavaMethod concreteMethod = CompilerToVMHelper
+                .findUniqueConcreteMethod(resolvedType, testMethod);
+        Asserts.assertEQ(concreteMethod, tcase.isPositive ? testMethod : null,
+                "Unexpected concrete method for " + tcase.methodName);
     }
 
     private static class TestCase {
@@ -132,35 +120,23 @@ public class FindUniqueConcreteMethodTest {
         public final Class<?> holder;
         public final String methodName;
         public final boolean isPositive;
-        public final Class<?> exception;
 
         public TestCase(boolean isPositive, Class<?> clazz, Class<?> holder,
-                        String methodName, Class<?> exception) {
+                        String methodName) {
             this.receiver = clazz;
             this.methodName = methodName;
             this.isPositive = isPositive;
             this.holder = holder;
-            this.exception = exception;
-        }
-
-        public TestCase(boolean isPositive, Class<?> clazz, Class<?> holder,
-                        String methodName) {
-            this(isPositive, clazz, holder, methodName, null);
         }
 
         public TestCase(boolean isPositive, Class<?> clazz, String methodName) {
-            this(isPositive, clazz, clazz, methodName, null);
-        }
-
-        public TestCase(Class<?> exception, Class<?> clazz, String methodName) {
-            this(false, clazz, clazz, methodName, exception);
+            this(isPositive, clazz, clazz, methodName);
         }
 
         @Override
         public String toString() {
-            return String.format("CASE: receiver=%s, holder=%s, method=%s, isPositive=%s, exception=%s",
-                                 receiver.getName(), holder.getName(), methodName, isPositive,
-                                 exception == null ? "<none>" : exception.getName());
+            return String.format("CASE: receiver=%s, holder=%s, method=%s, isPositive=%s",
+                                 receiver.getName(), holder.getName(), methodName, isPositive);
         }
     }
 }

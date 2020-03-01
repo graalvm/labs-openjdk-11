@@ -30,6 +30,7 @@ import sun.invoke.util.BytecodeDescriptor;
 import jdk.internal.misc.Unsafe;
 import sun.security.action.GetBooleanAction;
 import sun.security.action.GetPropertyAction;
+import sun.security.action.GetBooleanAction;
 
 import java.io.FilePermission;
 import java.io.Serializable;
@@ -91,11 +92,13 @@ import static jdk.internal.org.objectweb.asm.Opcodes.*;
     private static final boolean disableEagerInitialization;
 
     static {
-        final String dumpKey = "jdk.internal.lambda.dumpProxyClasses";
-        String path = GetPropertyAction.privilegedGetProperty(dumpKey);
-        dumper = (null == path) ? null : ProxyClassesDumper.getInstance(path);
+        final String dumpProxyClassesKey = "jdk.internal.lambda.dumpProxyClasses";
+        String dumpPath = GetPropertyAction.privilegedGetProperty(dumpProxyClassesKey);
+        dumper = (null == dumpPath) ? null : ProxyClassesDumper.getInstance(dumpPath);
 
-        disableEagerInitialization = new GetBooleanAction("jdk.internal.lambda.disableEagerInitialization").run();
+        final String disableEagerInitializationKey = "jdk.internal.lambda.disableEagerInitialization";
+        disableEagerInitialization = AccessController.doPrivileged(
+            new GetBooleanAction(disableEagerInitializationKey)).booleanValue();
     }
 
     // See context values in AbstractValidatingLambdaMetafactory

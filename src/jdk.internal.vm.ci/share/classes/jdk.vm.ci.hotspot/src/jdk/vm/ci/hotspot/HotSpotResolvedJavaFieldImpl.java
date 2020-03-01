@@ -29,8 +29,6 @@ import static jdk.internal.misc.Unsafe.ADDRESS_SIZE;
 
 import java.lang.annotation.Annotation;
 
-import jdk.internal.vm.annotation.Stable;
-
 import jdk.vm.ci.meta.JavaConstant;
 import jdk.vm.ci.meta.JavaType;
 import jdk.vm.ci.meta.ResolvedJavaType;
@@ -167,9 +165,9 @@ class HotSpotResolvedJavaFieldImpl implements HotSpotResolvedJavaField {
     }
 
     /**
-     * Checks if this field has the {@link Stable} annotation.
+     * Checks if this field has the {@code Stable} annotation.
      *
-     * @return true if field has {@link Stable} annotation, false otherwise
+     * @return true if field has {@code Stable} annotation, false otherwise
      */
     @Override
     public boolean isStable() {
