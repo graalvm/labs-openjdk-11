@@ -7,8 +7,12 @@ suite = {
   "libraries" : {
 
     "TESTNG" : {
-      "urls" : ["http://central.maven.org/maven2/org/testng/testng/6.9.10/testng-6.9.10.jar"],
       "sha1" : "6feb3e964aeb7097aff30c372aac3ec0f8d87ede",
+      "maven" : {
+        "groupId" : "org.testng",
+        "artifactId" : "testng",
+        "version" : "6.9.10",
+      },
     },
   },
 
