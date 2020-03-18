@@ -1982,9 +1982,8 @@ JRT_LEAF(void, SharedRuntime::reguard_yellow_pages())
   (void) JavaThread::current()->reguard_stack();
 JRT_END
 
-
-// Handles the uncommon case in locking, i.e., contention or an inflated lock.
-JRT_BLOCK_ENTRY(void, SharedRuntime::complete_monitor_locking_C(oopDesc* _obj, BasicLock* lock, JavaThread* thread))
+void SharedRuntime::monitor_enter_helper(oopDesc* _obj, BasicLock* lock, JavaThread* thread,
+                                         bool use_inlined_fast_locking) {
   if (!SafepointSynchronize::is_synchronizing()) {
     // Only try quick_enter() if we're not trying to reach a safepoint
     // so that the calling thread reaches the safepoint more quickly.
@@ -2000,14 +1999,24 @@ JRT_BLOCK_ENTRY(void, SharedRuntime::complete_monitor_locking_C(oopDesc* _obj, B
     Atomic::inc(BiasedLocking::slow_path_entry_count_addr());
   }
   Handle h_obj(THREAD, obj);
+  assert(oopDesc::is_oop(h_obj()), "must be NULL or an object");
   if (UseBiasedLocking) {
     // Retry fast entry if bias is revoked to avoid unnecessary inflation
     ObjectSynchronizer::fast_enter(h_obj, lock, true, CHECK);
   } else {
-    ObjectSynchronizer::slow_enter(h_obj, lock, CHECK);
+    if (use_inlined_fast_locking) {
+      ObjectSynchronizer::slow_enter(h_obj, lock, CHECK);
+    } else {
+      ObjectSynchronizer::fast_enter(h_obj, lock, false, CHECK);
+    }
   }
   assert(!HAS_PENDING_EXCEPTION, "Should have no exception here");
   JRT_BLOCK_END
+}
+
+// Handles the uncommon case in locking, i.e., contention or an inflated lock.
+JRT_BLOCK_ENTRY(void, SharedRuntime::complete_monitor_locking_C(oopDesc* _obj, BasicLock* lock, JavaThread* thread))
+  SharedRuntime::monitor_enter_helper(_obj, lock, thread, true);
 JRT_END
 
 // Handles the uncommon cases of monitor unlocking in compiled code
