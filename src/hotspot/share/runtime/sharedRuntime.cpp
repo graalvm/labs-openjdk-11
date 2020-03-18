@@ -2019,40 +2019,23 @@ JRT_BLOCK_ENTRY(void, SharedRuntime::complete_monitor_locking_C(oopDesc* _obj, B
   SharedRuntime::monitor_enter_helper(_obj, lock, thread, true);
 JRT_END
 
+void SharedRuntime::monitor_exit_helper(oop _obj, BasicLock* lock, JavaThread* thread,
+                                        bool use_inlined_fast_locking) {
+  assert(JavaThread::current() == thread, "invariant");
+  // Exit must be non-blocking, and therefore no exceptions can be thrown.
+  EXCEPTION_MARK;
+  if (use_inlined_fast_locking) {
+    // When using fast locking, the compiled code has already tried the fast case
+    ObjectSynchronizer::slow_exit(_obj, lock, THREAD);
+  } else {
+    ObjectSynchronizer::fast_exit(_obj, lock, THREAD);
+  }
+}
+
 // Handles the uncommon cases of monitor unlocking in compiled code
-JRT_LEAF(void, SharedRuntime::complete_monitor_unlocking_C(oopDesc* _obj, BasicLock* lock, JavaThread * THREAD))
-   oop obj(_obj);
-  assert(JavaThread::current() == THREAD, "invariant");
-  // I'm not convinced we need the code contained by MIGHT_HAVE_PENDING anymore
-  // testing was unable to ever fire the assert that guarded it so I have removed it.
-  assert(!HAS_PENDING_EXCEPTION, "Do we need code below anymore?");
-#undef MIGHT_HAVE_PENDING
-#ifdef MIGHT_HAVE_PENDING
-  // Save and restore any pending_exception around the exception mark.
-  // While the slow_exit must not throw an exception, we could come into
-  // this routine with one set.
-  oop pending_excep = NULL;
-  const char* pending_file;
-  int pending_line;
-  if (HAS_PENDING_EXCEPTION) {
-    pending_excep = PENDING_EXCEPTION;
-    pending_file  = THREAD->exception_file();
-    pending_line  = THREAD->exception_line();
-    CLEAR_PENDING_EXCEPTION;
-  }
-#endif /* MIGHT_HAVE_PENDING */
-
-  {
-    // Exit must be non-blocking, and therefore no exceptions can be thrown.
-    EXCEPTION_MARK;
-    ObjectSynchronizer::slow_exit(obj, lock, THREAD);
-  }
-
-#ifdef MIGHT_HAVE_PENDING
-  if (pending_excep != NULL) {
-    THREAD->set_pending_exception(pending_excep, pending_file, pending_line);
-  }
-#endif /* MIGHT_HAVE_PENDING */
+JRT_LEAF(void, SharedRuntime::complete_monitor_unlocking_C(oopDesc* _obj, BasicLock* lock, JavaThread* thread))
+  oop obj(_obj);
+  SharedRuntime::monitor_exit_helper(obj, lock, thread, true);
 JRT_END
 
 #ifndef PRODUCT

@@ -390,10 +390,7 @@ JRT_BLOCK_ENTRY(void, JVMCIRuntime::monitorenter(JavaThread* thread, oopDesc* ob
 JRT_END
 
 JRT_LEAF(void, JVMCIRuntime::monitorexit(JavaThread* thread, oopDesc* obj, BasicLock* lock))
-  assert(thread == JavaThread::current(), "threads must correspond");
   assert(thread->last_Java_sp(), "last_Java_sp must be set");
-  // monitorexit is non-blocking (leaf routine) => no exceptions can be thrown
-  EXCEPTION_MARK;
 
 #ifdef ASSERT
   if (!oopDesc::is_oop(obj)) {
@@ -407,12 +404,9 @@ JRT_LEAF(void, JVMCIRuntime::monitorexit(JavaThread* thread, oopDesc* obj, Basic
   }
 #endif
 
-  if (JVMCIUseFastLocking) {
-    // When using fast locking, the compiled code has already tried the fast case
-    ObjectSynchronizer::slow_exit(obj, lock, THREAD);
-  } else {
-    ObjectSynchronizer::fast_exit(obj, lock, THREAD);
-  }
+  oop object(obj);
+  SharedRuntime::monitor_exit_helper(object, lock, thread, JVMCIUseFastLocking);
+
   IF_TRACE_jvmci_3 {
     char type[O_BUFLEN];
     obj->klass()->name()->as_C_string(type, O_BUFLEN);

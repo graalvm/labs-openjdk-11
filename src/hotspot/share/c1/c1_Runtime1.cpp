@@ -705,19 +705,10 @@ JRT_END
 
 JRT_LEAF(void, Runtime1::monitorexit(JavaThread* thread, BasicObjectLock* lock))
   NOT_PRODUCT(_monitorexit_slowcase_cnt++;)
-  assert(thread == JavaThread::current(), "threads must correspond");
   assert(thread->last_Java_sp(), "last_Java_sp must be set");
-  // monitorexit is non-blocking (leaf routine) => no exceptions can be thrown
-  EXCEPTION_MARK;
-
   oop obj = lock->obj();
   assert(oopDesc::is_oop(obj), "must be NULL or an object");
-  if (UseFastLocking) {
-    // When using fast locking, the compiled code has already tried the fast case
-    ObjectSynchronizer::slow_exit(obj, lock->lock(), THREAD);
-  } else {
-    ObjectSynchronizer::fast_exit(obj, lock->lock(), THREAD);
-  }
+  SharedRuntime::monitor_exit_helper(obj, lock->lock(), thread, UseFastLocking);
 JRT_END
 
 // Cf. OptoRuntime::deoptimize_caller_frame
