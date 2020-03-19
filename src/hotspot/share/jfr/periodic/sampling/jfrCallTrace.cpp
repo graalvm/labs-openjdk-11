@@ -33,6 +33,7 @@
 #include "runtime/frame.inline.hpp"
 #include "runtime/registerMap.hpp"
 #include "runtime/thread.inline.hpp"
+#include "utilities/xmlstream.hpp"
 
 bool JfrGetCallTrace::find_top_frame(frame& top_frame, Method** method, frame& first_frame) {
   assert(top_frame.cb() != NULL, "invariant");
@@ -96,7 +97,12 @@ bool JfrGetCallTrace::find_top_frame(frame& top_frame, Method** method, frame& f
   return false;
 }
 
+
+static jlong get_topframe_calls;
+static jlong get_topframe_success;
+
 bool JfrGetCallTrace::get_topframe(void* ucontext, frame& topframe) {
+  get_topframe_calls++;
   if (!_thread->pd_get_top_frame_for_profiling(&topframe, ucontext, _in_java)) {
     return false;
   }
@@ -112,7 +118,19 @@ bool JfrGetCallTrace::get_topframe(void* ucontext, frame& topframe) {
       return false;
     }
     topframe = first_java_frame;
+    get_topframe_success++;
     return true;
   }
   return false;
+}
+
+
+void JfrGetCallTrace::print_statistics() {
+  if (xtty != NULL && get_topframe_calls != 0) {
+    xtty->head("statistics type='JfrGetCallTrace'");
+    xtty->begin_elem("counts calls='" JLONG_FORMAT "' success='" JLONG_FORMAT "' success_rate='%3.1f%%", get_topframe_calls, get_topframe_success,
+                     get_topframe_success * 100.0 / get_topframe_calls);
+    xtty->end_elem();
+    xtty->tail("statistics");
+  }
 }
