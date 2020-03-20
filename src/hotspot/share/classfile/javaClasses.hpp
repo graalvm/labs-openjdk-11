@@ -1423,7 +1423,7 @@ class java_lang_StackTraceElement: AllStatic {
   static void serialize_offsets(SerializeClosure* f) NOT_CDS_RETURN;
 
 #if INCLUDE_JVMCI
-  static void decode(methodHandle method, int bci, Symbol*& methodName, Symbol*& fileName, int& lineNumber, TRAPS);
+  static void decode(const methodHandle& method, int bci, Symbol*& fileName, int& lineNumber, TRAPS);
 #endif
 
   // Debugging

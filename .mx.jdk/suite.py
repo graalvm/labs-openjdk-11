@@ -96,8 +96,6 @@ suite = {
       "sourceDirs" : ["src"],
       "requiresConcealed" : {
         "java.base" : ["jdk.internal.reflect"],
-        "java.instrument" : ["java.lang.instrument"],
-        "java.management" : ["java.lang.management"],
       },
       "dependencies" : [
         "mx:JUNIT",
