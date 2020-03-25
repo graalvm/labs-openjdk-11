@@ -1,5 +1,7 @@
 Welcome to LabsJDK CE 11.
 
+The latest release is available at https://github.com/graalvm/labs-openjdk-11/releases/latest
+
 This is a fork of https://github.com/openjdk/jdk11u-dev (which is a read-only
 mirror of https://hg.openjdk.java.net/jdk-updates/jdk11u-dev/) that
 exists for the purpose of building a base JDK upon which GraalVM CE 11 is built.
