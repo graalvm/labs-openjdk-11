@@ -34,6 +34,7 @@
 #include "interpreter/bytecodeHistogram.hpp"
 #include "jfr/jfrEvents.hpp"
 #include "jfr/support/jfrThreadId.hpp"
+#include "jfr/periodic/sampling/jfrCallTrace.hpp"
 #if INCLUDE_JVMCI
 #include "jvmci/jvmci.hpp"
 #endif
@@ -363,6 +364,8 @@ void print_statistics() {
   }
 
   ThreadsSMRSupport::log_statistics();
+
+  JfrGetCallTrace::print_statistics();
 }
 
 #else // PRODUCT MODE STATISTICS
@@ -410,6 +413,8 @@ void print_statistics() {
   }
 
   ThreadsSMRSupport::log_statistics();
+
+  JfrGetCallTrace::print_statistics();
 }
 
 #endif
