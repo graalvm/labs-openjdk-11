@@ -210,6 +210,7 @@ STATIC_LIBS_MODULES := \
     java.smartcardio \
     jdk.crypto.cryptoki \
     jdk.net \
+    jdk.sctp \
     #
 
 ################################################################################
