@@ -42,7 +42,7 @@ $(foreach m, $(STATIC_LIBS_MODULES), \
       SRC := $(SUPPORT_OUTPUTDIR)/native/$m, \
       DEST := $(STATIC_LIBS_IMAGE_DIR)/lib, \
       FILES := $(filter %$(STATIC_LIBRARY_SUFFIX), \
-          $(call CacheFind, $(SUPPORT_OUTPUTDIR)/native/$m/*/static)), \
+          $(call FindFiles, $(SUPPORT_OUTPUTDIR)/native/$m/*/static)), \
   )) \
   $(eval TARGETS += $$(COPY_STATIC_LIBS_$m)) \
 )
