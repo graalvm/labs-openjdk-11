@@ -368,7 +368,7 @@ endif
 ################################################################################
 
 ifneq ($(filter static-libs-bundles, $(MAKECMDGOALS)), )
-  STATIC_LIBS_BUNDLE_FILES := $(call CacheFind, $(STATIC_LIBS_IMAGE_DIR))
+  STATIC_LIBS_BUNDLE_FILES := $(call FindFiles, $(STATIC_LIBS_IMAGE_DIR))
 
   ifeq ($(OPENJDK_TARGET_OS)-$(DEBUG_LEVEL), macosx-release)
     STATIC_LIBS_BUNDLE_SUBDIR := $(JDK_MACOSX_CONTENTS_SUBDIR)/Home
