@@ -141,7 +141,6 @@ def create_bundle(input_bundles, bundle, jdk_debug_level, install_prefix, extrac
                 root_name = get_root(tf.getnames(), input_bundle, root_name)
                 tf.extractall(tmp_dir)
         os.remove(input_bundle)
-
     root_dir = join(tmp_dir, root_name)
     if jdk_debug_level == 'fastdebug':
         if 'darwin' in bundle:
@@ -152,6 +151,16 @@ def create_bundle(input_bundles, bundle, jdk_debug_level, install_prefix, extrac
             for e in glob.glob(join(root_dir, 'fastdebug', '*')):
                 os.rename(e, join(root_dir, basename(e)))
             os.rmdir(join(root_dir, 'fastdebug'))
+
+    if jdk_debug_level == 'slowdebug':
+        if 'darwin' in bundle:
+            contents_dir = join(root_dir, 'Contents')
+            os.makedirs(contents_dir)
+            os.rename(join(root_dir, 'slowdebug'), join(contents_dir, 'Home'))
+        else:
+            for e in glob.glob(join(root_dir, 'slowdebug', '*')):
+                os.rename(e, join(root_dir, basename(e)))
+            os.rmdir(join(root_dir, 'slowdebug'))
 
     def on_error(err):
         raise err
@@ -249,7 +258,7 @@ def main():
     parser.add_argument('--boot-jdk', action='store', help='value for --boot-jdk configure option (default: $JAVA_HOME)',
                         default=env.get('JAVA_HOME'), required='JAVA_HOME' not in env, metavar='<path>')
     parser.add_argument('--clean-after-build', action='store_true', help='clean build directory after producing labsjdk binaries')
-    parser.add_argument('--jdk-debug-level', action='store', help='value for --with-debug-level JDK config option', default='release', choices=['release', 'fastdebug'])
+    parser.add_argument('--jdk-debug-level', action='store', help='value for --with-debug-level JDK config option', default='release', choices=['release', 'fastdebug','slowdebug'])
     parser.add_argument('--devkit', action='store', help='value for --with-devkit configure option', default=env.get('DEVKIT', ''), metavar='<path>')
     parser.add_argument('--jvmci-version', action='store', help='JVMCI version (e.g., 19.3-b03)', metavar='<version>')
 
@@ -278,6 +287,7 @@ def main():
     build_num = sorted(build_nums, reverse=True)[0]
 
     debug_qualifier = '' if jdk_debug_level == 'release' else '-debug'
+    debug_qualifier = '-slowdebug' if jdk_debug_level == 'slowdebug' else debug_qualifier
     jdk_bundle_prefix = 'labsjdk-ce-{}+{}-jvmci-{}{}'.format(java_version, build_num, jvmci_version, debug_qualifier)
     install_prefix = 'labsjdk-ce-{}-jvmci-{}{}'.format(java_version, jvmci_version, debug_qualifier)
     jdk_bundle_name = jdk_bundle_prefix + '-{}-{}.tar.gz'.format(build_os, build_arch)
