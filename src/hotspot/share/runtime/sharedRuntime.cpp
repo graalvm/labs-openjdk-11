@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 1997, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -1982,24 +1982,23 @@ JRT_LEAF(void, SharedRuntime::reguard_yellow_pages())
   (void) JavaThread::current()->reguard_stack();
 JRT_END
 
-void SharedRuntime::monitor_enter_helper(oopDesc* _obj, BasicLock* lock, JavaThread* thread,
+void SharedRuntime::monitor_enter_helper(oopDesc* obj, BasicLock* lock, JavaThread* thread,
                                          bool use_inlined_fast_locking) {
   if (!SafepointSynchronize::is_synchronizing()) {
     // Only try quick_enter() if we're not trying to reach a safepoint
     // so that the calling thread reaches the safepoint more quickly.
-    if (ObjectSynchronizer::quick_enter(_obj, thread, lock)) return;
+    if (ObjectSynchronizer::quick_enter(obj, thread, lock)) return;
   }
   // NO_ASYNC required because an async exception on the state transition destructor
   // would leave you with the lock held and it would never be released.
   // The normal monitorenter NullPointerException is thrown without acquiring a lock
   // and the model is that an exception implies the method failed.
   JRT_BLOCK_NO_ASYNC
-  oop obj(_obj);
+
   if (PrintBiasedLockingStatistics) {
     Atomic::inc(BiasedLocking::slow_path_entry_count_addr());
   }
   Handle h_obj(THREAD, obj);
-  assert(oopDesc::is_oop(h_obj()), "must be NULL or an object");
   if (UseBiasedLocking) {
     // Retry fast entry if bias is revoked to avoid unnecessary inflation
     ObjectSynchronizer::fast_enter(h_obj, lock, true, CHECK);
@@ -2015,26 +2014,25 @@ void SharedRuntime::monitor_enter_helper(oopDesc* _obj, BasicLock* lock, JavaThr
 }
 
 // Handles the uncommon case in locking, i.e., contention or an inflated lock.
-JRT_BLOCK_ENTRY(void, SharedRuntime::complete_monitor_locking_C(oopDesc* _obj, BasicLock* lock, JavaThread* thread))
-  SharedRuntime::monitor_enter_helper(_obj, lock, thread, true);
+JRT_BLOCK_ENTRY(void, SharedRuntime::complete_monitor_locking_C(oopDesc* obj, BasicLock* lock, JavaThread* thread))
+  SharedRuntime::monitor_enter_helper(obj, lock, thread, true);
 JRT_END
 
-void SharedRuntime::monitor_exit_helper(oop _obj, BasicLock* lock, JavaThread* thread,
+void SharedRuntime::monitor_exit_helper(oopDesc* obj, BasicLock* lock, JavaThread* thread,
                                         bool use_inlined_fast_locking) {
   assert(JavaThread::current() == thread, "invariant");
   // Exit must be non-blocking, and therefore no exceptions can be thrown.
   EXCEPTION_MARK;
   if (use_inlined_fast_locking) {
     // When using fast locking, the compiled code has already tried the fast case
-    ObjectSynchronizer::slow_exit(_obj, lock, THREAD);
+    ObjectSynchronizer::slow_exit(obj, lock, THREAD);
   } else {
-    ObjectSynchronizer::fast_exit(_obj, lock, THREAD);
+    ObjectSynchronizer::fast_exit(obj, lock, THREAD);
   }
 }
 
 // Handles the uncommon cases of monitor unlocking in compiled code
-JRT_LEAF(void, SharedRuntime::complete_monitor_unlocking_C(oopDesc* _obj, BasicLock* lock, JavaThread* thread))
-  oop obj(_obj);
+JRT_LEAF(void, SharedRuntime::complete_monitor_unlocking_C(oopDesc* obj, BasicLock* lock, JavaThread* thread))
   SharedRuntime::monitor_exit_helper(obj, lock, thread, true);
 JRT_END
 
