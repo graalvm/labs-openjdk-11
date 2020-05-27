@@ -1159,7 +1159,7 @@ void CompileBroker::compile_method_base(const methodHandle& method,
       // Don't allow blocking compilation requests if we are in JVMCIRuntime::shutdown
       // to avoid deadlock between compiler thread(s) and threads run at shutdown
       // such as the DestroyJavaVM thread.
-      if (JVMCI::shutdown_called()) {
+      if (JVMCI::in_shutdown()) {
         blocking = false;
       }
     }
@@ -2129,9 +2129,14 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
 
     TraceTime t1("compilation", &time);
     EventCompilation event;
+    JVMCIRuntime *runtime = NULL;
 
-    // Skip redefined methods
-    if (target_handle->is_old()) {
+    if (JVMCI::in_shutdown()) {
+      failure_reason = "in JVMCI shutdown";
+      retry_message = "not retryable";
+      compilable = ciEnv::MethodCompilable_never;
+    } else if (target_handle->is_old()) {
+      // Skip redefined methods
       failure_reason = "redefined method";
       retry_message = "not retryable";
       compilable = ciEnv::MethodCompilable_never;
@@ -2139,7 +2144,8 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
       JVMCICompileState compile_state(task, system_dictionary_modification_counter);
       JVMCIEnv env(thread, &compile_state, __FILE__, __LINE__);
       methodHandle method(thread, target_handle);
-      env.runtime()->compile_method(&env, jvmci, method, osr_bci);
+      runtime = env.runtime();
+      runtime->compile_method(&env, jvmci, method, osr_bci);
 
       failure_reason = compile_state.failure_reason();
       failure_reason_on_C_heap = compile_state.failure_reason_on_C_heap();
