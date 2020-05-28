@@ -3,7 +3,7 @@ local defs = import "defs.jsonnet";
 # https://github.com/graalvm/labs-openjdk-11/blob/master/doc/testing.md
 local run_test_spec = "test/hotspot/jtreg/compiler/jvmci";
 
-local labsjdk_builder_version = "82b42229d8815528127e23fd08501ba9e27a00a0";
+local labsjdk_builder_version = "ef0ec72512c0978676894a26d5dceba841c262f9";
 local os(conf) = conf.environment.CI_OS;
 
 {
@@ -64,6 +64,11 @@ local os(conf) = conf.environment.CI_OS;
             "devkit:gcc7.3.0-OEL6.4+1" : "==1"
         },
     },
+    LinuxMuslDocker:: self.Linux {
+        "docker": {
+            "image": "phx.ocir.io/oraclelabs2/c_graal/jdk-musl-snapshot-builder"
+        },
+    },
     Darwin:: self.OSBase + {
         jdk_home(java_home):: java_home + "/../..",
         java_home(jdk_home):: jdk_home + "/Contents/Home",
@@ -95,6 +100,13 @@ local os(conf) = conf.environment.CI_OS;
         environment+: {
             CI_ARCH: "amd64",
             JIB_ARCH: "x64"
+        }
+    },
+
+    AMD64Musl:: self.AMD64 + {
+        name+: "-musl",
+        environment+: {
+            CI_ARCH+: "-musl",
         }
     },
 
@@ -140,6 +152,19 @@ local os(conf) = conf.environment.CI_OS;
         }
     },
 
+    MuslBootJDK:: {
+        downloads+: {
+            BOOT_JDK: {
+                name: "labsjdk",
+                version: "ce-11.0.7+10-jvmci-20.1-b03-musl-boot",
+                platformspecific: true
+            }
+        },
+        environment+: {
+            LD_LIBRARY_PATH: "$BOOT_JDK/lib/server"
+        }
+    },
+
     JTReg:: {
         downloads+: {
             JT_HOME: {
@@ -166,13 +191,13 @@ local os(conf) = conf.environment.CI_OS;
         ],
     },
 
-    Build(conf):: conf + setupJDKSources(conf) + {
-        packages+: {
+    Build(conf, is_musl_build):: conf + setupJDKSources(conf) + {
+        packages+: if is_musl_build == "false" then {
             # GR-19828
             "00:pip:logilab-common ": "==1.4.4",
             "01:pip:astroid" : "==1.1.0",
             "pip:pylint" : "==1.1.0",
-        },
+        } else {},
         name: "build-jdk" + conf.name,
         timelimit: "1:30:00",
         diskspace_required: "10G",
@@ -232,13 +257,13 @@ local os(conf) = conf.environment.CI_OS;
             conf.copydir(conf.jdk_home("."), "${JDK_HOME}")
         ],
 
-        publishArtifacts+: [
+        publishArtifacts+: if is_musl_build == "false" then [
             {
                 name: "labsjdk" + conf.name,
                 dir: ".",
                 patterns: ["jdk_home"]
             }
-        ],
+        ] else [],
     },
 
     # Downstream Graal branch to test against.
@@ -366,14 +391,20 @@ local os(conf) = conf.environment.CI_OS;
         self.LinuxDocker + self.AArch64 + self.JTReg + self.BootJDK,
     ],
 
-    builds: [ self.Build(conf) for conf in build_confs ] +
+    local amd64_musl_confs = [
+        self.LinuxMuslDocker + self.AMD64Musl + self.MuslBootJDK,
+    ],
+
+    builds: [ self.Build(conf, "false") for conf in build_confs ] +
             [ self.CompilerTests(conf) for conf in graal_confs ] +
             [ self.JavaScriptTests(conf) for conf in graal_confs ] +
             [ self.BuildLibGraal(conf) for conf in graal_confs ] +
             [ self.TestLibGraal(conf) for conf in graal_confs ] +
 
-            [ self.Build(conf) for conf in aarch64_confs ] +
+            [ self.Build(conf, "false") for conf in aarch64_confs ] +
             [ self.CompilerTests(conf) for conf in aarch64_confs ] +
+
+            [ self.Build(conf, "true") for conf in amd64_musl_confs ] +
 
             # GR-20001 prevents reliable Graal testing on Windows
             # but we want to "require" the JDK artifact so that it
