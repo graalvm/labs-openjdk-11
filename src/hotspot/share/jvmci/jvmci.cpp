@@ -29,11 +29,9 @@
 #include "jvmci/jvmci_globals.hpp"
 #include "jvmci/jvmciJavaClasses.hpp"
 #include "jvmci/jvmciRuntime.hpp"
-#include "jvmci/metadataHandleBlock.hpp"
+#include "jvmci/metadataHandles.hpp"
 #include "memory/resourceArea.hpp"
 
-OopStorage* JVMCI::_object_handles = NULL;
-MetadataHandleBlock* JVMCI::_metadata_handles = NULL;
 JVMCIRuntime* JVMCI::_compiler_runtime = NULL;
 JVMCIRuntime* JVMCI::_java_runtime = NULL;
 volatile bool JVMCI::_is_initialized = false;
@@ -97,10 +95,6 @@ void JVMCI::initialize_compiler(TRAPS) {
 }
 
 void JVMCI::initialize_globals() {
-  _object_handles = new OopStorage("JVMCI Global Oop Handles",
-                                   JVMCIGlobalAlloc_lock,
-                                   JVMCIGlobalActive_lock);
-  _metadata_handles = MetadataHandleBlock::allocate_block();
   if (UseJVMCINativeLibrary) {
     // There are two runtimes.
     _compiler_runtime = new JVMCIRuntime(0);
@@ -108,75 +102,35 @@ void JVMCI::initialize_globals() {
   } else {
     // There is only a single runtime
     _java_runtime = _compiler_runtime = new JVMCIRuntime(0);
-}
-}
-
-OopStorage* JVMCI::object_handles() {
-  assert(_object_handles != NULL, "Uninitialized");
-  return _object_handles;
-}
-
-jobject JVMCI::make_global(const Handle& obj) {
-  assert(!Universe::heap()->is_gc_active(), "can't extend the root set during GC");
-  assert(oopDesc::is_oop(obj()), "not an oop");
-  oop* ptr = object_handles()->allocate();
-  jobject res = NULL;
-  if (ptr != NULL) {
-    assert(*ptr == NULL, "invariant");
-    NativeAccess<>::oop_store(ptr, obj());
-    res = reinterpret_cast<jobject>(ptr);
-  } else {
-    vm_exit_out_of_memory(sizeof(oop), OOM_MALLOC_ERROR,
-                          "Cannot create JVMCI oop handle");
   }
-  return res;
-}
-
-void JVMCI::destroy_global(jobject handle) {
-  // Assert before nulling out, for better debugging.
-  assert(is_global_handle(handle), "precondition");
-  oop* oop_ptr = reinterpret_cast<oop*>(handle);
-  NativeAccess<>::oop_store(oop_ptr, (oop)NULL);
-  object_handles()->release(oop_ptr);
-}
-
-bool JVMCI::is_global_handle(jobject handle) {
-  const oop* ptr = reinterpret_cast<oop*>(handle);
-  return object_handles()->allocation_status(ptr) == OopStorage::ALLOCATED_ENTRY;
-}
-
-jmetadata JVMCI::allocate_handle(const methodHandle& handle) {
-  assert(_metadata_handles != NULL, "uninitialized");
-  MutexLocker ml(JVMCI_lock);
-  return _metadata_handles->allocate_handle(handle);
-}
-
-jmetadata JVMCI::allocate_handle(const constantPoolHandle& handle) {
-  assert(_metadata_handles != NULL, "uninitialized");
-  MutexLocker ml(JVMCI_lock);
-  return _metadata_handles->allocate_handle(handle);
-}
-
-void JVMCI::release_handle(jmetadata handle) {
-  MutexLocker ml(JVMCI_lock);
-  _metadata_handles->chain_free_list(handle);
 }
 
 void JVMCI::oops_do(OopClosure* f) {
-  if (_object_handles != NULL) {
-    _object_handles->oops_do(f);
+  if (_java_runtime != NULL) {
+    _java_runtime->_object_handles->oops_do(f);
+  }
+  if (_compiler_runtime != NULL && _compiler_runtime != _java_runtime) {
+    _compiler_runtime->_object_handles->oops_do(f);
   }
 }
 
 void JVMCI::metadata_do(void f(Metadata*)) {
-  if (_metadata_handles != NULL) {
-    _metadata_handles->metadata_do(f);
+  if (_java_runtime != NULL) {
+    _java_runtime->_metadata_handles->metadata_do(f);
+  }
+  if (_compiler_runtime != NULL && _compiler_runtime != _java_runtime) {
+    _compiler_runtime->_metadata_handles->metadata_do(f);
   }
 }
 
 void JVMCI::do_unloading(bool unloading_occurred) {
-  if (_metadata_handles != NULL && unloading_occurred) {
-    _metadata_handles->do_unloading();
+  if (unloading_occurred) {
+    if (_java_runtime != NULL) {
+      _java_runtime->_metadata_handles->do_unloading();
+    }
+    if (_compiler_runtime != NULL && _compiler_runtime != _java_runtime) {
+      _compiler_runtime->_metadata_handles->do_unloading();
+    }
   }
 }
 
