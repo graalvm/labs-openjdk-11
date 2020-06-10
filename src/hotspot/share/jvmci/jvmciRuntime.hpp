@@ -32,6 +32,7 @@
 class JVMCIEnv;
 class JVMCICompiler;
 class JVMCICompileState;
+class MetadataHandles;
 
 // Encapsulates the JVMCI metadata for an nmethod.
 // JVMCINMethodData objects are inlined into nmethods
@@ -111,12 +112,18 @@ class JVMCIRuntime: public CHeapObj<mtJVMCI> {
   JVMCIObject _HotSpotJVMCIRuntime_instance;
 
   // Result of calling JNI_CreateJavaVM in the JVMCI shared library.
-  // Must only be mutated under _lock.
+  // Must only be modified under JVMCI_lock.
   volatile JavaVM* _shared_library_javavm;
 
   // The HotSpot heap based runtime will have an id of -1 and the
   // JVMCI shared library runtime will have an id of 0.
   int _id;
+
+  // Handles to objects in the HotSpot heap.
+  OopStorage* _object_handles;
+
+  // Handles to Metadata objects.
+  MetadataHandles* _metadata_handles;
 
   JVMCIObject create_jvmci_primitive_type(BasicType type, JVMCI_TRAPS);
 
@@ -143,6 +150,8 @@ class JVMCIRuntime: public CHeapObj<mtJVMCI> {
                                      Symbol*         sig,
                                      Bytecodes::Code bc,
                                      constantTag     tag);
+
+  static OopStorage* create_object_handles(int id);
 
  public:
   JVMCIRuntime(int id);
@@ -178,12 +187,28 @@ class JVMCIRuntime: public CHeapObj<mtJVMCI> {
   // Compute offsets and construct any state required before executing JVMCI code.
   void initialize(JVMCIEnv* jvmciEnv);
 
+  // Allocation and management of JNI global object handles.
+  jobject make_global(const Handle& obj);
+  void destroy_global(jobject handle);
+  bool is_global_handle(jobject handle);
+
+  // Allocation and management of matadata handles.
+  jmetadata allocate_handle(const methodHandle& handle);
+  jmetadata allocate_handle(const constantPoolHandle& handle);
+  void release_handle(jmetadata handle);
+
   // Gets the HotSpotJVMCIRuntime instance for this runtime,
   // initializing it first if necessary.
   JVMCIObject get_HotSpotJVMCIRuntime(JVMCI_TRAPS);
 
   bool is_HotSpotJVMCIRuntime_initialized() {
     return _HotSpotJVMCIRuntime_instance.is_non_null();
+  }
+
+  // Gets the current HotSpotJVMCIRuntime instance for this runtime which
+  // may be a "null" JVMCIObject value.
+  JVMCIObject probe_HotSpotJVMCIRuntime() {
+    return _HotSpotJVMCIRuntime_instance;
   }
 
   // Trigger initialization of HotSpotJVMCIRuntime through JVMCI.getRuntime()

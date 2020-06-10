@@ -23,9 +23,11 @@
 
 #include "precompiled.hpp"
 #include "compiler/compileBroker.hpp"
+#include "gc/shared/oopStorage.inline.hpp"
 #include "jvmci/jniAccessMark.inline.hpp"
 #include "jvmci/jvmciCompilerToVM.hpp"
 #include "jvmci/jvmciRuntime.hpp"
+#include "jvmci/metadataHandles.hpp"
 #include "logging/log.hpp"
 #include "memory/oopFactory.hpp"
 #include "oops/constantPool.inline.hpp"
@@ -717,11 +719,65 @@ void JVMCINMethodData::invalidate_nmethod_mirror(nmethod* nm) {
   }
 }
 
+OopStorage* JVMCIRuntime::create_object_handles(int id) {
+  FormatBuffer<> name("JVMCI %s Runtime %d Global Oop Handles", id == -1 ? "Java" : "Shared Library", id);
+  return new OopStorage(name, JVMCIGlobalAlloc_lock, JVMCIGlobalActive_lock);
+}
+
 JVMCIRuntime::JVMCIRuntime(int id) {
   _init_state = uninitialized;
   _shared_library_javavm = NULL;
   _id = id;
+  _object_handles = new OopStorage(id == -1 ? "JVMCI Java Runtime Global Oop Handles" :
+		                                      "JVMCI Shared Library Runtime Global Oop Handles",
+		                            JVMCIGlobalAlloc_lock,
+		                            JVMCIGlobalActive_lock);
+  _metadata_handles = new MetadataHandles();
   TRACE_jvmci_1("created new JVMCI runtime %d (" PTR_FORMAT ")", id, p2i(this));
+}
+
+jobject JVMCIRuntime::make_global(const Handle& obj) {
+  assert(!Universe::heap()->is_gc_active(), "can't extend the root set during GC");
+  assert(oopDesc::is_oop(obj()), "not an oop");
+  oop* ptr = _object_handles->allocate();
+  jobject res = NULL;
+  if (ptr != NULL) {
+    assert(*ptr == NULL, "invariant");
+    NativeAccess<>::oop_store(ptr, obj());
+    res = reinterpret_cast<jobject>(ptr);
+  } else {
+    vm_exit_out_of_memory(sizeof(oop), OOM_MALLOC_ERROR,
+                          "Cannot create JVMCI oop handle");
+  }
+  return res;
+}
+
+void JVMCIRuntime::destroy_global(jobject handle) {
+  // Assert before nulling out, for better debugging.
+  assert(is_global_handle(handle), "precondition");
+  oop* oop_ptr = reinterpret_cast<oop*>(handle);
+  NativeAccess<>::oop_store(oop_ptr, (oop)NULL);
+  _object_handles->release(oop_ptr);
+}
+
+bool JVMCIRuntime::is_global_handle(jobject handle) {
+  const oop* ptr = reinterpret_cast<oop*>(handle);
+  return _object_handles->allocation_status(ptr) == OopStorage::ALLOCATED_ENTRY;
+}
+
+jmetadata JVMCIRuntime::allocate_handle(const methodHandle& handle) {
+  MutexLocker ml(JVMCI_lock);
+  return _metadata_handles->allocate_handle(handle);
+}
+
+jmetadata JVMCIRuntime::allocate_handle(const constantPoolHandle& handle) {
+  MutexLocker ml(JVMCI_lock);
+  return _metadata_handles->allocate_handle(handle);
+}
+
+void JVMCIRuntime::release_handle(jmetadata handle) {
+  MutexLocker ml(JVMCI_lock);
+  _metadata_handles->chain_free_list(handle);
 }
 
 JNIEnv* JVMCIRuntime::init_shared_library_javavm() {
@@ -989,6 +1045,13 @@ void JVMCIRuntime::shutdown() {
     JVMCIEnv __stack_jvmci_env__(JavaThread::current(), instance.is_hotspot(), __FILE__, __LINE__);
     JVMCIEnv* JVMCIENV = &__stack_jvmci_env__;
     JVMCIENV->call_HotSpotJVMCIRuntime_shutdown(instance);
+    if (!instance.is_hotspot()) {
+      // Need to keep the HotSpot based instance alive for the sake of
+      // JVMCICompiler::force_comp_at_level_simple which can race with
+      // shutting down the JVMCI runtime.
+      JVMCIENV->destroy_global(instance);
+    }
+    TRACE_jvmci_1("shut down JVMCI runtime %d", _id);
   }
 }
 
