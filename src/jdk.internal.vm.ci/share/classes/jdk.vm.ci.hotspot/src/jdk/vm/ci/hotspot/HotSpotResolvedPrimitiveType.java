@@ -250,6 +250,16 @@ public final class HotSpotResolvedPrimitiveType extends HotSpotResolvedJavaType 
     }
 
     @Override
+    public boolean hasDefaultMethods() {
+        return false;
+    }
+
+    @Override
+    public boolean declaresDefaultMethods() {
+        return false;
+    }
+
+    @Override
     public ResolvedJavaField findInstanceFieldWithOffset(long offset, JavaKind expectedType) {
         return null;
     }
