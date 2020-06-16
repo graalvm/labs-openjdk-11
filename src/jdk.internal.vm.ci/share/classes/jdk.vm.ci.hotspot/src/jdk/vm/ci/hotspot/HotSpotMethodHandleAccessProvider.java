@@ -54,6 +54,7 @@ public class HotSpotMethodHandleAccessProvider implements MethodHandleAccessProv
         final ResolvedJavaField methodHandleFormField;
         final ResolvedJavaField lambdaFormVmentryField;
         final HotSpotResolvedJavaField callSiteTargetField;
+        final HotSpotResolvedJavaField constantCallSiteFrozenField;
         final ResolvedJavaField methodField;
         final HotSpotResolvedJavaField vmtargetField;
 
@@ -94,6 +95,9 @@ public class HotSpotMethodHandleAccessProvider implements MethodHandleAccessProv
 
                 ResolvedJavaType callSiteType = resolveType("Ljava/lang/invoke/CallSite;");
                 callSiteTargetField = (HotSpotResolvedJavaField) findFieldInClass(callSiteType, "target", methodHandleType);
+                ResolvedJavaType constantCallSiteType = resolveType("Ljava/lang/invoke/ConstantCallSite;");
+                ResolvedJavaType booleanType = resolveType("Z");
+                constantCallSiteFrozenField = (HotSpotResolvedJavaField) findFieldInClass(constantCallSiteType, "isFrozen", booleanType);
             } catch (Throwable ex) {
                 throw new JVMCIError(ex);
             }
@@ -118,7 +122,6 @@ public class HotSpotMethodHandleAccessProvider implements MethodHandleAccessProv
         }
 
     }
-
 
     @Override
     public IntrinsicMethod lookupMethodHandleIntrinsic(ResolvedJavaMethod method) {
