@@ -335,7 +335,7 @@ public class TestResolvedJavaType extends TypeUniverse {
         }
     }
 
-    private class HidingCLassLoader extends ClassLoader {
+    private class HidingClassLoader extends ClassLoader {
         @Override
         protected Class<?> findClass(final String name) throws ClassNotFoundException {
             if (name.endsWith("MissingInterface")) {
@@ -343,7 +343,7 @@ public class TestResolvedJavaType extends TypeUniverse {
             }
             byte[] classData = null;
             try {
-                InputStream is = HidingCLassLoader.class.getResourceAsStream("/" + name.replace('.', '/') + ".class");
+                InputStream is = HidingClassLoader.class.getResourceAsStream("/" + name.replace('.', '/') + ".class");
                 classData = new byte[is.available()];
                 new DataInputStream(is).readFully(classData);
             } catch (IOException e) {
@@ -357,7 +357,7 @@ public class TestResolvedJavaType extends TypeUniverse {
             return metaAccess.lookupJavaType(loadClass(name));
         }
 
-        HidingCLassLoader() {
+        HidingClassLoader() {
             super(null);
         }
 
@@ -380,7 +380,7 @@ public class TestResolvedJavaType extends TypeUniverse {
 
     @Test
     public void linkExceptionTest() throws ClassNotFoundException {
-        HidingCLassLoader cl = new HidingCLassLoader();
+        HidingClassLoader cl = new HidingClassLoader();
         ResolvedJavaType inner = cl.lookupJavaType(Wrapper.class.getName());
         assertTrue("expected default methods", inner.hasDefaultMethods());
         try {
