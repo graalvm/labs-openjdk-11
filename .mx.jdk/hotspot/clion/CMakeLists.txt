@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.10)
 project(jvmci_ce_11)
+set(CMAKE_CONFIGURATION_TYPES "slowdebug;fastdebug;optimized;product" CACHE STRING "" FORCE)
 
 set(CMAKE_CXX_STANDARD 98)
 
@@ -15,12 +16,12 @@ if (APPLE)
 endif()
 
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+if (CMAKE_BUILD_TYPE MATCHES product)
     add_definitions(-DPRODUCT)
 endif()
 
 
-if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE MATCHES .*debug)
     add_definitions(-DASSERT)
 endif()
 
@@ -100,6 +101,8 @@ else()
 endif()
 
 set(HS_VARIANT compiler2)
+set(JVM_VARIANT server)
+set(JDK_VARIANT normal)
 
 if (${HS_VARIANT} STREQUAL "compiler2")
     add_definitions(-DCOMPILER2)
@@ -114,8 +117,8 @@ add_definitions(-DINCLUDE_SUFFIX_CPU=_${HS_CPU})
 add_definitions(-DINCLUDE_SUFFIX_OS=_${HS_OS})
 #add_definitions(-DTARGET_OS_FAMILY_${HS_OS})
 add_definitions(-DHOTSPOT_LIB_ARCH=\"${HS_ARCH}\")
-set(BUILD_DIR ${BUILD_ROOT}/${HS_OS}-${ALT_HS_ARCH}-normal-server-slowdebug)  # ??
-set(GENERATED_DIR ${BUILD_DIR}/hotspot/variant-server/gensrc)
+set(BUILD_DIR ${BUILD_ROOT}/${HS_OS}-${ALT_HS_ARCH}-${JDK_VARIANT}-${JVM_VARIANT}-${CMAKE_BUILD_TYPE})
+set(GENERATED_DIR ${BUILD_DIR}/hotspot/variant-${JVM_VARIANT}/gensrc)
 set(OS_CPU_VM_SOURCES_DIR ${HOTSPOT_SRC_ROOT}/os_cpu/${HS_OS}_${HS_CPU})
 file(GLOB OS_CPU_JVM_SOURCES
         ${OS_CPU_VM_SOURCES_DIR}/*${HS_CPU}.cpp
