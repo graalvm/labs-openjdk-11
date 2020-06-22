@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -465,7 +465,13 @@
   declare_constant(CodeInstaller::CRC_TABLE_ADDRESS)                      \
   declare_constant(CodeInstaller::LOG_OF_HEAP_REGION_GRAIN_BYTES)         \
   declare_constant(CodeInstaller::INLINE_CONTIGUOUS_ALLOCATION_SUPPORTED) \
+  declare_constant(CodeInstaller::DEOPT_MH_HANDLER_ENTRY)                 \
   declare_constant(CodeInstaller::INVOKE_INVALID)                         \
+                                                                          \
+  declare_constant(vmIntrinsics::FIRST_MH_SIG_POLY)                       \
+  declare_constant(vmIntrinsics::LAST_MH_SIG_POLY)                        \
+  declare_constant(vmIntrinsics::_invokeGeneric)                          \
+  declare_constant(vmIntrinsics::_compiledLambdaForm)                     \
                                                                           \
   declare_constant(ConstantPool::CPCACHE_INDEX_TAG)                       \
   declare_constant(ConstantPool::_has_dynamic_constant)                   \
