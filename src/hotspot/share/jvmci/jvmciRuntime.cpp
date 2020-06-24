@@ -733,7 +733,7 @@ JVMCIRuntime::JVMCIRuntime(int id) {
 		                            JVMCIGlobalAlloc_lock,
 		                            JVMCIGlobalActive_lock);
   _metadata_handles = new MetadataHandles();
-  JVMCI::log("created new JVMCI runtime %d (" PTR_FORMAT ")", id, p2i(this));
+  JVMCI_event_1("created new JVMCI runtime %d (" PTR_FORMAT ")", id, p2i(this));
 }
 
 jobject JVMCIRuntime::make_global(const Handle& obj) {
@@ -844,7 +844,7 @@ JNIEnv* JVMCIRuntime::init_shared_library_javavm() {
     if (result == JNI_OK) {
       guarantee(env != NULL, "missing env");
       _shared_library_javavm = javaVM;
-      JVMCI::log("created JavaVM[%ld]@" PTR_FORMAT " for JVMCI runtime %d", javaVM_id, p2i(javaVM), _id);
+      JVMCI_event_1("created JavaVM[%ld]@" PTR_FORMAT " for JVMCI runtime %d", javaVM_id, p2i(javaVM), _id);
       return env;
     } else {
       vm_exit_during_initialization(err_msg("JNI_CreateJavaVM failed with return value %d", result), sl_path);
@@ -922,15 +922,15 @@ void JVMCIRuntime::initialize(JVMCIEnv* JVMCIENV) {
   }
 
   while (_init_state == being_initialized) {
-    JVMCI::log("waiting for initialization of JVMCI runtime %d", _id);
+    JVMCI_event_1("waiting for initialization of JVMCI runtime %d", _id);
     JVMCI_lock->wait();
     if (_init_state == fully_initialized) {
-      JVMCI::log("done waiting for initialization of JVMCI runtime %d", _id);
+      JVMCI_event_1("done waiting for initialization of JVMCI runtime %d", _id);
       return;
     }
   }
 
-  JVMCI::log("initializing JVMCI runtime %d", _id);
+  JVMCI_event_1("initializing JVMCI runtime %d", _id);
   _init_state = being_initialized;
 
   {
@@ -971,7 +971,7 @@ void JVMCIRuntime::initialize(JVMCIEnv* JVMCIENV) {
   }
 
   _init_state = fully_initialized;
-  JVMCI::log("initialized JVMCI runtime %d", _id);
+  JVMCI_event_1("initialized JVMCI runtime %d", _id);
   JVMCI_lock->notify_all();
 }
 
@@ -1062,12 +1062,12 @@ JVM_END
 void JVMCIRuntime::shutdown() {
   JVMCIObject instance = _HotSpotJVMCIRuntime_instance;
   if (instance.is_non_null()) {
-    JVMCI::log("shutting down JVMCI runtime %d", _id);
+    JVMCI_event_1("shutting down JVMCI runtime %d", _id);
     _HotSpotJVMCIRuntime_instance = JVMCIObject();
     JVMCIEnv __stack_jvmci_env__(JavaThread::current(), instance.is_hotspot(), __FILE__, __LINE__);
     JVMCIEnv* JVMCIENV = &__stack_jvmci_env__;
     JVMCIENV->call_HotSpotJVMCIRuntime_shutdown(instance);
-    JVMCI::log("shut down JVMCI runtime %d", _id);
+    JVMCI_event_1("shut down JVMCI runtime %d", _id);
   }
 }
 
