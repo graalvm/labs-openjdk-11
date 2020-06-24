@@ -1067,12 +1067,6 @@ void JVMCIRuntime::shutdown() {
     JVMCIEnv __stack_jvmci_env__(JavaThread::current(), instance.is_hotspot(), __FILE__, __LINE__);
     JVMCIEnv* JVMCIENV = &__stack_jvmci_env__;
     JVMCIENV->call_HotSpotJVMCIRuntime_shutdown(instance);
-    if (!instance.is_hotspot()) {
-      // Need to keep the HotSpot based instance alive for the sake of
-      // JVMCICompiler::force_comp_at_level_simple which can race with
-      // shutting down the JVMCI runtime.
-      JVMCIENV->destroy_global(instance);
-    }
     TRACE_jvmci_1("shut down JVMCI runtime %d", _id);
   }
 }
