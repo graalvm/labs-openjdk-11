@@ -87,10 +87,11 @@
   NOT_COMPILER2(product(bool, ReduceInitialCardMarks, true,                 \
           "Defer write barriers of young objects"))                         \
                                                                             \
+  experimental(intx, JVMCIEventLogLevel, 1,                                 \
+          "Event log level for JVMCI")                                      \
+                                                                            \
   experimental(intx, JVMCITraceLevel, 0,                                    \
-          "Trace level for JVMCI: "                                         \
-          "1 means emit a message for each CompilerToVM call,"              \
-          "levels greater than 1 provide progressively greater detail")     \
+          "Trace level for JVMCI")                                          \
                                                                             \
   experimental(intx, JVMCICounterSize, 0,                                   \
           "Reserved size for benchmark counters")                           \
