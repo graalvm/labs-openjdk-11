@@ -379,7 +379,7 @@ var getJibProfilesCommon = function (input, data) {
         };
     };
 
-    common.boot_jdk_version = "10";
+    common.boot_jdk_version = input.build_cpu == 'aarch64' ? "11.0.7" : "10";
     common.boot_jdk_home = input.get("boot_jdk", "home_path") + "/jdk-"
         + common.boot_jdk_version
         + (input.build_os == "macosx" ? ".jdk/Contents/Home" : "");
@@ -903,9 +903,17 @@ var getJibProfilesDependencies = function (input, common) {
         ? input.get("gnumake", "install_path") + "/cygwin/bin"
         : input.get("gnumake", "install_path") + "/bin");
 
-    var dependencies = {
-
-        boot_jdk: {
+    if (input.build_cpu == 'aarch64') {
+        boot_jdk = {
+            organization: common.organization,
+            ext: "tar.gz",
+            module: "jdk-linux_aarch64",
+            revision: "11.0.7+1.0",
+            configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
+            environment_path: common.boot_jdk_home + "/bin"
+        }
+    } else {
+        boot_jdk = {
             server: "jpg",
             product: "jdk",
             version: common.boot_jdk_version,
@@ -914,7 +922,12 @@ var getJibProfilesDependencies = function (input, common) {
                 + boot_jdk_platform + "_bin.tar.gz",
             configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
             environment_path: common.boot_jdk_home + "/bin"
-        },
+        }
+    }
+
+    var dependencies = {
+
+        boot_jdk: boot_jdk,
 
         devkit: {
             organization: common.organization,
