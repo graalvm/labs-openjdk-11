@@ -267,7 +267,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "master",
+    local downstream_branch = "cpu/graal-vm/20.1",
 
     local clone_graal = {
         run+: [
