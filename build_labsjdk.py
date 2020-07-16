@@ -312,14 +312,11 @@ def main():
         "--with-version-opt=" + "jvmci-" + jvmci_version,
         "--with-version-pre="
     ]
-    if opts.disable_warnings_as_errors:
+    # If we are building on musl, some warnings are produced which would abort the compilation
+    if opts.disable_warnings_as_errors or is_musl(build_os):
         configure_options.append("--disable-warnings-as-errors")
-    else:
-        if build_arch != 'aarch64':
-            configure_options.append("--disable-precompiled-headers")
-        if is_musl(build_os):
-            # If we are building on musl, some warnings are produced which would abort the compilation
-            configure_options.append("--disable-warnings-as-errors")
+    if build_arch != 'aarch64':
+        configure_options.append("--disable-precompiled-headers")
 
     check_call(["sh", "configure"] + configure_options, cwd=jdk_src_dir)
     check_call([opts.make, "LOG=info", "CONF=" + conf_name, "product-bundles", "static-libs-bundles"], cwd=jdk_src_dir)
