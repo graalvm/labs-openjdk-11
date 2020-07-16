@@ -261,6 +261,7 @@ def main():
     parser.add_argument('--jdk-debug-level', action='store', help='value for --with-debug-level JDK config option', default='release', choices=['release', 'fastdebug','slowdebug'])
     parser.add_argument('--devkit', action='store', help='value for --with-devkit configure option', default=env.get('DEVKIT', ''), metavar='<path>')
     parser.add_argument('--jvmci-version', action='store', help='JVMCI version (e.g., 19.3-b03)', metavar='<version>')
+    parser.add_argument('--disable-warnings-as-errors', action='store_true', help='do not consider compiler warnings to be an errors')
 
     opts = parser.parse_args()
     build_os = get_os()
@@ -311,11 +312,14 @@ def main():
         "--with-version-opt=" + "jvmci-" + jvmci_version,
         "--with-version-pre="
     ]
-    if build_arch != 'aarch64':
-        configure_options.append("--disable-precompiled-headers")
-    if is_musl(build_os):
-        # If we are building on musl, some warnings are produced which would abort the compilation
+    if opts.disable_warnings_as_errors:
         configure_options.append("--disable-warnings-as-errors")
+    else:
+        if build_arch != 'aarch64':
+            configure_options.append("--disable-precompiled-headers")
+        if is_musl(build_os):
+            # If we are building on musl, some warnings are produced which would abort the compilation
+            configure_options.append("--disable-warnings-as-errors")
 
     check_call(["sh", "configure"] + configure_options, cwd=jdk_src_dir)
     check_call([opts.make, "LOG=info", "CONF=" + conf_name, "product-bundles", "static-libs-bundles"], cwd=jdk_src_dir)
