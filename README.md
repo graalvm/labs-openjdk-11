@@ -13,6 +13,21 @@ python build_labsjdk.py
 This will produce a labsjdk installation under `build/labsjdks/release` along with 2 archives in the same
 directory; one for the JDK itself and a separate one for the debug symbols.
 
+You can pass extra options to the `configure` script using `--configure-option` or `--configure-options`. For example:
+```
+--configure-option=--disable-warnings-as-errors --configure-option=--with-extra-cxxflags=-fcommon --configure-option=--with-extra-cflags=-fcommon
+```
+or alternatively:
+```
+--configure-options=my.config
+```
+where the contents of the file `my.config` are:
+```
+--disable-warnings-as-errors
+--with-extra-cxxflags=-fcommon
+--with-extra-cflags=-fcommon
+```
+
 You can verify the labsjdk build with:
 ```
 ./build/labsjdks/release/java_home/bin/java -version

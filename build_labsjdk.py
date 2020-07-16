@@ -261,6 +261,10 @@ def main():
     parser.add_argument('--jdk-debug-level', action='store', help='value for --with-debug-level JDK config option', default='release', choices=['release', 'fastdebug','slowdebug'])
     parser.add_argument('--devkit', action='store', help='value for --with-devkit configure option', default=env.get('DEVKIT', ''), metavar='<path>')
     parser.add_argument('--jvmci-version', action='store', help='JVMCI version (e.g., 19.3-b03)', metavar='<version>')
+    
+    extra_config = parser.add_mutually_exclusive_group()
+    extra_config.add_argument('--configure-options', action='store', help='File containing extra options for configure script, one option per line', metavar='<path>')
+    extra_config.add_argument('--configure-option', action='append', help='Extra option appended to configure script', metavar='<path>')
 
     opts = parser.parse_args()
     build_os = get_os()
@@ -316,6 +320,15 @@ def main():
     if is_musl(build_os):
         # If we are building on musl, some warnings are produced which would abort the compilation
         configure_options.append("--disable-warnings-as-errors")
+
+    if opts.configure_options:
+        with open(opts.configure_options, 'r') as conf:
+            for line in conf:
+                option = line.strip()
+                if not option.startswith('#'):
+                    configure_options.append(option)
+    elif opts.configure_option:
+        configure_options.extend(opts.configure_option)
 
     check_call(["sh", "configure"] + configure_options, cwd=jdk_src_dir)
     check_call([opts.make, "LOG=info", "CONF=" + conf_name, "product-bundles", "static-libs-bundles"], cwd=jdk_src_dir)
