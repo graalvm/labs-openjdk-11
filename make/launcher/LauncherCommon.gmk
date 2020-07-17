@@ -61,7 +61,7 @@ LAUNCHER_CFLAGS += -I$(TOPDIR)/src/java.base/share/native/launcher \
 
 ifeq ($(call isTargetOs, ios), true)
   LAUNCHER_CFLAGS += -I$(TOPDIR)/src/java.base/macosx/native/libjli
-fi
+endif
 
 GLOBAL_VERSION_INFO_RESOURCE := $(TOPDIR)/src/java.base/windows/native/common/version.rc
 JAVA_VERSION_INFO_RESOURCE := $(TOPDIR)/src/java.base/windows/native/launcher/java.rc
