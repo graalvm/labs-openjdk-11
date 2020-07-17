@@ -29,6 +29,7 @@
 #include <arpa/inet.h>
 #include <objc/objc-runtime.h>
 
+#include <Security/AuthSession.h>
 #include <CoreFoundation/CoreFoundation.h>
 #include <SystemConfiguration/SystemConfiguration.h>
 #include <Foundation/Foundation.h>
@@ -44,11 +45,9 @@
 #include <CoreFoundation/CFlocale.h>
 
 #endif
-
 #include "java_props_macosx.h"
 
 #ifndef TARGET_IOS
-
 char *getPosixLocale(int cat) {
     char *lc = setlocale(cat, NULL);
     if ((lc == NULL) || (strcmp(lc, "C") == 0)) {
@@ -235,6 +234,25 @@ char *setupMacOSXLocale(int cat) {
     } else {
         return ret;
     }
+}
+
+int isInAquaSession() {
+    // environment variable to bypass the aqua session check
+    char *ev = getenv("AWT_FORCE_HEADFUL");
+    if (ev && (strncasecmp(ev, "true", 4) == 0)) {
+        // if "true" then tell the caller we're in an Aqua session without actually checking
+        return 1;
+    }
+    // Is the WindowServer available?
+    SecuritySessionId session_id;
+    SessionAttributeBits session_info;
+    OSStatus status = SessionGetInfo(callerSecuritySession, &session_id, &session_info);
+    if (status == noErr) {
+        if (session_info & sessionHasGraphicAccess) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 // 10.9 SDK does not include the NSOperatingSystemVersion struct.
@@ -442,12 +460,14 @@ void setProxyProperties(java_props_t *sProps) {
     cf_httpHost = NULL,
     cf_httpsHost = NULL,
     cf_ftpHost = NULL,
-    cf_socksHost = NULL;
+    cf_socksHost = NULL,
+    cf_gopherHost = NULL;
     int
     httpPort = 80, // Default proxy port values
     httpsPort = 443,
     ftpPort = 21,
-    socksPort = 1080;
+    socksPort = 1080,
+    gopherPort = 70;
 
     CFDictionaryRef dict = SCDynamicStoreCopyProxies(NULL);
     if (dict == NULL) return;
@@ -503,6 +523,7 @@ void setProxyProperties(java_props_t *sProps) {
     CHECK_PROXY(https, HTTPS);
     CHECK_PROXY(ftp, FTP);
     CHECK_PROXY(socks, SOCKS);
+    CHECK_PROXY(gopher, Gopher);
 
 #undef CHECK_PROXY
 
