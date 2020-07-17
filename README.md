@@ -13,6 +13,8 @@ python build_labsjdk.py
 This will produce a labsjdk installation under `build/labsjdks/release` along with 2 archives in the same
 directory; one for the JDK itself and a separate one for the debug symbols.
 
+NOTE: if you want to pass options for `configure` in OpenJDK, you can pass the file location which lists them in each line to `--configure-options` on `build_labsjdk.py`.
+
 You can verify the labsjdk build with:
 ```
 ./build/labsjdks/release/java_home/bin/java -version
