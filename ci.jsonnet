@@ -3,7 +3,7 @@ local defs = import "defs.jsonnet";
 # https://github.com/graalvm/labs-openjdk-11/blob/master/doc/testing.md
 local run_test_spec = "test/hotspot/jtreg/compiler/jvmci";
 
-local labsjdk_builder_version = "ef0ec72512c0978676894a26d5dceba841c262f9";
+local labsjdk_builder_version = "de724ca4da0c678e712542d1093c82eb1147ce3a";
 local os(conf) = conf.environment.CI_OS;
 
 {
