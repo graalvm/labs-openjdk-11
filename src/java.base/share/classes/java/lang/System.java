@@ -772,9 +772,11 @@ public final class System {
         if (props == null) {
             props = new Properties();
             initProperties(props);
-            VersionProps.init(props);
+            System.props = props;
+            VersionProps.init();
+        } else {
+            System.props = props;
         }
-        System.props = props;
     }
 
     /**
