@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -256,6 +256,13 @@ public class InliningData {
 
         // type check based inlining
         return getTypeCheckedInlineInfo(invoke, targetMethod);
+    }
+
+    private InlineInfo getTypeCheckedAssumptionInfo(Invoke invoke, ResolvedJavaMethod method, ResolvedJavaType type) {
+        if (!checkTargetConditions(invoke, method)) {
+            return null;
+        }
+        return new TypeGuardInlineInfo(invoke, method, type);
     }
 
     private InlineInfo getTypeCheckedInlineInfo(Invoke invoke, ResolvedJavaMethod targetMethod) {

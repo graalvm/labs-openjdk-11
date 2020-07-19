@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+
 class VersionProps {
 
     private static final String launcher_name =
@@ -71,7 +72,7 @@ class VersionProps {
     private static final String VENDOR_URL =
         "@@VENDOR_URL@@";
 
-    // The remaining VENDOR_* fields must not be final,
+    // The remaining fields must not be final,
     // so that they can be redefined by jlink plugins
 
     // This field is read by HotSpot
@@ -85,21 +86,17 @@ class VersionProps {
     private static String VENDOR_URL_VM_BUG =
         "@@VENDOR_URL_VM_BUG@@";
 
-    // This field is read by HotSpot
-    private static String VENDOR_VERSION =
-        "@@VENDOR_VERSION_STRING@@";
-
-    public static void init() {
-        System.setProperty("java.version", java_version);
-        System.setProperty("java.version.date", java_version_date);
-        System.setProperty("java.runtime.version", java_runtime_version);
-        System.setProperty("java.runtime.name", java_runtime_name);
+    public static void init(Properties props) {
+        props.put("java.version", java_version);
+        props.put("java.version.date", java_version_date);
+        props.put("java.runtime.version", java_runtime_version);
+        props.put("java.runtime.name", java_runtime_name);
         if (!VENDOR_VERSION.isEmpty())
-            System.setProperty("java.vendor.version", VENDOR_VERSION);
+            props.put("java.vendor.version", VENDOR_VERSION);
 
-        System.setProperty("java.vendor", VENDOR);
-        System.setProperty("java.vendor.url", VENDOR_URL);
-        System.setProperty("java.vendor.url.bug", VENDOR_URL_BUG);
+        props.put("java.vendor", VENDOR);
+        props.put("java.vendor.url", VENDOR_URL);
+        props.put("java.vendor.url.bug", VENDOR_URL_BUG);
     }
 
     private static int parseVersionNumber(String version, int prevIndex, int index) {

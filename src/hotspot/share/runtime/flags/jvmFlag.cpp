@@ -998,12 +998,6 @@ bool JVMFlagEx::is_cmdline(JVMFlags flag) {
   return f->is_command_line();
 }
 
-bool JVMFlagEx::is_jimage_resource(JVMFlags flag) {
-  assert((size_t)flag < JVMFlag::numFlags, "bad command line flag index");
-  JVMFlag* f = &JVMFlag::flags[flag];
-  return f->is_jimage_resource();
-}
-
 bool JVMFlag::wasSetOnCmdline(const char* name, bool* value) {
   JVMFlag* result = JVMFlag::find_flag((char*)name, strlen(name));
   if (result == NULL) return false;
