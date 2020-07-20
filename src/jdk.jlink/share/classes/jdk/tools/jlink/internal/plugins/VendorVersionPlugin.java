@@ -26,7 +26,8 @@
 package jdk.tools.jlink.internal.plugins;
 
 /**
- * Plugin to set the vendor version string
+ * Plugin to set the vendor version string, by redefining the static field
+ * java.lang.VersionProps.VENDOR_VERSION
  */
 public final class VendorVersionPlugin extends VersionPropsPlugin {
 

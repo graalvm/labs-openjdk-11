@@ -3,7 +3,7 @@ local defs = import "defs.jsonnet";
 # https://github.com/graalvm/labs-openjdk-11/blob/master/doc/testing.md
 local run_test_spec = "test/hotspot/jtreg/compiler/jvmci";
 
-local labsjdk_builder_version = "ef0ec72512c0978676894a26d5dceba841c262f9";
+local labsjdk_builder_version = "de724ca4da0c678e712542d1093c82eb1147ce3a";
 local os(conf) = conf.environment.CI_OS;
 
 {
@@ -183,7 +183,7 @@ local os(conf) = conf.environment.CI_OS;
             # Need to fix line endings on Windows to satisfy cygwin
             # https://stackoverflow.com/a/26408129
             ["set-export", "JDK_SRC_DIR", "${PWD}\\..\\jdk"],
-            ["git", "clone", "--quiet", "--config", "core.autocrlf=input", ".", "${JDK_SRC_DIR}"],
+            ["git", "clone", "--quiet", "-c", "core.autocrlf=input", "-c", "gc.auto=0", ".", "${JDK_SRC_DIR}"],
         ] else [
             ["set-export", "JDK_SRC_DIR", "${PWD}"],
         ]) + [
@@ -199,14 +199,14 @@ local os(conf) = conf.environment.CI_OS;
             "pip:pylint" : "==1.1.0",
         } else {},
         name: "build-jdk" + conf.name,
-        timelimit: "1:30:00",
+        timelimit: "1:50:00",
         diskspace_required: "10G",
         logs: ["*.log"],
         targets: ["gate"],
 
         run+: [
             ["set-export", "LABSJDK_BUILDER_DIR", conf.path("${PWD}/../labsjdk-builder")],
-            ["git", "clone", "--quiet", "--config", "core.autocrlf=input", defs.labsjdk_builder_url, "${LABSJDK_BUILDER_DIR}"],
+            ["git", "clone", "--quiet", "-c", "core.autocrlf=input", "-c", "gc.auto=0", defs.labsjdk_builder_url, "${LABSJDK_BUILDER_DIR}"],
             ["git", "-C", "${LABSJDK_BUILDER_DIR}", "checkout", labsjdk_builder_version],
 
             # This restricts cygwin to be on the PATH only while using jib.
@@ -267,7 +267,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "master",
+    local downstream_branch = "ds/GR-24732", # adapt to signature change in JDK-8233234
 
     local clone_graal = {
         run+: [

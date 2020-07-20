@@ -84,6 +84,7 @@ const char *env_list[] = {
   // Env variables that are defined on Solaris/Linux/BSD
   "LD_LIBRARY_PATH", "LD_PRELOAD", "SHELL", "DISPLAY",
   "HOSTTYPE", "OSTYPE", "ARCH", "MACHTYPE",
+  "LANG", "LC_ALL", "LC_CTYPE", "TZ",
 
   // defined on Linux
   "LD_ASSUME_KERNEL", "_JAVA_SR_SIGNUM",
@@ -124,12 +125,14 @@ static char* next_OnError_command(char* buf, int buflen, const char** ptr) {
 
 static void print_bug_submit_message(outputStream *out, Thread *thread) {
   if (out == NULL) return;
-  out->print_raw_cr("# If you would like to submit a bug report, please visit:");
-  out->print_raw   ("#   ");
   const char *url = Arguments::java_vendor_url_bug();
   if (url == NULL || *url == '\0')
     url = JDK_Version::runtime_vendor_vm_bug_url();
-  out->print_raw_cr(url);
+  if (url != NULL && *url != '\0') {
+    out->print_raw_cr("# If you would like to submit a bug report, please visit:");
+    out->print_raw   ("#   ");
+    out->print_raw_cr(url);
+  }
   // If the crash is in native code, encourage user to submit a bug to the
   // provider of that code.
   if (thread && thread->is_Java_thread() &&
