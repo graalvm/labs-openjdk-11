@@ -199,7 +199,7 @@ local os(conf) = conf.environment.CI_OS;
             "pip:pylint" : "==1.1.0",
         } else {},
         name: "build-jdk" + conf.name,
-        timelimit: "1:30:00",
+        timelimit: "1:50:00",
         diskspace_required: "10G",
         logs: ["*.log"],
         targets: ["gate"],
