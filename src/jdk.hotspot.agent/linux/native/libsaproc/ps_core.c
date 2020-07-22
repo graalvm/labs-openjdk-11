@@ -724,6 +724,7 @@ static bool read_lib_segments(struct ps_prochandle* ph, int lib_fd, ELF_EHDR* li
         // rounded up to page boundary.
         if ((strcmp(LIBC, "musl")) &&
             (existing_map->memsz != page_size) &&
+            (existing_map->fd != ph->core->core_fd) &&
             (existing_map->fd != lib_fd) &&
             (ROUNDUP(existing_map->memsz, page_size) != ROUNDUP(lib_php->p_memsz, page_size))) {
 
