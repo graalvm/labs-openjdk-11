@@ -1005,12 +1005,6 @@ bool JVMFlag::wasSetOnCmdline(const char* name, bool* value) {
   return true;
 }
 
-bool JVMFlagEx::is_jimage_resource(JVMFlags flag) {
-  assert((size_t)flag < JVMFlag::numFlags, "bad command line flag index");
-  JVMFlag* f = &JVMFlag::flags[flag];
-  return f->is_jimage_resource();
-}
-
 void JVMFlagEx::setOnCmdLine(JVMFlagsWithType flag) {
   JVMFlag* faddr = address_of_flag(flag);
   assert(faddr != NULL, "Unknown flag");

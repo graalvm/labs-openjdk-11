@@ -25,18 +25,24 @@
 
 package org.graalvm.compiler.core.test;
 
-import jdk.vm.ci.meta.ResolvedJavaType;
+import java.util.Map;
+
 import org.graalvm.compiler.nodes.CallTargetNode;
+import org.graalvm.compiler.nodes.Invoke;
 import org.graalvm.compiler.nodes.InvokeNode;
 import org.graalvm.compiler.nodes.StructuredGraph;
 import org.graalvm.compiler.nodes.java.InstanceOfNode;
+import org.graalvm.compiler.phases.BasePhase;
 import org.graalvm.compiler.phases.OptimisticOptimizations;
 import org.graalvm.compiler.phases.common.CanonicalizerPhase;
 import org.graalvm.compiler.phases.common.inlining.InliningPhase;
+import org.graalvm.compiler.phases.common.inlining.info.InlineInfo;
+import org.graalvm.compiler.phases.common.inlining.policy.GreedyInliningPolicy;
 import org.graalvm.compiler.phases.tiers.HighTierContext;
-import org.graalvm.compiler.phases.tiers.PhaseContext;
 import org.graalvm.compiler.serviceprovider.GraalServices;
 import org.junit.Test;
+
+import jdk.vm.ci.meta.ResolvedJavaType;
 
 public class SingleImplementorInterfaceTest extends GraalCompilerTest {
 
@@ -77,7 +83,7 @@ public class SingleImplementorInterfaceTest extends GraalCompilerTest {
         ResolvedJavaType expectedReferencedType = getMetaAccess().lookupJavaType(Interface2.class);
         singleImplementorType.initialize();
         StructuredGraph graph = parseEager("singleImplementorInterfaceSnippet1", StructuredGraph.AllowAssumptions.YES);
-        new CanonicalizerPhase().apply(graph, new PhaseContext(getProviders()));
+        createCanonicalizerPhase().apply(graph, getProviders());
         // Devirtualization shouldn't work in this case. The invoke should remain intact.
         InvokeNode invoke = graph.getNodes().filter(InvokeNode.class).first();
         assertTrue(invoke != null, "Should have an invoke");
@@ -93,7 +99,7 @@ public class SingleImplementorInterfaceTest extends GraalCompilerTest {
         ResolvedJavaType singleImplementorType = getMetaAccess().lookupJavaType(SingleImplementor1.class);
         singleImplementorType.initialize();
         StructuredGraph graph = parseEager("singleImplementorInterfaceSnippet2", StructuredGraph.AllowAssumptions.YES);
-        new CanonicalizerPhase().apply(graph, new PhaseContext(getProviders()));
+        createCanonicalizerPhase().apply(graph, getProviders());
         InvokeNode invoke = graph.getNodes().filter(InvokeNode.class).first();
         assertTrue(invoke != null, "Should have an invoke");
         if (GraalServices.hasLookupReferencedType()) {
@@ -113,7 +119,7 @@ public class SingleImplementorInterfaceTest extends GraalCompilerTest {
         singleImplementorType.initialize();
         StructuredGraph graph = parseEager("singleImplementorInterfaceSnippet1", StructuredGraph.AllowAssumptions.YES);
         HighTierContext context = new HighTierContext(getProviders(), getDefaultGraphBuilderSuite(), OptimisticOptimizations.ALL);
-        new InliningPhase(new CanonicalizerPhase()).apply(graph, context);
+        createInliningPhase().apply(graph, context);
         // Inlining shouldn't do anything
         InvokeNode invoke = graph.getNodes().filter(InvokeNode.class).first();
         assertTrue(invoke != null, "Should have an invoke");
@@ -133,7 +139,7 @@ public class SingleImplementorInterfaceTest extends GraalCompilerTest {
         singleImplementorType.initialize();
         StructuredGraph graph = parseEager("singleImplementorInterfaceSnippet2", StructuredGraph.AllowAssumptions.YES);
         HighTierContext context = new HighTierContext(getProviders(), getDefaultGraphBuilderSuite(), OptimisticOptimizations.ALL);
-        new InliningPhase(new CanonicalizerPhase()).apply(graph, context);
+        createInliningPhase().apply(graph, context);
 
         // Right now inlining will not do anything, but if it starts doing devirtualization of
         // interface calls
@@ -150,5 +156,9 @@ public class SingleImplementorInterfaceTest extends GraalCompilerTest {
             assertTrue(instanceOfNode != null, "Missing the subtype check");
             assertTrue(instanceOfNode.getCheckedStamp().type().equals(singleImplementorType), "Checking against a wrong type");
         }
+    }
+
+    protected CanonicalizerPhase createCanonicalizerPhase() {
+        return new CanonicalizerPhase();
     }
 }
