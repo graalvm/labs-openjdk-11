@@ -33,7 +33,8 @@ import java.util.stream.*;
 import jdk.tools.jlink.plugin.*;
 
 /**
- * Plugin to add VM command-line options
+ * Plugin to add VM command-line options, by storing them in a resource
+ * that's read by the VM at startup
  */
 public final class AddOptionsPlugin extends AddResourcePlugin {
 
