@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
 
+
 class VersionProps {
 
     private static final String launcher_name =
@@ -65,6 +66,12 @@ class VersionProps {
     private static final boolean isLTS =
         "@@VERSION_OPT@@".startsWith("LTS");
 
+    private static final String VENDOR =
+        "@@VENDOR@@";
+
+    private static final String VENDOR_URL =
+        "@@VENDOR_URL@@";
+
     // The remaining fields must not be final,
     // so that they can be redefined by jlink plugins
 
@@ -86,6 +93,9 @@ class VersionProps {
         props.put("java.runtime.name", java_runtime_name);
         if (!VENDOR_VERSION.isEmpty())
             props.put("java.vendor.version", VENDOR_VERSION);
+
+        props.put("java.vendor", VENDOR);
+        props.put("java.vendor.url", VENDOR_URL);
         props.put("java.vendor.url.bug", VENDOR_URL_BUG);
     }
 

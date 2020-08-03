@@ -1154,7 +1154,7 @@ static const char* get_java_runtime_version(TRAPS) {
   }
 }
 
-// extract the JRE vendor version from java.lang.VersionProps.java_runtime_version
+// extract the JRE vendor version from java.lang.VersionProps.VENDOR_VERSION
 static const char* get_java_runtime_vendor_version(TRAPS) {
   Klass* k = SystemDictionary::find(vmSymbols::java_lang_VersionProps(),
                                     Handle(), Handle(), CHECK_AND_CLEAR_NULL);
@@ -1176,7 +1176,7 @@ static const char* get_java_runtime_vendor_version(TRAPS) {
   }
 }
 
-// extract the JRE vendor VM bug URL from java.lang.VersionProps.java_runtime_version
+// extract the JRE vendor VM bug URL from java.lang.VersionProps.VENDOR_URL_VM_BUG
 static const char* get_java_runtime_vendor_vm_bug_url(TRAPS) {
   Klass* k = SystemDictionary::find(vmSymbols::java_lang_VersionProps(),
                                     Handle(), Handle(), CHECK_AND_CLEAR_NULL);
@@ -3863,7 +3863,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     return status;
   }
 
-  JFR_ONLY(Jfr::on_vm_init();)
+  JFR_ONLY(Jfr::on_create_vm_1();)
 
   // Should be done after the heap is fully created
   main_thread->cache_global_variables();
@@ -4002,6 +4002,8 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // loaded until phase 2 completes
   call_initPhase2(CHECK_JNI_ERR);
 
+  JFR_ONLY(Jfr::on_create_vm_2();)
+
   // Always call even when there are not JVMTI environments yet, since environments
   // may be attached late and JVMTI must track phases of VM execution
   JvmtiExport::enter_start_phase();
@@ -4036,7 +4038,7 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
   // Notify JVMTI agents that VM initialization is complete - nop if no agents.
   JvmtiExport::post_vm_initialized();
 
-  JFR_ONLY(Jfr::on_vm_start();)
+  JFR_ONLY(Jfr::on_create_vm_3();)
 
 #if INCLUDE_MANAGEMENT
   Management::initialize(THREAD);
@@ -4383,9 +4385,6 @@ bool Threads::destroy_vm() {
   before_exit(thread);
 
   thread->exit(true);
-  // thread will never call smr_delete, instead of implicit cancel
-  // in wait_for_vm_thread_exit we do it explicit.
-  thread->cancel_handshake();
 
   // Stop VM thread.
   {

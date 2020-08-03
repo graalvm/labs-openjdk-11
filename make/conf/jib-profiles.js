@@ -415,7 +415,10 @@ var getJibProfilesProfiles = function (input, common, data) {
             target_cpu: "x64",
             dependencies: ["devkit", "graalunit_lib"],
             configure_args: concat(common.configure_args_64bit, "--with-zlib=system",
-                "--with-macosx-version-max=10.9.0"),
+                "--with-macosx-version-max=10.9.0",
+                // Use system SetFile instead of the one in the devkit as the
+                // devkit one may not work on Catalina.
+                "SETFILE=/usr/bin/SetFile"),
         },
 
         "solaris-x64": {
@@ -854,10 +857,10 @@ var getJibProfilesDependencies = function (input, common) {
 
     var devkit_platform_revisions = {
         linux_x64: "gcc7.3.0-OEL6.4+1.1",
-        macosx_x64: "Xcode9.4-MacOSX10.13+1.0",
+        macosx_x64: "Xcode10.1-MacOSX10.14+1.0",
         solaris_x64: "SS12u4-Solaris11u1+1.0",
-        solaris_sparcv9: "SS12u4-Solaris11u1+1.1",
-        windows_x64: "VS2017-15.5.5+1.0",
+        solaris_sparcv9: "SS12u4-Solaris11u1+2.0",
+        windows_x64: "VS2017-15.9.16+1.0",
         linux_aarch64: (input.profile != null && input.profile.indexOf("arm64") >= 0
                     ? "gcc-linaro-aarch64-linux-gnu-4.8-2013.11_linux+1.0"
                     : "gcc7.3.0-Fedora27+1.1"),
@@ -865,7 +868,7 @@ var getJibProfilesDependencies = function (input, common) {
                     ? "gcc-linaro-arm-linux-gnueabihf-raspbian-2012.09-20120921_linux+1.0"
                     : (input.profile != null && input.profile.indexOf("arm32") >= 0
                        ? "gcc7.3.0-Fedora27+1.1"
-                       : "arm-linaro-4.7+1.0"
+                       : "arm-linaro-4.7+1.1"
                        )
                     )
     };
@@ -920,7 +923,7 @@ var getJibProfilesDependencies = function (input, common) {
         jtreg: {
             server: "javare",
             revision: "4.2",
-            build_number: "b13",
+            build_number: "b14",
             checksum_file: "MD5_VALUES",
             file: "jtreg_bin-4.2.zip",
             environment_name: "JT_HOME",
