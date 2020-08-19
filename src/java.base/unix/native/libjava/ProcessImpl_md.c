@@ -485,8 +485,10 @@ startChild(JNIEnv *env, jobject process, ChildStuff *c, const char *helperpath) 
 #endif
       case MODE_FORK:
         return forkChild(c);
+#ifndef ANDROID
       case MODE_POSIX_SPAWN:
         return spawnChild(env, process, c, helperpath);
+#endif
       default:
         return -1;
     }
