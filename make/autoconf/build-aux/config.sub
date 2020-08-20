@@ -37,7 +37,8 @@ if [ "$1"x = "x86_64-unknown-linux-musl"x ]; then
     exit
 fi
 
-# First, filter out everything that doesn't begin with "aarch64-"
+# First, filter out everything that doesn't begin with "aarch64-" 
+# or end with "-ios" or "-android".
 if ! echo $* | egrep "^aarch64-|-ios|-android" >/dev/null ; then
     . $DIR/autoconf-config.sub "$@"
     # autoconf-config.sub exits, so we never reach here, but just in
