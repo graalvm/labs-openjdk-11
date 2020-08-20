@@ -77,9 +77,13 @@ endif
 # Param 1 - module name
 # Param 2 - library name
 # Param 3 - optional subdir for library
-FindStaticLib = \
-    $(addprefix $(SUPPORT_OUTPUTDIR)/native/, \
-        $(strip $1)$(strip $3)/$(LIBRARY_PREFIX)$(strip $2)$(STATIC_LIBRARY_SUFFIX))
+ifneq ($(STATIC_LIBS), true)
+  FindStaticLib = \
+      $(addprefix $(SUPPORT_OUTPUTDIR)/native/, \
+          $(strip $1)$(strip $3)/$(LIBRARY_PREFIX)$(strip $2)$(STATIC_LIBRARY_SUFFIX))
+else
+  FindStaticLib =
+endif
 
 # Put the libraries here.
 INSTALL_LIBRARIES_HERE := $(call FindLibDirForModule, $(MODULE))
