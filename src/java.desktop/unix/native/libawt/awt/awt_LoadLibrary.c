@@ -204,7 +204,7 @@ Java_sun_awt_motif_XsessionWMcommand(JNIEnv *env, jobject this,
     }
 
     XsessionWMcommand = (XsessionWMcommand_type *)
-        dlsym(awtHandle, "Java_sun_awt_motif_XsessionWMcommand");
+        dlsym(awtHandle, "Java_sun_xawt_motif_XsessionWMcommand");
 
     if (XsessionWMcommand == NULL)
         return;
@@ -231,7 +231,7 @@ Java_sun_awt_motif_XsessionWMcommand_New(JNIEnv *env, jobjectArray jargv)
     }
 
     XsessionWMcommand = (XsessionWMcommand_New_type *)
-        dlsym(awtHandle, "Java_sun_awt_motif_XsessionWMcommand_New");
+        dlsym(awtHandle, "Java_sun_xawt_motif_XsessionWMcommand_New");
 
     if (XsessionWMcommand == NULL)
         return;
