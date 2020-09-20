@@ -39,7 +39,7 @@ typedef struct {
 typedef mlib_image *(*MlibCreateFP_t)(mlib_type, mlib_s32, mlib_s32,
                                        mlib_s32);
 typedef mlib_image *(*MlibCreateStructFP_t)(mlib_type, mlib_s32, mlib_s32,
-                                             mlib_s32, mlib_s32, void *);
+                                             mlib_s32, mlib_s32, const void *);
 typedef void (*MlibDeleteFP_t)(mlib_image *);
 
 typedef struct {
