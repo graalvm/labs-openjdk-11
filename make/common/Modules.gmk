@@ -131,6 +131,7 @@ ifneq ($(filter $(OPENJDK_TARGET_OS), android ios), )
   MODULES_FILTER += java.desktop
   MODULES_FILTER += jdk.accessibility
   MODULES_FILTER += jdk.jdwp.agent
+  MODULES_FILTER += jdk.jdi
 endif
 
 JRE_TOOL_MODULES += \
