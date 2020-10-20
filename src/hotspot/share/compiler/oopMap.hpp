@@ -76,10 +76,31 @@ public:
 
   // Constructors
   OopMapValue () { set_value(0); set_content_reg(VMRegImpl::Bad()); }
-  OopMapValue (VMReg reg, oop_types t) { set_reg_type(reg, t); set_content_reg(VMRegImpl::Bad()); }
-  OopMapValue (VMReg reg, oop_types t, VMReg reg2) { set_reg_type(reg, t); set_content_reg(reg2); }
-  OopMapValue (CompressedReadStream* stream) { read_from(stream); }
+  OopMapValue (VMReg reg, oop_types t, VMReg reg2) {
+    set_reg_type(reg, t);
+    set_content_reg(reg2);
+  }
 
+ private:
+    void set_reg_type(VMReg p, oop_types t) {
+    set_value((p->value() << register_shift) | t);
+    assert(reg() == p, "sanity check" );
+    assert(type() == t, "sanity check" );
+  }
+
+  void set_content_reg(VMReg r) {
+    if (is_callee_saved()) {
+      // This can never be a stack location, so we don't need to transform it.
+      assert(r->is_reg(), "Trying to callee save a stack location");
+    } else if (is_derived_oop()) {
+      assert (r->is_valid(), "must have a valid VMReg");
+    } else {
+      assert (!r->is_valid(), "valid VMReg not allowed");
+    }
+    _content_reg = r->value();
+  }
+
+ public:
   // Archiving
   void write_on(CompressedWriteStream* stream) {
     stream->write_int(value());
@@ -101,11 +122,14 @@ public:
   bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; }
   bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; }
 
+<<<<<<< HEAD
   void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); }
   void set_narrowoop()        { set_value((value() & register_mask_in_place) | narrowoop_value); }
   void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); }
   void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); }
 
+=======
+>>>>>>> jdk-11.0.9+10
   VMReg reg() const { return VMRegImpl::as_VMReg(mask_bits(value(), register_mask_in_place) >> register_shift); }
   oop_types type() const      { return (oop_types)mask_bits(value(), type_mask_in_place); }
 
@@ -113,15 +137,7 @@ public:
     return (p->value()  == (p->value() & register_mask));
   }
 
-  void set_reg_type(VMReg p, oop_types t) {
-    set_value((p->value() << register_shift) | t);
-    assert(reg() == p, "sanity check" );
-    assert(type() == t, "sanity check" );
-  }
-
-
   VMReg content_reg() const       { return VMRegImpl::as_VMReg(_content_reg, true); }
-  void set_content_reg(VMReg r)   { _content_reg = r->value(); }
 
   // Physical location queries
   bool is_register_loc()      { return reg()->is_reg(); }
@@ -159,6 +175,8 @@ class OopMap: public ResourceObj {
   enum DeepCopyToken { _deep_copy_token };
   OopMap(DeepCopyToken, OopMap* source);  // used only by deep_copy
 
+  void set_xxx(VMReg reg, OopMapValue::oop_types x, VMReg optional);
+
  public:
   OopMap(int frame_size, int arg_count);
 
@@ -176,12 +194,9 @@ class OopMap: public ResourceObj {
   // frame_size units are stack-slots (4 bytes) NOT intptr_t; we can name odd
   // slots to hold 4-byte values like ints and floats in the LP64 build.
   void set_oop  ( VMReg local);
-  void set_value( VMReg local);
   void set_narrowoop(VMReg local);
-  void set_dead ( VMReg local);
   void set_callee_saved( VMReg local, VMReg caller_machine_register );
   void set_derived_oop ( VMReg local, VMReg derived_from_local_register );
-  void set_xxx(VMReg reg, OopMapValue::oop_types x, VMReg optional);
 
   int heap_size() const;
   void copy_data_to(address addr) const;

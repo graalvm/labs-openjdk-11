@@ -169,19 +169,7 @@ AC_DEFUN([FLAGS_SETUP_WARNINGS],
     gcc)
       DISABLE_WARNING_PREFIX="-Wno-"
       CFLAGS_WARNINGS_ARE_ERRORS="-Werror"
-      # Repeate the check for the BUILD_CC and BUILD_CXX. Need to also reset
-      # CFLAGS since any target specific flags will likely not work with the
-      # build compiler
-      CC_OLD="$CC"
-      CXX_OLD="$CXX"
-      CC="$BUILD_CC"
-      CXX="$BUILD_CXX"
-      CFLAGS_OLD="$CFLAGS"
-      CFLAGS=""
       BUILD_CC_DISABLE_WARNING_PREFIX="-Wno-"
-      CC="$CC_OLD"
-      CXX="$CXX_OLD"
-      CFLAGS="$CFLAGS_OLD"
       ;;
     clang)
       DISABLE_WARNING_PREFIX="-Wno-"
@@ -376,6 +364,17 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
 
   FLAGS_SETUP_CFLAGS_CPU_DEP([TARGET])
 
+  # Repeat the check for the BUILD_CC and BUILD_CXX. Need to also reset CFLAGS
+  # since any target specific flags will likely not work with the build compiler.
+  CC_OLD="$CC"
+  CXX_OLD="$CXX"
+  CFLAGS_OLD="$CFLAGS"
+  CXXFLAGS_OLD="$CXXFLAGS"
+  CC="$BUILD_CC"
+  CXX="$BUILD_CXX"
+  CFLAGS=""
+  CXXFLAGS=""
+
   FLAGS_OS=$OPENJDK_BUILD_OS
   FLAGS_OS_TYPE=$OPENJDK_BUILD_OS_TYPE
   FLAGS_CPU=$OPENJDK_BUILD_CPU
@@ -387,6 +386,7 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
 
   FLAGS_SETUP_CFLAGS_CPU_DEP([BUILD], [OPENJDK_BUILD_], [BUILD_])
 
+<<<<<<< HEAD
   # Extra flags needed when building optional static versions of certain
   # JDK libraries.
   STATIC_LIBS_CFLAGS="-DSTATIC_BUILD=1"
@@ -399,6 +399,12 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
 	IF_TRUE: [STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -Xassembler -mrelax-relocations=no"])
   fi
   AC_SUBST(STATIC_LIBS_CFLAGS)
+=======
+  CC="$CC_OLD"
+  CXX="$CXX_OLD"
+  CFLAGS="$CFLAGS_OLD"
+  CXXFLAGS="$CXXFLAGS_OLD"
+>>>>>>> jdk-11.0.9+10
 
   # Tests are only ever compiled for TARGET
   CFLAGS_TESTLIB="$CFLAGS_JDKLIB"
