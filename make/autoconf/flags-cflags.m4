@@ -386,7 +386,6 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
 
   FLAGS_SETUP_CFLAGS_CPU_DEP([BUILD], [OPENJDK_BUILD_], [BUILD_])
 
-<<<<<<< HEAD
   # Extra flags needed when building optional static versions of certain
   # JDK libraries.
   STATIC_LIBS_CFLAGS="-DSTATIC_BUILD=1"
@@ -399,12 +398,6 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
 	IF_TRUE: [STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -Xassembler -mrelax-relocations=no"])
   fi
   AC_SUBST(STATIC_LIBS_CFLAGS)
-=======
-  CC="$CC_OLD"
-  CXX="$CXX_OLD"
-  CFLAGS="$CFLAGS_OLD"
-  CXXFLAGS="$CXXFLAGS_OLD"
->>>>>>> jdk-11.0.9+10
 
   # Tests are only ever compiled for TARGET
   CFLAGS_TESTLIB="$CFLAGS_JDKLIB"

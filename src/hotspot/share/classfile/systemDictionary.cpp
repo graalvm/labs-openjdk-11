@@ -2023,16 +2023,10 @@ void SystemDictionary::resolve_well_known_classes(TRAPS) {
   // JSR 292 classes
   WKID jsr292_group_start = WK_KLASS_ENUM_NAME(MethodHandle_klass);
   WKID jsr292_group_end   = WK_KLASS_ENUM_NAME(VolatileCallSite_klass);
-<<<<<<< HEAD
-  initialize_wk_klasses_until(jsr292_group_start, scan, CHECK);
-  initialize_wk_klasses_through(jsr292_group_end, scan, CHECK);
-  initialize_wk_klasses_until(WKID_LIMIT, scan, CHECK);
-=======
   resolve_wk_klasses_until(jsr292_group_start, scan, CHECK);
   resolve_wk_klasses_through(jsr292_group_end, scan, CHECK);
-  WKID last = NOT_JVMCI(WKID_LIMIT) JVMCI_ONLY(FIRST_JVMCI_WKID);
+  WKID last = NOT_JVMCI(WKID_LIMIT) JVMCI_ONLY(WKID_LIMIT);
   resolve_wk_klasses_until(last, scan, CHECK);
->>>>>>> jdk-11.0.9+10
 
   _box_klasses[T_BOOLEAN] = WK_KLASS(Boolean_klass);
   _box_klasses[T_CHAR]    = WK_KLASS(Character_klass);
