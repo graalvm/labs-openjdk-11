@@ -261,14 +261,24 @@ def main():
     parser.add_argument('--jdk-debug-level', action='store', help='value for --with-debug-level JDK config option', default='release', choices=['release', 'fastdebug','slowdebug'])
     parser.add_argument('--devkit', action='store', help='value for --with-devkit configure option', default=env.get('DEVKIT', ''), metavar='<path>')
     parser.add_argument('--jvmci-version', action='store', help='JVMCI version (e.g., 19.3-b03)', metavar='<version>')
-    
+    parser.add_argument('--static-only', action='store_true', help='only build static libs')
+    parser.add_argument('--target', action='store', help='build target in os-arch format', default=get_os() + "-" + get_arch())
+
     extra_config = parser.add_mutually_exclusive_group()
     extra_config.add_argument('--configure-options', action='store', help='File containing extra options for configure script, one option per line', metavar='<path>')
     extra_config.add_argument('--configure-option', action='append', help='Extra option appended to configure script', metavar='<path>')
 
     opts = parser.parse_args()
-    build_os = get_os()
-    build_arch = get_arch()
+
+    if opts.target is None:
+        abort('Missing target - please specify it with --target option')
+
+    target_info = opts.target.split('-')
+    if len(target_info) != 2:
+        abort('Wrong --target option format')
+
+    build_os = target_info[0]
+    build_arch = target_info[1]
 
     jdk_debug_level = opts.jdk_debug_level
     jdk_src_dir = abspath(dirname(__file__))
@@ -296,6 +306,7 @@ def main():
     install_prefix = 'labsjdk-ce-{}-jvmci-{}{}'.format(java_version, jvmci_version, debug_qualifier)
     jdk_bundle_name = jdk_bundle_prefix + '-{}-{}.tar.gz'.format(build_os, build_arch)
     jdk_bundle = join(target_dir, jdk_bundle_name)
+
     conf_name = build_os + '-' + build_arch + debug_qualifier
 
     # zlib should only be bundled on Windows
@@ -330,8 +341,12 @@ def main():
     elif opts.configure_option:
         configure_options.extend(opts.configure_option)
 
+    bundles = ["static-libs-bundles"]
+    if not opts.static_only:
+        bundles += ["product-bundles"]
+
     check_call(["sh", "configure"] + configure_options, cwd=jdk_src_dir)
-    check_call([opts.make, "LOG=info", "CONF=" + conf_name, "product-bundles", "static-libs-bundles"], cwd=jdk_src_dir)
+    check_call([opts.make, "LOG=info", "CONF=" + conf_name] + bundles, cwd=jdk_src_dir)
 
     bundles_dir = join(build_dir, conf_name, 'bundles')
 
@@ -372,7 +387,9 @@ def main():
     java_exe = join(java_home_symlink, 'bin', 'java')
     if build_os == 'windows':
         java_exe += '.exe'
-    check_call([java_exe, "-version"])
+
+    if not opts.static_only:
+        check_call([java_exe, "-version"])
 
     log('--- Build Succeeded ---')
     log('JDK bundle: {} [{}]'.format(jdk_bundle, human_fmt(getsize(jdk_bundle))))
