@@ -742,11 +742,6 @@ final class CompilerToVM {
     native Object getFlagValue(String name);
 
     /**
-     * Forces linking of {@code type}.
-     */
-    native void ensureLinked(HotSpotResolvedObjectTypeImpl type);
-
-    /**
      * Gets the host class for {@code type}.
      */
     native HotSpotResolvedObjectTypeImpl getHostClass(HotSpotResolvedObjectTypeImpl type);

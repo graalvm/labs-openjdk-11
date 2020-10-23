@@ -385,26 +385,11 @@ AC_DEFUN([FLAGS_SETUP_CFLAGS],
   FLAGS_CPU_LEGACY_LIB=$OPENJDK_BUILD_CPU_LEGACY_LIB
 
   FLAGS_SETUP_CFLAGS_CPU_DEP([BUILD], [OPENJDK_BUILD_], [BUILD_])
-
-<<<<<<< HEAD
-  # Extra flags needed when building optional static versions of certain
-  # JDK libraries.
-  STATIC_LIBS_CFLAGS="-DSTATIC_BUILD=1"
-  if test "x$TOOLCHAIN_TYPE" = xgcc || test "x$TOOLCHAIN_TYPE" = xclang; then
-    STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -ffunction-sections -fdata-sections"
-  fi
-  if test "x$TOOLCHAIN_TYPE" = xgcc; then
-    # Disable relax-relocation to enable compatibility with older linkers
-    FLAGS_COMPILER_CHECK_ARGUMENTS(ARGUMENT: [-Xassembler -mrelax-relocations=no],
-	IF_TRUE: [STATIC_LIBS_CFLAGS="$STATIC_LIBS_CFLAGS -Xassembler -mrelax-relocations=no"])
-  fi
-  AC_SUBST(STATIC_LIBS_CFLAGS)
-=======
+  
   CC="$CC_OLD"
   CXX="$CXX_OLD"
   CFLAGS="$CFLAGS_OLD"
   CXXFLAGS="$CXXFLAGS_OLD"
->>>>>>> jdk-11.0.9+10
 
   # Tests are only ever compiled for TARGET
   CFLAGS_TESTLIB="$CFLAGS_JDKLIB"

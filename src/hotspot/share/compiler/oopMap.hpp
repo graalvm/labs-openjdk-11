@@ -122,14 +122,6 @@ public:
   bool is_callee_saved()      { return mask_bits(value(), type_mask_in_place) == callee_saved_value; }
   bool is_derived_oop()       { return mask_bits(value(), type_mask_in_place) == derived_oop_value; }
 
-<<<<<<< HEAD
-  void set_oop()              { set_value((value() & register_mask_in_place) | oop_value); }
-  void set_narrowoop()        { set_value((value() & register_mask_in_place) | narrowoop_value); }
-  void set_callee_saved()     { set_value((value() & register_mask_in_place) | callee_saved_value); }
-  void set_derived_oop()      { set_value((value() & register_mask_in_place) | derived_oop_value); }
-
-=======
->>>>>>> jdk-11.0.9+10
   VMReg reg() const { return VMRegImpl::as_VMReg(mask_bits(value(), register_mask_in_place) >> register_shift); }
   oop_types type() const      { return (oop_types)mask_bits(value(), type_mask_in_place); }
 
