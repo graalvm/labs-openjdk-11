@@ -686,10 +686,20 @@ void JVMCINMethodData::set_nmethod_mirror(nmethod* nm, oop new_mirror) {
   Universe::heap()->register_nmethod(nm);
 }
 
+<<<<<<< HEAD
 void JVMCINMethodData::clear_nmethod_mirror(nmethod* nm) {
   if (_nmethod_mirror_index != -1) {
     oop* addr = nm->oop_addr_at(_nmethod_mirror_index);
     *addr = NULL;
+=======
+void JVMCIRuntime::initialize_well_known_classes(TRAPS) {
+  if (JVMCIRuntime::_well_known_classes_initialized == false) {
+    guarantee(can_initialize_JVMCI(), "VM is not yet sufficiently booted to initialize JVMCI");
+    SystemDictionary::WKID scan = SystemDictionary::FIRST_JVMCI_WKID;
+    SystemDictionary::resolve_wk_klasses_through(SystemDictionary::LAST_JVMCI_WKID, scan, CHECK);
+    JVMCIJavaClasses::compute_offsets(CHECK);
+    JVMCIRuntime::_well_known_classes_initialized = true;
+>>>>>>> jdk-11.0.9+10
   }
 }
 
