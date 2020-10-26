@@ -133,16 +133,7 @@ void OopMap::set_xxx(VMReg reg, OopMapValue::oop_types x, VMReg optional) {
   assert( _locs_used[reg->value()] == OopMapValue::unused_value, "cannot insert twice" );
   debug_only( _locs_used[reg->value()] = x; )
 
-  OopMapValue o(reg, x);
-
-  if(x == OopMapValue::callee_saved_value) {
-    // This can never be a stack location, so we don't need to transform it.
-    assert(optional->is_reg(), "Trying to callee save a stack location");
-    o.set_content_reg(optional);
-  } else if(x == OopMapValue::derived_oop_value) {
-    o.set_content_reg(optional);
-  }
-
+  OopMapValue o(reg, x, optional);
   o.write_on(write_stream());
   increment_count();
 }
@@ -150,11 +141,6 @@ void OopMap::set_xxx(VMReg reg, OopMapValue::oop_types x, VMReg optional) {
 
 void OopMap::set_oop(VMReg reg) {
   set_xxx(reg, OopMapValue::oop_value, VMRegImpl::Bad());
-}
-
-
-void OopMap::set_value(VMReg reg) {
-  // At this time, we don't need value entries in our OopMap.
 }
 
 
@@ -319,10 +305,13 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
 
   // handle derived pointers first (otherwise base pointer may be
   // changed before derived pointer offset has been collected)
-  OopMapValue omv;
   {
-    OopMapStream oms(map);
-    if (!oms.is_done()) {
+    for (OopMapStream oms(map); !oms.is_done(); oms.next()) {
+      OopMapValue omv = oms.current();
+      if (omv.type() != OopMapValue::derived_oop_value) {
+        continue;
+      }
+
 #ifndef TIERED
       COMPILER1_PRESENT(ShouldNotReachHere();)
 #if INCLUDE_JVMCI
@@ -335,31 +324,26 @@ void OopMapSet::all_do(const frame *fr, const RegisterMap *reg_map,
       // protects the addition of derived pointers to the shared
       // derived pointer table in DerivedPointerTable::add().
       MutexLockerEx x(DerivedPointerTableGC_lock, Mutex::_no_safepoint_check_flag);
-      do {
-        omv = oms.current();
-        if (omv.type() == OopMapValue::derived_oop_value) {
-          oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
-          guarantee(loc != NULL, "missing saved register");
-          oop *derived_loc = loc;
-          oop *base_loc    = fr->oopmapreg_to_location(omv.content_reg(), reg_map);
-          // Ignore NULL oops and decoded NULL narrow oops which
-          // equal to Universe::narrow_oop_base when a narrow oop
-          // implicit null check is used in compiled code.
-          // The narrow_oop_base could be NULL or be the address
-          // of the page below heap depending on compressed oops mode.
-          if (base_loc != NULL && *base_loc != (oop)NULL && !Universe::is_narrow_oop_base(*base_loc)) {
-            derived_oop_fn(base_loc, derived_loc);
-          }
-        }
-        oms.next();
-      }  while (!oms.is_done());
+
+      oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
+      guarantee(loc != NULL, "missing saved register");
+      oop *derived_loc = loc;
+      oop *base_loc    = fr->oopmapreg_to_location(omv.content_reg(), reg_map);
+      // Ignore NULL oops and decoded NULL narrow oops which
+      // equal to Universe::narrow_oop_base when a narrow oop
+      // implicit null check is used in compiled code.
+      // The narrow_oop_base could be NULL or be the address
+      // of the page below heap depending on compressed oops mode.
+      if (base_loc != NULL && *base_loc != (oop)NULL && !Universe::is_narrow_oop_base(*base_loc)) {
+        derived_oop_fn(base_loc, derived_loc);
+      }
     }
   }
 
   {
     // We want coop and oop oop_types
     for (OopMapStream oms(map); !oms.is_done(); oms.next()) {
-      omv = oms.current();
+      OopMapValue omv = oms.current();
       oop* loc = fr->oopmapreg_to_location(omv.reg(),reg_map);
       // It should be an error if no location can be found for a
       // register mentioned as contained an oop of some kind.  Maybe
