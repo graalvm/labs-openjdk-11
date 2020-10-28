@@ -2025,7 +2025,7 @@ void SystemDictionary::resolve_well_known_classes(TRAPS) {
   WKID jsr292_group_end   = WK_KLASS_ENUM_NAME(VolatileCallSite_klass);
   resolve_wk_klasses_until(jsr292_group_start, scan, CHECK);
   resolve_wk_klasses_through(jsr292_group_end, scan, CHECK);
-  WKID last = NOT_JVMCI(WKID_LIMIT) JVMCI_ONLY(WKID_LIMIT);
+  WKID last = WKID_LIMIT;
   resolve_wk_klasses_until(last, scan, CHECK);
 
   _box_klasses[T_BOOLEAN] = WK_KLASS(Boolean_klass);
