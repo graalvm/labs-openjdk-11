@@ -2627,6 +2627,18 @@ C2V_VMENTRY(void, callSystemExit, (JNIEnv* env, jobject, jint status))
                        CHECK);
 }
 
+C2V_VMENTRY(void, ensureLinked, (JNIEnv* env, jobject, jobject jvmci_type))
+  if (jvmci_type == NULL) {
+    THROW(vmSymbols::java_lang_NullPointerException());
+  }
+
+  Klass* klass = JVMCIENV->asKlass(jvmci_type); 
+  if (klass != NULL && klass->is_instance_klass()) {
+    InstanceKlass* k = InstanceKlass::cast(klass);
+    k->link_class(CHECK);
+  }
+C2V_END
+
 #define CC (char*)  /*cast a literal from (const char*)*/
 #define FN_PTR(f) CAST_FROM_FN_PTR(void*, &(c2v_ ## f))
 
@@ -2774,6 +2786,8 @@ JNINativeMethod CompilerToVM::methods[] = {
   {CC "releaseFailedSpeculations",                    CC "(J)V",                                                                            FN_PTR(releaseFailedSpeculations)},
   {CC "addFailedSpeculation",                         CC "(J[B)Z",                                                                          FN_PTR(addFailedSpeculation)},
   {CC "callSystemExit",                               CC "(I)V",                                                                            FN_PTR(callSystemExit)},
+  {CC "ensureLinked",                                 CC "(" HS_RESOLVED_KLASS ")V",                                                        FN_PTR(ensureLinked)},
+
 };
 
 int CompilerToVM::methods_count() {
