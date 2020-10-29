@@ -308,6 +308,8 @@ class java_lang_Class : AllStatic {
   static objArrayOop  signers(oop java_class);
   static void set_signers(oop java_class, objArrayOop signers);
 
+  static int component_mirror_offset() { return _component_mirror_offset; }
+
   static oop class_loader(oop java_class);
   static void set_module(oop java_class, oop module);
   static oop module(oop java_class);
