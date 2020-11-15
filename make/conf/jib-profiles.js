@@ -379,7 +379,7 @@ var getJibProfilesCommon = function (input, data) {
         };
     };
 
-    common.boot_jdk_version = "10";
+    common.boot_jdk_version = input.build_cpu == 'aarch64' ? "11.0.7" : "10";
     common.boot_jdk_home = input.get("boot_jdk", "home_path") + "/jdk-"
         + common.boot_jdk_version
         + (input.build_os == "macosx" ? ".jdk/Contents/Home" : "");
@@ -878,10 +878,10 @@ var getJibProfilesDependencies = function (input, common) {
         macosx_x64: "Xcode10.1-MacOSX10.14+1.0",
         solaris_x64: "SS12u4-Solaris11u1+1.0",
         solaris_sparcv9: "SS12u4-Solaris11u1+2.0",
-        windows_x64: "VS2017-15.9.16+1.0",
+        windows_x64: "VS2017-15.9.24+1.0",
         linux_aarch64: (input.profile != null && input.profile.indexOf("arm64") >= 0
                     ? "gcc-linaro-aarch64-linux-gnu-4.8-2013.11_linux+1.0"
-                    : "gcc7.3.0-Fedora27+1.1"),
+                    : "gcc7.3.0-OL7.6+2.0"),
         linux_arm: (input.profile != null && input.profile.indexOf("hflt") >= 0
                     ? "gcc-linaro-arm-linux-gnueabihf-raspbian-2012.09-20120921_linux+1.0"
                     : (input.profile != null && input.profile.indexOf("arm32") >= 0
@@ -903,9 +903,17 @@ var getJibProfilesDependencies = function (input, common) {
         ? input.get("gnumake", "install_path") + "/cygwin/bin"
         : input.get("gnumake", "install_path") + "/bin");
 
-    var dependencies = {
-
-        boot_jdk: {
+    if (input.build_cpu == 'aarch64') {
+        boot_jdk = {
+            organization: common.organization,
+            ext: "tar.gz",
+            module: "jdk-linux_aarch64",
+            revision: "11.0.7+1.0",
+            configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
+            environment_path: common.boot_jdk_home + "/bin"
+        }
+    } else {
+        boot_jdk = {
             server: "jpg",
             product: "jdk",
             version: common.boot_jdk_version,
@@ -914,7 +922,12 @@ var getJibProfilesDependencies = function (input, common) {
                 + boot_jdk_platform + "_bin.tar.gz",
             configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
             environment_path: common.boot_jdk_home + "/bin"
-        },
+        }
+    }
+
+    var dependencies = {
+
+        boot_jdk: boot_jdk,
 
         devkit: {
             organization: common.organization,
