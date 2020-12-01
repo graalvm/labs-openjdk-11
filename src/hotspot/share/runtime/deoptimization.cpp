@@ -254,6 +254,7 @@ Deoptimization::UnrollBlock* Deoptimization::fetch_unroll_info_helper(JavaThread
     }
     if (EliminateLocks) {
 #endif // INCLUDE_JVMCI
+      HandleMark hm;
 #ifndef PRODUCT
       bool first = true;
 #endif
@@ -1483,6 +1484,8 @@ void Deoptimization::revoke_biases_of_monitors(JavaThread* thread, frame fr, Reg
     return;
   }
 
+  ResourceMark rm;
+  HandleMark hm;
   GrowableArray<Handle>* objects_to_revoke = new GrowableArray<Handle>();
 
   // Unfortunately we don't have a RegisterMap available in most of
