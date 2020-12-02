@@ -89,6 +89,10 @@
 #include "services/memTracker.hpp"
 #include "utilities/nativeCallStack.hpp"
 #endif // INCLUDE_NMT
+#if INCLUDE_JVMCI
+#include "jvmci/jvmciEnv.hpp"
+#include "jvmci/jvmciRuntime.hpp"
+#endif
 #if INCLUDE_AOT
 #include "aot/aotLoader.hpp"
 #endif // INCLUDE_AOT
@@ -331,6 +335,16 @@ WB_END
 
 WB_ENTRY(jboolean, WB_IsGCSupported(JNIEnv* env, jobject o, jint name))
   return GCConfig::is_gc_supported((CollectedHeap::Name)name);
+WB_END
+
+WB_ENTRY(jboolean, WB_IsGCSupportedByJVMCICompiler(JNIEnv* env, jobject o, jint name))
+#if INCLUDE_JVMCI
+  if (EnableJVMCI) {
+    JVMCIEnv jvmciEnv(thread, env, __FILE__, __LINE__);
+    return jvmciEnv.runtime()->is_gc_supported(&jvmciEnv, (CollectedHeap::Name)name);
+  }
+#endif
+  return false;
 WB_END
 
 WB_ENTRY(jboolean, WB_IsGCSelected(JNIEnv* env, jobject o, jint name))
@@ -1829,6 +1843,14 @@ WB_ENTRY(jboolean, WB_IsCDSIncludedInVmBuild(JNIEnv* env))
 #endif // INCLUDE_CDS
 WB_END
 
+WB_ENTRY(jboolean, WB_IsJVMCISupportedByGC(JNIEnv* env))
+#if INCLUDE_JVMCI
+  return JVMCIGlobals::gc_supports_jvmci();
+#else
+  return false;
+#endif
+WB_END
+
 WB_ENTRY(jboolean, WB_IsJavaHeapArchiveSupported(JNIEnv* env))
   return MetaspaceShared::is_heap_object_archiving_allowed();
 WB_END
@@ -2235,6 +2257,7 @@ static JNINativeMethod methods[] = {
   {CC"areOpenArchiveHeapObjectsMapped",   CC"()Z",    (void*)&WB_AreOpenArchiveHeapObjectsMapped},
   {CC"isCDSIncludedInVmBuild",            CC"()Z",    (void*)&WB_IsCDSIncludedInVmBuild },
   {CC"isJFRIncludedInVmBuild",            CC"()Z",    (void*)&WB_IsJFRIncludedInVmBuild },
+  {CC"isJVMCISupportedByGC",              CC"()Z",    (void*)&WB_IsJVMCISupportedByGC},
   {CC"isJavaHeapArchiveSupported",      CC"()Z",      (void*)&WB_IsJavaHeapArchiveSupported },
 
   {CC"clearInlineCaches0",  CC"(Z)V",                 (void*)&WB_ClearInlineCaches },
@@ -2243,6 +2266,7 @@ static JNINativeMethod methods[] = {
                                                       (void*)&WB_AddCompilerDirective },
   {CC"removeCompilerDirective",   CC"(I)V",           (void*)&WB_RemoveCompilerDirective },
   {CC"isGCSupported",             CC"(I)Z",           (void*)&WB_IsGCSupported},
+  {CC"isGCSupportedByJVMCICompiler", CC"(I)Z",        (void*)&WB_IsGCSupportedByJVMCICompiler},
   {CC"isGCSelected",              CC"(I)Z",           (void*)&WB_IsGCSelected},
   {CC"isGCSelectedErgonomically", CC"()Z",            (void*)&WB_IsGCSelectedErgonomically},
   {CC"supportsConcurrentGCPhaseControl", CC"()Z",     (void*)&WB_SupportsConcurrentGCPhaseControl},
