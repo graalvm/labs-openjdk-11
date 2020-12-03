@@ -3973,10 +3973,13 @@ jint Threads::create_vm(JavaVMInitArgs* args, bool* canTryAgain) {
     Chunk::start_chunk_pool_cleaner_task();
   }
 
+<<<<<<< HEAD
+=======
   // Start the service thread
   // The service thread enqueues JVMTI deferred events and does various hashtable
   // and other cleanups.  Needs to start before the compilers start posting events.
   ServiceThread::initialize();
+>>>>>>> jdk-11.0.10+5
 
   // initialize compiler(s)
 #if defined(COMPILER1) || COMPILER2_OR_JVMCI
