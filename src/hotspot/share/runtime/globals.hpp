@@ -435,6 +435,9 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
   product(bool, CriticalJNINatives, true,                                   \
           "Check for critical JNI entry points")                            \
                                                                             \
+  product(bool, UseLegacyJNINameEscaping, false,                            \
+          "Use the original JNI name escaping scheme")                      \
+                                                                            \
   notproduct(bool, StressCriticalJNINatives, false,                         \
           "Exercise register saving code in critical natives")              \
                                                                             \
@@ -1677,7 +1680,7 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
   notproduct(intx, MaxSubklassPrintSize, 4,                                 \
           "maximum number of subklasses to print when printing klass")      \
                                                                             \
-  product(intx, MaxInlineLevel, 9,                                          \
+  product(intx, MaxInlineLevel, 15,                                         \
           "maximum number of nested calls that are inlined")                \
           range(0, max_jint)                                                \
                                                                             \

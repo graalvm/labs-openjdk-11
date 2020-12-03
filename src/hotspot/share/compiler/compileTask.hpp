@@ -136,6 +136,20 @@ class CompileTask : public CHeapObj<mtCompiler> {
     }
   }
 #if INCLUDE_JVMCI
+  bool         should_wait_for_compilation() const {
+    // Wait for blocking compilation to finish.
+    switch (_compile_reason) {
+        case Reason_CTW:
+        case Reason_Replay:
+        case Reason_Whitebox:
+        case Reason_MustBeCompiled:
+        case Reason_Bootstrap:
+          return _is_blocking;
+        default:
+          return false;
+    }
+  }
+
   bool         has_waiter() const                { return _has_waiter; }
   void         clear_waiter()                    { _has_waiter = false; }
   JVMCICompileState* blocking_jvmci_compile_state() const { return _blocking_jvmci_compile_state; }
