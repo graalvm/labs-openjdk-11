@@ -220,6 +220,8 @@ public class WhiteBox {
   public native void NMTArenaMalloc(long arena, long size);
 
   // Compiler
+  public native boolean isJVMCISupportedByGC();
+
   public native int     matchesMethod(Executable method, String pattern);
   public native int     matchesInline(Executable method, String pattern);
   public native boolean shouldPrintAssembly(Executable method, int comp_level);
@@ -389,6 +391,7 @@ public class WhiteBox {
   // Don't use these methods directly
   // Use sun.hotspot.gc.GC class instead.
   public native boolean isGCSupported(int name);
+  public native boolean isGCSupportedByJVMCICompiler(int name);
   public native boolean isGCSelected(int name);
   public native boolean isGCSelectedErgonomically();
 

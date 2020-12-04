@@ -241,18 +241,12 @@ public class VMProps implements Callable<Map<String, String>> {
             return "false";
         }
 
-        switch (GC.selected()) {
-            case Serial:
-            case Parallel:
-            case G1:
-                // These GCs are supported with JVMCI
-                return "true";
-            default:
-                break;
+        // Not all GCs have full JVMCI support
+        if (!WB.isJVMCISupportedByGC()) {
+          return "false";
         }
 
-        // Every other GC is not supported
-        return "false";
+        return "true";
     }
 
     /**
@@ -282,9 +276,11 @@ public class VMProps implements Callable<Map<String, String>> {
      * @param map - property-value pairs
      */
     protected void vmGC(SafeMap map) {
+        var isJVMCIEnabled = Compiler.isJVMCIEnabled();
         for (GC gc: GC.values()) {
             map.put("vm.gc." + gc.name(),
                     () -> "" + (gc.isSupported()
+                            && (!isJVMCIEnabled || gc.isSupportedByJVMCICompiler())
                             && (gc.isSelected() || GC.isSelectedErgonomically())));
         }
     }

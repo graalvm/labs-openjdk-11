@@ -247,6 +247,19 @@ public final class HotSpotGraalRuntime implements HotSpotGraalRuntimeProvider {
             return false;
         }
 
+        /**
+         * Gets the GC matching {@code name}.
+         *
+         * @param name the ordinal of a {@code CollectedHeap::Name} value
+         */
+        static HotSpotGC forName(int name, GraalHotSpotVMConfig config) {
+            for (HotSpotGC gc : HotSpotGC.values()) {
+                if (config.getConstant("CollectedHeap::" + gc.name(), Integer.class, -1) == name) {
+                    return gc;
+                }
+            }
+            return null;
+        }
     }
 
     private HotSpotGC getSelectedGC() throws GraalError {

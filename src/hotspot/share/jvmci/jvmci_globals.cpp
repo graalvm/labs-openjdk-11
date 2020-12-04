@@ -26,6 +26,7 @@
 #include "jvm.h"
 #include "jvmci/jvmci_globals.hpp"
 #include "gc/shared/gcConfig.hpp"
+#include "logging/log.hpp"
 #include "utilities/defaultStream.hpp"
 #include "utilities/ostream.hpp"
 #include "runtime/globals_extension.hpp"
@@ -196,11 +197,15 @@ bool JVMCIGlobals::enable_jvmci_product_mode(JVMFlag::Flags origin) {
 }
 
 
+bool JVMCIGlobals::gc_supports_jvmci() {
+  return UseSerialGC || UseParallelGC || UseG1GC;
+}
+
 void JVMCIGlobals::check_jvmci_supported_gc() {
   if (EnableJVMCI) {
     // Check if selected GC is supported by JVMCI and Java compiler
-    if (!(UseSerialGC || UseParallelGC || UseParallelOldGC || UseG1GC)) {
-      vm_exit_during_initialization("JVMCI Compiler does not support selected GC", GCConfig::hs_err_name());
+    if (!gc_supports_jvmci()) {
+      log_warning(gc, jvmci)("Setting EnableJVMCI to false as selected GC does not support JVMCI: %s", GCConfig::hs_err_name());
       FLAG_SET_DEFAULT(EnableJVMCI, false);
       FLAG_SET_DEFAULT(UseJVMCICompiler, false);
     }
