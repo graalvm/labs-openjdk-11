@@ -53,6 +53,9 @@ class JVMCI : public AllStatic {
   // execution has completed successfully.
   static volatile bool _is_initialized;
 
+  // used to synchronize lazy initialization of boxing cache classes.
+  static volatile bool _box_caches_initialized;
+
   // Handle created when loading the JVMCI shared library with os::dll_load.
   // Must hold JVMCI_lock when initializing.
   static void* _shared_library_handle;
@@ -110,6 +113,9 @@ class JVMCI : public AllStatic {
   static bool can_initialize_JVMCI();
 
   static void initialize_globals();
+
+  // Ensures the boxing cache classes (e.g., java.lang.Integer.IntegerCache) are initialized.
+  static void ensure_box_caches_initialized(TRAPS);
 
   static void initialize_compiler(TRAPS);
 
