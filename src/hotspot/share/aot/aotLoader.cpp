@@ -27,6 +27,7 @@
 #include "aot/aotCodeHeap.hpp"
 #include "aot/aotLoader.inline.hpp"
 #include "classfile/javaClasses.hpp"
+#include "jvmci/jvmci.hpp"
 #include "memory/allocation.inline.hpp"
 #include "memory/resourceArea.hpp"
 #include "oops/method.hpp"
@@ -322,15 +323,5 @@ void AOTLoader::initialize_box_caches(TRAPS) {
     return;
   }
   TraceTime timer("AOT initialization of box caches", TRACETIME_LOG(Info, aot, startuptime));
-  Symbol* box_classes[] = { java_lang_Boolean::symbol(), java_lang_Byte_ByteCache::symbol(),
-    java_lang_Short_ShortCache::symbol(), java_lang_Character_CharacterCache::symbol(),
-    java_lang_Integer_IntegerCache::symbol(), java_lang_Long_LongCache::symbol() };
-
-  for (unsigned i = 0; i < sizeof(box_classes) / sizeof(Symbol*); i++) {
-    Klass* k = SystemDictionary::resolve_or_fail(box_classes[i], true, CHECK);
-    InstanceKlass* ik = InstanceKlass::cast(k);
-    if (ik->is_not_initialized()) {
-      ik->initialize(CHECK);
-    }
-  }
+  JVMCI::ensure_box_caches_initialized(CHECK);
 }
