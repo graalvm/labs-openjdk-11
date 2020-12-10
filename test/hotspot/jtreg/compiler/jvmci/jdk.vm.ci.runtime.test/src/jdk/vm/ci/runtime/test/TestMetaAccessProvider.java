@@ -172,6 +172,9 @@ public class TestMetaAccessProvider extends TypeUniverse {
     public void getMemorySizeTest() {
         for (ConstantValue cv : constants()) {
             JavaConstant c = cv.value;
+            if (c.getJavaKind() == JavaKind.Illegal) {
+                continue;
+            }
             long memSize = metaAccess.getMemorySize(c);
             if (c.isNull()) {
                 assertEquals("Expected size = 0 for null", memSize, 0L);
