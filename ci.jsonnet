@@ -1,4 +1,4 @@
 {
-    overlay: "c239885b04f925d6c7e8b9c4631c4b1996df6cd4",
+    overlay: "78604fd484a461ddb8a02cf89301f9ec05bcb252",
     specVersion: "2",
 }
