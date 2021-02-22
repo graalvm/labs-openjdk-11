@@ -977,13 +977,8 @@ void ciEnv::register_method(ciMethod* target,
       // as in C2, then it must be freed.
       code_buffer->free_blob();
       return;
-<<<<<<< HEAD
-    }  
-  
-=======
     }
 
->>>>>>> jdk-11.0.11+3
     // To prevent compile queue updates.
     MutexLocker locker(MethodCompileQueue_lock, THREAD);
 
@@ -1018,11 +1013,8 @@ void ciEnv::register_method(ciMethod* target,
       // Check for {class loads, evolution, breakpoints, ...} during compilation
       validate_compile_task_dependencies(target);
     }
-<<<<<<< HEAD
 
 
-=======
->>>>>>> jdk-11.0.11+3
 #if INCLUDE_RTM_OPT
     if (!failing() && (rtm_state != NoRTM) &&
         (method()->method_data() != NULL) &&
