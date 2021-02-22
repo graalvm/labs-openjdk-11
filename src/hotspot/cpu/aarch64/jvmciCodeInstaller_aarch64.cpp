@@ -21,8 +21,13 @@
  * questions.
  */
 
+<<<<<<< HEAD
  #include "jvmci/jvmci.hpp"
  #include "jvmci/jvmciCodeInstaller.hpp"
+=======
+#include "asm/macroAssembler.hpp"
+#include "jvmci/jvmciCodeInstaller.hpp"
+>>>>>>> jdk-11.0.11+3
 #include "jvmci/jvmciRuntime.hpp"
 #include "jvmci/jvmciCompilerToVM.hpp"
 #include "jvmci/jvmciJavaClasses.hpp"
