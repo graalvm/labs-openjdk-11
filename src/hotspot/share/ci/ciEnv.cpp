@@ -977,8 +977,8 @@ void ciEnv::register_method(ciMethod* target,
       // as in C2, then it must be freed.
       code_buffer->free_blob();
       return;
-    }  
-  
+    }
+
     // To prevent compile queue updates.
     MutexLocker locker(MethodCompileQueue_lock, THREAD);
 
