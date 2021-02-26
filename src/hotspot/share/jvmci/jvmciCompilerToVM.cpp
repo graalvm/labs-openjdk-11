@@ -36,6 +36,7 @@
 #include "jvmci/jvmciRuntime.hpp"
 #include "memory/oopFactory.hpp"
 #include "oops/constantPool.inline.hpp"
+#include "oops/instanceMirrorKlass.hpp"
 #include "oops/method.inline.hpp"
 #include "oops/objArrayOop.inline.hpp"
 #include "oops/typeArrayOop.inline.hpp"
@@ -2226,15 +2227,55 @@ C2V_VMENTRY_NULL(jobject, getObject, (JNIEnv* env, jobject, jobject x, long disp
   if (x == NULL) {
     JVMCI_THROW_0(NullPointerException);
   }
-  Handle xobj = JVMCIENV->asConstant(JVMCIENV->wrap(x), JVMCI_CHECK_0);
-  if (displacement == java_lang_Class::component_mirror_offset() && java_lang_Class::is_instance(xobj()) &&
-      !java_lang_Class::as_Klass(xobj())->is_array_klass()) {
+
+  Handle obj = JVMCIENV->asConstant(JVMCIENV->wrap(x), JVMCI_CHECK_0);
+
+  // Perform minimal sanity checks on the read.  Primitive reads are permitted to read outside the
+  // bounds of their fields but object reads must map exactly onto the underlying oop slot.
+  if (obj->is_objArray()) {
+    if (displacement < arrayOopDesc::base_offset_in_bytes(T_OBJECT)) {
+      JVMCI_THROW_MSG_NULL(IllegalArgumentException, "reading from array header");
+    }
+    if (displacement + heapOopSize > arrayOopDesc::base_offset_in_bytes(T_OBJECT) + arrayOop(obj())->length() * heapOopSize) {
+      JVMCI_THROW_MSG_NULL(IllegalArgumentException, "reading after last array element");
+    }
+    if (((displacement - arrayOopDesc::base_offset_in_bytes(T_OBJECT)) % heapOopSize) != 0) {
+      JVMCI_THROW_MSG_NULL(IllegalArgumentException, "misaligned object read from array");
+    }
+  } else if (obj->is_instance()) {
+    bool is_static = false;
+    if (java_lang_Class::is_instance(obj()) && displacement >= InstanceMirrorKlass::offset_of_static_fields()) {
+      is_static = true;
+    }
+    InstanceKlass* klass = InstanceKlass::cast(is_static ? java_lang_Class::as_Klass(obj()) : obj->klass());
+    fieldDescriptor fd;
+    if (!klass->find_field_from_offset(displacement, is_static, &fd)) {
+      JVMCI_THROW_MSG_NULL(IllegalArgumentException, err_msg("Can't find field at displacement %d in object of type %s", (int) displacement, klass->external_name()));
+    }
+    if (fd.field_type() != T_OBJECT && fd.field_type() != T_ARRAY) {
+      JVMCI_THROW_MSG_NULL(IllegalArgumentException, err_msg("Field at displacement %d in object of type %s is %s but expected object", (int) displacement,
+                                                             klass->external_name(), type2name(fd.field_type())));
+    }
+  } else if (obj->is_typeArray()) {
+    JVMCI_THROW_MSG_NULL(IllegalArgumentException, "Unexpected kind: T_OBJECT");
+  }
+
+  if (displacement == java_lang_Class::component_mirror_offset() && java_lang_Class::is_instance(obj()) &&
+      (java_lang_Class::as_Klass(obj()) == NULL || !java_lang_Class::as_Klass(obj())->is_array_klass())) {
     // Class.componentType for non-array classes can transiently contain an int[] that's
     // used for locking so always return null to mimic Class.getComponentType()
     return JVMCIENV->get_jobject(JVMCIENV->get_JavaConstant_NULL_POINTER());
   }
 
-  oop res = xobj->obj_field(displacement);
+  oop res = obj->obj_field(displacement);
+  if (res != NULL && !oopDesc::is_oop(res)) {
+    // Throw an exception to improve debuggability.  This check isn't totally reliable because
+    // is_oop doesn't try to be completety safe but for most invalid values it provides a good
+    // enough answer.  It possible to crash in the is_oop call but that just means the crash happens
+    // closer to where things went wrong.
+    JVMCI_THROW_MSG_NULL(InternalError, err_msg("Read bad oop " INTPTR_FORMAT " at offset " JLONG_FORMAT " in object " INTPTR_FORMAT " of type %s",
+                                                p2i(res), displacement, p2i(obj()), obj->klass()->external_name()));
+  }
   JVMCIObject result = JVMCIENV->get_object_constant(res);
   return JVMCIENV->get_jobject(result);
 }
@@ -2792,7 +2833,7 @@ JNINativeMethod CompilerToVM::methods[] = {
   {CC "getShort",                                     CC "(" OBJECTCONSTANT "J)S",                                                          FN_PTR(getShort)},
   {CC "getInt",                                       CC "(" OBJECTCONSTANT "J)I",                                                          FN_PTR(getInt)},
   {CC "getLong",                                      CC "(" OBJECTCONSTANT "J)J",                                                          FN_PTR(getLong)},
-  {CC "getObject",                                    CC "(" OBJECTCONSTANT "J)" OBJECTCONSTANT,                                            FN_PTR(getObject)},
+  {CC "getObject",                                    CC "(" OBJECTCONSTANT "J)" JAVACONSTANT,                                              FN_PTR(getObject)},
   {CC "deleteGlobalHandle",                           CC "(J)V",                                                                            FN_PTR(deleteGlobalHandle)},
   {CC "registerNativeMethods",                        CC "(" CLASS ")[J",                                                                   FN_PTR(registerNativeMethods)},
   {CC "isCurrentThreadAttached",                      CC "()Z",                                                                             FN_PTR(isCurrentThreadAttached)},

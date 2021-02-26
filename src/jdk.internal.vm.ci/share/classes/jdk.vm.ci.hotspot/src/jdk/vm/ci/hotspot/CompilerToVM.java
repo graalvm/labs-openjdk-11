@@ -886,7 +886,7 @@ final class CompilerToVM {
     /**
      * Reads a Java object from {@code displacement} in {@code object}.
      */
-    native HotSpotObjectConstantImpl getObject(HotSpotObjectConstantImpl object, long displacement);
+    native JavaConstant getObject(HotSpotObjectConstantImpl object, long displacement);
 
     /**
      * @see HotSpotJVMCIRuntime#registerNativeMethods
