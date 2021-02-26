@@ -44,6 +44,8 @@
 #include "gc/z/zWorkers.hpp"
 #include "memory/allocation.hpp"
 
+class ThreadClosure;
+
 class ZHeap {
   friend class VMStructs;
 
@@ -136,6 +138,7 @@ public:
   void mark();
   void mark_flush_and_free(Thread* thread);
   bool mark_end();
+  void keep_alive(oop obj);
 
   // Post-marking & Pre-relocation
   void destroy_detached_pages();
