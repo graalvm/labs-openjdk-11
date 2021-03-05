@@ -90,6 +90,16 @@ public class MemoryAccessProviderTest {
         }
     }
 
+    @Test(dataProvider = "outOfBoundsObjectArray", dataProviderClass = MemoryAccessProviderData.class)
+    public void testReadObjectOutOfBoundsObjectArray(JavaKind kind, Constant base, Long offset, boolean isOutOfBounds) {
+        try {
+            PROVIDER.readObjectConstant(base, offset);
+            Assert.assertFalse(isOutOfBounds);
+        } catch (IllegalArgumentException iae) {
+            Assert.assertTrue(isOutOfBounds, iae.getMessage());
+        }
+    }
+
     @Test(dataProvider = "positiveObject", dataProviderClass = MemoryAccessProviderData.class, expectedExceptions = {IllegalArgumentException.class})
     public void testObjectReadPrimitiveConstant(JavaKind kind, Constant base, Long offset, Object expected, int bitsCount) {
         PROVIDER.readPrimitiveConstant(kind, base, 0L, bitsCount);
