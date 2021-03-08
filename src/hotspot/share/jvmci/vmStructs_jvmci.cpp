@@ -479,6 +479,7 @@
   declare_constant(CollectedHeap::None)                                   \
   declare_constant(CollectedHeap::Serial)                                 \
   declare_constant(CollectedHeap::Parallel)                               \
+  declare_constant(CollectedHeap::CMS)                                    \
   declare_constant(CollectedHeap::G1)                                     \
   declare_constant(CollectedHeap::Epsilon)                                \
                                                                           \
