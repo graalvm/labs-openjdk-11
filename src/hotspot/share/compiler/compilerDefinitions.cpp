@@ -253,6 +253,25 @@ void set_jvmci_specific_flags() {
     if (FLAG_IS_DEFAULT(TypeProfileWidth)) {
       FLAG_SET_DEFAULT(TypeProfileWidth, 8);
     }
+<<<<<<< HEAD
+=======
+    if (FLAG_IS_DEFAULT(OnStackReplacePercentage)) {
+      FLAG_SET_DEFAULT(OnStackReplacePercentage, 933);
+    }
+    // JVMCI needs values not less than defaults
+    if (FLAG_IS_DEFAULT(ReservedCodeCacheSize)) {
+      FLAG_SET_DEFAULT(ReservedCodeCacheSize, MAX2(64*M, ReservedCodeCacheSize));
+    }
+    if (FLAG_IS_DEFAULT(InitialCodeCacheSize)) {
+      FLAG_SET_DEFAULT(InitialCodeCacheSize, MAX2(16*M, InitialCodeCacheSize));
+    }
+    if (FLAG_IS_DEFAULT(MetaspaceSize)) {
+      FLAG_SET_DEFAULT(MetaspaceSize, MIN2(MAX2(12*M, MetaspaceSize), MaxMetaspaceSize));
+    }
+    if (FLAG_IS_DEFAULT(NewSizeThreadIncrease)) {
+      FLAG_SET_DEFAULT(NewSizeThreadIncrease, MAX2(4*K, NewSizeThreadIncrease));
+    }
+>>>>>>> jdk-11.0.11+5
     if (TieredStopAtLevel != CompLevel_full_optimization) {
       // Currently JVMCI compiler can only work at the full optimization level
       warning("forcing TieredStopAtLevel to full optimization because JVMCI is enabled");
