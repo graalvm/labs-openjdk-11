@@ -267,7 +267,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "ds/GR-29831_ignore_bailoutts_in_CTW", # adapt to signature change in JDK-8233234
+    local downstream_branch = "me/GR-29173", # adapt to signature change in JDK-8233234
 
     local clone_graal = {
         run+: [
