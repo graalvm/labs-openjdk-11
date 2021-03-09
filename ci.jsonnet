@@ -3,7 +3,7 @@ local defs = import "defs.jsonnet";
 # https://github.com/graalvm/labs-openjdk-11/blob/master/doc/testing.md
 local run_test_spec = "test/hotspot/jtreg/compiler/jvmci";
 
-local labsjdk_builder_version = "de724ca4da0c678e712542d1093c82eb1147ce3a";
+local labsjdk_builder_version = "66c43e01a537017021f186f9063796e2f82cd2aa";
 local os(conf) = conf.environment.CI_OS;
 
 {
@@ -91,7 +91,7 @@ local os(conf) = conf.environment.CI_OS;
             MACOSX_DEPLOYMENT_TARGET: "10.11"
         },
         name+: "-darwin",
-        capabilities+: ["darwin_mojave"] # JIB only works on the darwin_mojave slaves
+        capabilities+: ["darwin_mojave_6"] # JIB only works on the darwin_mojave slaves
     },
 
     AMD64:: {
@@ -222,7 +222,6 @@ local os(conf) = conf.environment.CI_OS;
             ["python3", "-u", conf.path("${LABSJDK_BUILDER_DIR}/build_labsjdk.py"),
                 "--boot-jdk=${BOOT_JDK}",
                 "--clean-after-build",
-                "--ci-target=tmp",
                 "--jdk-debug-level=release",
                 "--test=" + run_test_spec,
                 "--java-home-link-target=${JAVA_HOME}",
@@ -235,7 +234,6 @@ local os(conf) = conf.environment.CI_OS;
             ["python3", "-u", conf.path("${LABSJDK_BUILDER_DIR}/build_labsjdk.py"),
                 "--boot-jdk=${BOOT_JDK}",
                 "--clean-after-build",
-                "--ci-target=tmp",
                 "--jdk-debug-level=fastdebug",
                 "--test=" + run_test_spec,
                 "--java-home-link-target=${JAVA_HOME_FASTDEBUG}",
