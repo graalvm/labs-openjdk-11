@@ -3,7 +3,7 @@ local defs = import "defs.jsonnet";
 # https://github.com/graalvm/labs-openjdk-11/blob/master/doc/testing.md
 local run_test_spec = "test/hotspot/jtreg/compiler/jvmci";
 
-local labsjdk_builder_version = "eb99e407b1f5c5698f3074a2bd528371646ce890";
+local labsjdk_builder_version = "66c43e01a537017021f186f9063796e2f82cd2aa";
 
 {
     overlay: "509baaf0d06e0fd662ba236954bacf62c6676360",
@@ -89,7 +89,7 @@ local labsjdk_builder_version = "eb99e407b1f5c5698f3074a2bd528371646ce890";
             MACOSX_DEPLOYMENT_TARGET: "10.11"
         },
         name+: "-darwin",
-        capabilities+: ["darwin_mojave"] # JIB only works on the darwin_mojave slaves
+        capabilities+: ["darwin_mojave_6"] # JIB only works on the darwin_mojave slaves
     },
 
     AMD64:: {
@@ -196,7 +196,6 @@ local labsjdk_builder_version = "eb99e407b1f5c5698f3074a2bd528371646ce890";
             ["python3", "-u", conf.path("${LABSJDK_BUILDER_DIR}/build_labsjdk.py"),
                 "--boot-jdk=${BOOT_JDK}",
                 "--clean-after-build",
-                "--ci-target=tmp",
                 "--jdk-debug-level=" + jdk_debug_level,
                 "--test=" + run_test_spec,
                 "--java-home-link-target=${%s}" % java_home_env_var,
@@ -252,7 +251,7 @@ local labsjdk_builder_version = "eb99e407b1f5c5698f3074a2bd528371646ce890";
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "master",
+    local downstream_branch = "me/GR-29173_b04",
 
     local clone_graal = {
         run+: [
