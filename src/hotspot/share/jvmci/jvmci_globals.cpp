@@ -72,8 +72,20 @@ bool JVMCIGlobals::check_jvmci_flags_are_consistent() {
     if (FLAG_IS_DEFAULT(EnableJVMCI)) {
       FLAG_SET_DEFAULT(EnableJVMCI, true);
     }
-    if (EnableJVMCI && FLAG_IS_DEFAULT(UseJVMCICompiler)) {
-      FLAG_SET_DEFAULT(UseJVMCICompiler, true);
+    if (EnableJVMCI) {
+      if (TieredStopAtLevel != CompLevel_full_optimization) {
+        // JVMCI compiler is only used at the full optimization level
+        if (UseJVMCICompiler) {
+          if (!FLAG_IS_DEFAULT(UseJVMCICompiler)) {
+            warning("disabling UseJVMCICompiler because TieredStopAtLevel != %d", CompLevel_full_optimization);
+          }
+          FLAG_SET_ERGO(bool, UseJVMCICompiler, false);
+        }
+      } else {
+        if (FLAG_IS_DEFAULT(UseJVMCICompiler)) {
+          FLAG_SET_DEFAULT(UseJVMCICompiler, true);
+        }
+      }
     }
   }
 
