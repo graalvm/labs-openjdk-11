@@ -265,7 +265,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "me/GR-30028", 
+    local downstream_branch = "me/GR-30028", # add missing graal intrinsic checks
 
     local clone_graal = {
         run+: [
