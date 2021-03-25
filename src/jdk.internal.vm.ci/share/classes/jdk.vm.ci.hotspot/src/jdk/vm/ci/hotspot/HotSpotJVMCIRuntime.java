@@ -1216,18 +1216,4 @@ public final class HotSpotJVMCIRuntime implements JVMCIRuntime {
         }
         compilerToVm.callSystemExit(status);
     }
-<<<<<<< HEAD
-=======
-
-    /**
-     * Writes a message to HotSpot's log stream and then calls {@link System#exit(int)} in HotSpot's
-     * runtime.
-     */
-    JVMCIError exitHotSpotWithMessage(int status, String format, Object... args) {
-        byte[] messageBytes = String.format(format, args).getBytes();
-        writeDebugOutput(messageBytes, 0, messageBytes.length, true, true);
-        exitHotSpot(status);
-        throw JVMCIError.shouldNotReachHere();
-    }
->>>>>>> 4a0cdc659f... allow printing to tty from unattached libgraal thread (JDK-8262011)
 }
