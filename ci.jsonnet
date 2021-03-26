@@ -399,8 +399,8 @@ local os(conf) = conf.environment.CI_OS;
             [ self.BuildLibGraal(conf) for conf in graal_confs ] +
             [ self.TestLibGraal(conf) for conf in graal_confs ] +
 
-            [ self.Build(conf, "false") for conf in aarch64_confs ] +
-            [ self.CompilerTests(conf) for conf in aarch64_confs ] +
+            #[ self.Build(conf, "false") for conf in aarch64_confs ] +
+            #[ self.CompilerTests(conf) for conf in aarch64_confs ] +
 
             [ self.Build(conf, "true") for conf in amd64_musl_confs ] +
 
