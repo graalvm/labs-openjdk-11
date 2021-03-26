@@ -265,7 +265,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "me/GR-29173", # adapt to signature change in JDK-8233234
+    local downstream_branch = "me/GR-30028", # add missing graal intrinsic checks
 
     local clone_graal = {
         run+: [
@@ -399,8 +399,8 @@ local os(conf) = conf.environment.CI_OS;
             [ self.BuildLibGraal(conf) for conf in graal_confs ] +
             [ self.TestLibGraal(conf) for conf in graal_confs ] +
 
-            [ self.Build(conf, "false") for conf in aarch64_confs ] +
-            [ self.CompilerTests(conf) for conf in aarch64_confs ] +
+            #[ self.Build(conf, "false") for conf in aarch64_confs ] +
+            #[ self.CompilerTests(conf) for conf in aarch64_confs ] +
 
             [ self.Build(conf, "true") for conf in amd64_musl_confs ] +
 
