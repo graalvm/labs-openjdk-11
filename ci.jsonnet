@@ -48,11 +48,6 @@ local labsjdk_builder_version = "66c43e01a537017021f186f9063796e2f82cd2aa";
         name+: "-linux",
         os:: "linux",
     },
-    LinuxDockerAArch64:: self.Linux {
-        docker: {
-          image: defs.linux_docker_image_aarch64
-        },
-    },
     LinuxDockerAMD64:: self.Linux {
         docker: {
             image: defs.linux_docker_image_amd64,
@@ -361,14 +356,14 @@ local labsjdk_builder_version = "66c43e01a537017021f186f9063796e2f82cd2aa";
 
     local build_confs = [
         self.LinuxDevkitAMD64 + self.AMD64,
-        self.LinuxDockerAArch64 + self.AArch64,
+        self.Linux + self.AArch64,
         self.Darwin + self.AMD64,
         self.Windows + self.AMD64
     ],
 
     local graal_confs = [
         self.LinuxDevkitAMD64 + self.AMD64,
-        self.LinuxDockerAArch64 + self.AArch64 + self.JTReg + self.BootJDK,
+        self.Linux + self.AArch64 + self.JTReg + self.BootJDK,
         self.Darwin + self.AMD64,
     ],
 
