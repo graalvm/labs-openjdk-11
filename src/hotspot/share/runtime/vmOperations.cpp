@@ -150,6 +150,7 @@ void VM_DeoptimizeNMethod::invalidate(nmethod* nm) {
     // Invalidating the HotSpotNmethod means we want the nmethod
     // to be deoptimized.
     nm->mark_for_deoptimization();
+    nm->make_not_entrant();
     VM_DeoptimizeNMethod op(nm);
     VMThread::execute(&op);
   }
@@ -167,8 +168,6 @@ void VM_DeoptimizeNMethod::doit() {
 
   // Deoptimize all activations depending on marked nmethods
   Deoptimization::deoptimize_dependents();
-
-  _nm->make_not_entrant();
 }
 
 #ifndef PRODUCT
