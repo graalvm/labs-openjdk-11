@@ -31,7 +31,7 @@ suite = {
         ],
       },
       "javaCompliance" : "11+",
-      "checkstyleVersion" : "8.8",
+      "checkstyleVersion" : "8.36.1",
       "workingSets" : "API,JVMCI",
     },
 
@@ -203,4 +203,27 @@ suite = {
       "workingSets" : "JVMCI,HotSpot,SPARC",
     },
   },
+  "distributions": {
+    "JVMCI" : {
+      # This distribution defines a module.
+      "moduleInfo" : {
+        "name" : "jdk.internal.vm.ci",
+      },
+      "subDir" : "src/",
+      "dependencies" : [
+        "jdk.vm.ci.aarch64",
+        "jdk.vm.ci.amd64",
+        "jdk.vm.ci.code",
+        "jdk.vm.ci.common",
+        "jdk.vm.ci.hotspot",
+        "jdk.vm.ci.hotspot.aarch64",
+        "jdk.vm.ci.hotspot.amd64",
+        "jdk.vm.ci.hotspot.sparc",
+        "jdk.vm.ci.meta",
+        "jdk.vm.ci.runtime",
+        "jdk.vm.ci.services",
+        "jdk.vm.ci.sparc",
+      ],
+    },
+  }
 }

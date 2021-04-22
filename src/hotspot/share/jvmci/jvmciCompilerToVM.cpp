@@ -482,10 +482,11 @@ C2V_END
 
 C2V_VMENTRY_0(jboolean, isCompilable,(JNIEnv* env, jobject, jobject jvmci_method))
   methodHandle method = JVMCIENV->asMethod(jvmci_method);
-  constantPoolHandle cp = method->constMethod()->constants();
-  assert(!cp.is_null(), "npe");
-  // don't inline method when constant pool contains a CONSTANT_Dynamic
-  return !method->is_not_compilable(CompLevel_full_optimization) && !cp->has_dynamic_constant();
+  // Skip redefined methods
+  if (method->is_old()) {
+    return false;
+  }
+  return !method->is_not_compilable(CompLevel_full_optimization);
 C2V_END
 
 C2V_VMENTRY_0(jboolean, hasNeverInlineDirective,(JNIEnv* env, jobject, jobject jvmci_method))
@@ -605,8 +606,39 @@ C2V_VMENTRY_NULL(jobject, lookupClass, (JNIEnv* env, jobject, jclass mirror))
 
 C2V_VMENTRY_NULL(jobject, resolvePossiblyCachedConstantInPool, (JNIEnv* env, jobject, jobject jvmci_constant_pool, jint index))
   constantPoolHandle cp = JVMCIENV->asConstantPool(jvmci_constant_pool);
-  oop result = cp->resolve_possibly_cached_constant_at(index, CHECK_NULL);
-  return JVMCIENV->get_jobject(JVMCIENV->get_object_constant(result));
+  oop obj = cp->resolve_possibly_cached_constant_at(index, CHECK_NULL);
+  constantTag tag = cp->tag_at(index);
+  if (tag.is_dynamic_constant() || tag.is_dynamic_constant_in_error()) {
+    if (oopDesc::equals(obj, Universe::the_null_sentinel())) {
+      return JVMCIENV->get_jobject(JVMCIENV->get_JavaConstant_NULL_POINTER());
+    }
+    BasicType bt = FieldType::basic_type(cp->uncached_signature_ref_at(index));
+    if (!is_reference_type(bt)) {
+      if (!is_java_primitive(bt)) {
+        return JVMCIENV->get_jobject(JVMCIENV->get_JavaConstant_ILLEGAL());
+      }
+      jvalue value;
+      jlong raw_value;
+      JVMCIObject kind;
+      BasicType bt2 = java_lang_boxing_object::get_value(obj, &value);
+      assert(bt2 == bt, "");
+      switch (bt2) {
+        case T_LONG:    kind = JVMCIENV->get_JavaKind_Long();    raw_value = value.j; break;
+        case T_DOUBLE:  kind = JVMCIENV->get_JavaKind_Double();  raw_value = value.j; break;
+        case T_FLOAT:   kind = JVMCIENV->get_JavaKind_Float();   raw_value = value.i; break;
+        case T_INT:     kind = JVMCIENV->get_JavaKind_Int();     raw_value = value.i; break;
+        case T_SHORT:   kind = JVMCIENV->get_JavaKind_Short();   raw_value = value.s; break;
+        case T_BYTE:    kind = JVMCIENV->get_JavaKind_Byte();    raw_value = value.b; break;
+        case T_CHAR:    kind = JVMCIENV->get_JavaKind_Char();    raw_value = value.c; break;
+        case T_BOOLEAN: kind = JVMCIENV->get_JavaKind_Boolean(); raw_value = value.z; break;
+        default:        return JVMCIENV->get_jobject(JVMCIENV->get_JavaConstant_ILLEGAL());
+      }
+
+      JVMCIObject result = JVMCIENV->call_JavaConstant_forPrimitive(kind, raw_value, JVMCI_CHECK_NULL);
+      return JVMCIENV->get_jobject(result);
+    }
+  }
+  return JVMCIENV->get_jobject(JVMCIENV->get_object_constant(obj));
 C2V_END
 
 C2V_VMENTRY_0(jint, lookupNameAndTypeRefIndexInPool, (JNIEnv* env, jobject, jobject jvmci_constant_pool, jint index))
@@ -2635,7 +2667,7 @@ JNINativeMethod CompilerToVM::methods[] = {
   {CC "lookupAppendixInPool",                         CC "(" HS_CONSTANT_POOL "I)" OBJECTCONSTANT,                                          FN_PTR(lookupAppendixInPool)},
   {CC "lookupMethodInPool",                           CC "(" HS_CONSTANT_POOL "IB)" HS_RESOLVED_METHOD,                                     FN_PTR(lookupMethodInPool)},
   {CC "constantPoolRemapInstructionOperandFromCache", CC "(" HS_CONSTANT_POOL "I)I",                                                        FN_PTR(constantPoolRemapInstructionOperandFromCache)},
-  {CC "resolvePossiblyCachedConstantInPool",          CC "(" HS_CONSTANT_POOL "I)" OBJECTCONSTANT,                                          FN_PTR(resolvePossiblyCachedConstantInPool)},
+  {CC "resolvePossiblyCachedConstantInPool",          CC "(" HS_CONSTANT_POOL "I)" JAVACONSTANT,                                            FN_PTR(resolvePossiblyCachedConstantInPool)},
   {CC "resolveTypeInPool",                            CC "(" HS_CONSTANT_POOL "I)" HS_RESOLVED_KLASS,                                       FN_PTR(resolveTypeInPool)},
   {CC "resolveFieldInPool",                           CC "(" HS_CONSTANT_POOL "I" HS_RESOLVED_METHOD "B[I)" HS_RESOLVED_KLASS,              FN_PTR(resolveFieldInPool)},
   {CC "resolveInvokeDynamicInPool",                   CC "(" HS_CONSTANT_POOL "I)V",                                                        FN_PTR(resolveInvokeDynamicInPool)},

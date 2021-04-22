@@ -14,6 +14,7 @@ test/nashorn/lib
 NashornProfile.txt
 **/JTreport/**
 **/JTwork/**
+/mxbuild/
 **/.checkstyle
 **/.classpath
 **/.externalToolBuilders

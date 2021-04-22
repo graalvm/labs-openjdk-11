@@ -215,11 +215,11 @@ final class CompilerToVM {
      * constant pool cache first.
      *
      * The behavior of this method is undefined if {@code cpi} does not denote one of the following
-     * entry types: {@code JVM_CONSTANT_String}, {@code JVM_CONSTANT_MethodHandle},
-     * {@code JVM_CONSTANT_MethodHandleInError}, {@code JVM_CONSTANT_MethodType} and
-     * {@code JVM_CONSTANT_MethodTypeInError}.
+     * entry types: {@code JVM_CONSTANT_Dynamic}, {@code JVM_CONSTANT_String},
+     * {@code JVM_CONSTANT_MethodHandle}, {@code JVM_CONSTANT_MethodHandleInError},
+     * {@code JVM_CONSTANT_MethodType} and {@code JVM_CONSTANT_MethodTypeInError}.
      */
-    native HotSpotObjectConstantImpl resolvePossiblyCachedConstantInPool(HotSpotConstantPool constantPool, int cpi);
+    native JavaConstant resolvePossiblyCachedConstantInPool(HotSpotConstantPool constantPool, int cpi);
 
     /**
      * Gets the {@code JVM_CONSTANT_NameAndType} index from the entry at index {@code cpi} in
@@ -789,14 +789,14 @@ final class CompilerToVM {
 
     /**
      * Reads the current value of a static field. If {@code expectedType} is non-null, then the
-     * object is exptected to be a subtype of {@code expectedType} and extra sanity checking is
+     * object is expected to be a subtype of {@code expectedType} and extra sanity checking is
      * performed on the offset and kind of the read being performed.
      */
     native JavaConstant readFieldValue(HotSpotResolvedObjectTypeImpl object, HotSpotResolvedObjectTypeImpl expectedType, long offset, boolean isVolatile, JavaKind kind);
 
     /**
      * Reads the current value of an instance field. If {@code expectedType} is non-null, then the
-     * object is exptected to be a subtype of {@code expectedType} and extra sanity checking is
+     * object is expected to be a subtype of {@code expectedType} and extra sanity checking is
      * performed on the offset and kind of the read being performed.
      */
     native JavaConstant readFieldValue(HotSpotObjectConstantImpl object, HotSpotResolvedObjectTypeImpl expectedType, long offset, boolean isVolatile, JavaKind kind);
