@@ -239,6 +239,7 @@ public:
                                    JVMCIObject target,
                                    JVMCIObject compiled_code,
                                    CodeBlob*& cb,
+                                   nmethodLocker& nmethod_handle,
                                    JVMCIObject installed_code,
                                    FailedSpeculation** failed_speculations,
                                    char* speculations,

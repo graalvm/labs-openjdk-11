@@ -95,7 +95,8 @@ class JVMCI : public AllStatic {
      dependencies_failed,
      dependencies_invalid,
      cache_full,
-     code_too_large
+     code_too_large,
+     first_permanent_bailout = code_too_large
   };
 
   // Gets the handle to the loaded JVMCI shared library, loading it

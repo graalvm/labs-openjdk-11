@@ -1684,7 +1684,7 @@ bool JVMCIRuntime::is_gc_supported(JVMCIEnv* JVMCIENV, CollectedHeap::Name name)
 // ------------------------------------------------------------------
 JVMCI::CodeInstallResult JVMCIRuntime::register_method(JVMCIEnv* JVMCIENV,
                                 const methodHandle& method,
-                                nmethod*& nm,
+                                nmethodLocker& code_handle,
                                 int entry_bci,
                                 CodeOffsets* offsets,
                                 int orig_pc_offset,
@@ -1705,7 +1705,7 @@ JVMCI::CodeInstallResult JVMCIRuntime::register_method(JVMCIEnv* JVMCIENV,
                                 char* speculations,
                                 int speculations_len) {
   JVMCI_EXCEPTION_CONTEXT;
-  nm = NULL;
+  nmethod* nm = NULL;
   int comp_level = CompLevel_full_optimization;
   char* failure_detail = NULL;
 
@@ -1790,6 +1790,7 @@ JVMCI::CodeInstallResult JVMCIRuntime::register_method(JVMCIEnv* JVMCIENV,
           MutexUnlocker locker(MethodCompileQueue_lock);
           CompileBroker::handle_full_code_cache(CodeCache::get_code_blob_type(comp_level));
         }
+        result = JVMCI::cache_full;
       } else {
         nm->set_has_unsafe_access(has_unsafe_access);
         nm->set_has_wide_vectors(has_wide_vector);
@@ -1848,6 +1849,10 @@ JVMCI::CodeInstallResult JVMCIRuntime::register_method(JVMCIEnv* JVMCIENV,
     }
   }
 
+  if (result == JVMCI::ok) {
+    code_handle.set_code(nm);
+  }
+
   // String creation must be done outside lock
   if (failure_detail != NULL) {
     // A failure to allocate the string is silently ignored.
@@ -1855,8 +1860,8 @@ JVMCI::CodeInstallResult JVMCIRuntime::register_method(JVMCIEnv* JVMCIENV,
     JVMCIENV->set_HotSpotCompiledNmethod_installationFailureMessage(compiled_code, message);
   }
 
-  // JVMTI -- compiled method notification (must be done outside lock)
-  if (nm != NULL) {
+  if (result == JVMCI::ok) {
+    // JVMTI -- compiled method notification (must be done outside lock)
     nm->post_compiled_method_load_event();
   }
 
