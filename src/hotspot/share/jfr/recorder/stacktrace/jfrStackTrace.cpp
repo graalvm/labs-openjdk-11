@@ -214,12 +214,8 @@ bool JfrStackTrace::record_thread(JavaThread& thread, frame& frame) {
     _hash = (_hash * 31) + mid;
     _hash = (_hash * 31) + bci;
     _hash = (_hash * 31) + type;
-<<<<<<< HEAD
-    _frames[count] = JfrStackFrame(mid, bci, type, method);
-=======
     _frames[count] = JfrStackFrame(mid, bci, type, lineno, method);
     st.samples_next();
->>>>>>> jdk-11.0.12+4
     count++;
   }
 
