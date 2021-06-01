@@ -53,6 +53,13 @@ CompiledMethod::CompiledMethod(Method* method, const char* name, CompilerType ty
 }
 
 void CompiledMethod::init_defaults() {
+  { // avoid uninitialized fields, even for short time periods
+    _is_far_code                = false;
+    _scopes_data_begin          = NULL;
+    _deopt_handler_begin        = NULL;
+    _deopt_mh_handler_begin     = NULL;
+    _exception_cache            = NULL;
+  }
   _has_unsafe_access          = 0;
   _has_method_handle_invokes  = 0;
   _lazy_critical_native       = 0;
@@ -612,6 +619,7 @@ void CompiledMethod::do_unloading_parallel_postponed() {
   }
 }
 
+<<<<<<< HEAD
 address CompiledMethod::continuation_for_implicit_exception(address pc, bool for_div0_check) {
   // Exception happened outside inline-cache check code => we are inside
   // an active nmethod => use cpc to determine a return address
@@ -665,3 +673,5 @@ bool CompiledMethod::nmethod_access_is_safe(nmethod* nm) {
          os::is_readable_pointer(method->constants()) &&
          os::is_readable_pointer(method->signature());
 }
+=======
+>>>>>>> jdk-11.0.12+4
