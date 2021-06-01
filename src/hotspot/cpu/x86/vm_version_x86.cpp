@@ -746,13 +746,7 @@ void VM_Version::get_processor_features() {
     }
   }
 
-<<<<<<< HEAD
-  _has_intel_jcc_erratum = compute_has_intel_jcc_erratum();
-
-  char buf[256];
-=======
   char buf[512];
->>>>>>> jdk-11.0.12+4
   jio_snprintf(buf, sizeof(buf),
                "(%u cores per cpu, %u threads per core) family %d model %d stepping %d microcode 0x%x"
                "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
