@@ -217,8 +217,6 @@ class OopStorage;
   /* force inline of iterators */                                                                                        \
   do_klass(Iterator_klass,                              java_util_Iterator,                        Pre                 ) \
                                                                                                                          \
-  /* JVMCI classes. These are loaded on-demand. */                                                                       \
-  JVMCI_WK_KLASSES_DO(do_klass)                                                                                          \
                                                                                                                          \
   /*end*/
 

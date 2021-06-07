@@ -619,3 +619,42 @@ void CompiledMethod::do_unloading_parallel_postponed() {
   }
 }
 
+address CompiledMethod::continuation_for_implicit_exception(address pc, bool for_div0_check) {
+  // Exception happened outside inline-cache check code => we are inside
+  // an active nmethod => use cpc to determine a return address
+  int exception_offset = pc - code_begin();
+  int cont_offset = ImplicitExceptionTable(this).continuation_offset( exception_offset );
+#ifdef ASSERT
+  if (cont_offset == 0) {
+    Thread* thread = Thread::current();
+    ResetNoHandleMark rnm; // Might be called from LEAF/QUICK ENTRY
+    HandleMark hm(thread);
+    ResourceMark rm(thread);
+    CodeBlob* cb = CodeCache::find_blob(pc);
+    assert(cb != NULL && cb == this, "");
+    ttyLocker ttyl;
+    tty->print_cr("implicit exception happened at " INTPTR_FORMAT, p2i(pc));
+    print();
+    method()->print_codes();
+    print_code();
+    print_pcs();
+  }
+#endif
+  if (cont_offset == 0) {
+    // Let the normal error handling report the exception
+    return NULL;
+  }
+  if (cont_offset == exception_offset) {
+#if INCLUDE_JVMCI
+    Deoptimization::DeoptReason deopt_reason = for_div0_check ? Deoptimization::Reason_div0_check : Deoptimization::Reason_null_check;
+    JavaThread *thread = JavaThread::current();
+    thread->set_jvmci_implicit_exception_pc(pc);
+    thread->set_pending_deoptimization(Deoptimization::make_trap_request(deopt_reason,
+                                                                         Deoptimization::Action_reinterpret));
+    return (SharedRuntime::deopt_blob()->implicit_exception_uncommon_trap());
+#else
+    ShouldNotReachHere();
+#endif
+  }
+  return code_begin() + cont_offset;
+}
