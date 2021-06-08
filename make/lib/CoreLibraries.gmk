@@ -91,7 +91,7 @@ TARGETS += $(BUILD_LIBVERIFY)
 
 LIBJAVA_CFLAGS := -DARCHPROPNAME='"$(OPENJDK_TARGET_CPU_OSARCH)"'
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
+ifneq (,$(filter $(OPENJDK_TARGET_OS), macosx ios))
   BUILD_LIBJAVA_java_props_md.c_CFLAGS := -x objective-c
   BUILD_LIBJAVA_java_props_macosx.c_CFLAGS := -x objective-c
 endif
@@ -198,7 +198,7 @@ ifeq ($(LIBJLI_ALL_ERGO), $(LIBJLI_EXCLUDE_ERGO))
 endif
 LIBJLI_EXCLUDE_FILES += $(notdir $(LIBJLI_EXCLUDE_ERGO))
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
+ifneq (,$(filter $(OPENJDK_TARGET_OS), macosx ios))
   LIBJLI_EXCLUDE_FILES += java_md_solinux.c ergo.c ergo_i586.c
 
   BUILD_LIBJLI_java_md_macosx.c_CFLAGS := -x objective-c
@@ -241,6 +241,7 @@ $(eval $(call SetupJdkLibrary, BUILD_LIBJLI, \
     EXTRA_FILES := $(LIBJLI_EXTRA_FILES), \
     OPTIMIZATION := HIGH, \
     CFLAGS := $(CFLAGS_JDKLIB) $(LIBJLI_CFLAGS), \
+    CFLAGS_ios := -I$(TOPDIR)/src/java.base/macosx/native/libjli, \
     DISABLED_WARNINGS_gcc := unused-function implicit-fallthrough, \
     DISABLED_WARNINGS_solstudio := \
         E_ASM_DISABLES_OPTIMIZATION \

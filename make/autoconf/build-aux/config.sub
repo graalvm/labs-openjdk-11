@@ -37,8 +37,9 @@ if [ "$1"x = "x86_64-unknown-linux-musl"x ]; then
     exit
 fi
 
-# First, filter out everything that doesn't begin with "aarch64-"
-if ! echo $* | grep '^aarch64-' >/dev/null ; then
+# First, filter out everything that doesn't begin with "aarch64-" 
+# or end with "-ios" or "-android".
+if ! echo $* | egrep "^aarch64-|-ios|-android" >/dev/null ; then
     . $DIR/autoconf-config.sub "$@"
     # autoconf-config.sub exits, so we never reach here, but just in
     # case we do:
@@ -49,6 +50,14 @@ while test $# -gt 0 ; do
     case $1 in 
         -- )   # Stop option processing
             shift; break ;;
+        *-ios* )
+             echo $1
+             exit
+             ;;
+         *-android* )
+             echo $1
+             exit
+             ;;
         aarch64-* )
             config=`echo $1 | sed 's/^aarch64-/arm-/'`
             sub_args="$sub_args $config"

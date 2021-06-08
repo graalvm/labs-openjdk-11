@@ -126,6 +126,18 @@ ifeq ($(OPENJDK_TARGET_OS), solaris)
   PLATFORM_MODULES += jdk.crypto.ucrypto
 endif
 
+# These modules are not needed for android/ios static libs
+ifneq ($(filter $(OPENJDK_TARGET_OS), android ios), )
+  MODULES_FILTER += java.desktop
+  MODULES_FILTER += jdk.accessibility
+  MODULES_FILTER += jdk.jdwp.agent
+  MODULES_FILTER += jdk.jdi
+endif
+ifneq ($(filter $(OPENJDK_TARGET_OS), android ios), )
+  MODULES_FILTER += jdk.sctp
+  MODULES_FILTER += jdk.management
+endif
+
 JRE_TOOL_MODULES += \
     jdk.jdwp.agent \
     jdk.pack \
@@ -240,6 +252,14 @@ GENERATED_SRC_DIRS += \
 TOP_SRC_DIRS += \
     $(TOPDIR)/src \
     #
+
+ifeq ($(OPENJDK_TARGET_OS), ios)
+  SRC_SUBDIRS += macosx/classes
+endif
+
+ifeq ($(OPENJDK_TARGET_OS), android)
+  SRC_SUBDIRS += linux/classes
+endif
 
 SRC_SUBDIRS += $(OPENJDK_TARGET_OS)/classes
 ifneq ($(OPENJDK_TARGET_OS), $(OPENJDK_TARGET_OS_TYPE))

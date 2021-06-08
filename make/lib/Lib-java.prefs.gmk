@@ -28,7 +28,7 @@ include LibCommon.gmk
 ################################################################################
 
 # libprefs on macosx do not use the unix code
-ifeq ($(OPENJDK_TARGET_OS), macosx)
+ifneq ($(filter $(OPENJDK_TARGET_OS), macosx ios), )
   LIBPREFS_EXCLUDE_SRC_PATTERNS := unix
 endif
 

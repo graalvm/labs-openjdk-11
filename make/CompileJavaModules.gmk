@@ -124,8 +124,8 @@ java.desktop_EXCLUDE_FILES += \
     .template \
     #
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
-  # exclude all X11 on Mac.
+ifneq ($(filter $(OPENJDK_TARGET_OS), macosx ios), )
+  # exclude all X11 on Mac and iOS.
   java.desktop_EXCLUDES += \
       sun/awt/X11 \
       sun/java2d/x11 \
@@ -374,7 +374,7 @@ SCTP_IMPL_CLASSES = \
     $(TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/SendFailed.java \
     $(TOPDIR)/src/jdk.sctp/unix/classes/sun/nio/ch/sctp/Shutdown.java
 
-ifeq ($(OPENJDK_TARGET_OS), macosx)
+ifneq ($(filter $(OPENJDK_TARGET_OS), macosx ios), )
   jdk.sctp_EXCLUDE_FILES += $(SCTP_IMPL_CLASSES)
 endif
 
