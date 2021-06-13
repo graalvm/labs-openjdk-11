@@ -461,6 +461,10 @@ C2V_VMENTRY_NULL(jobject, findUniqueConcreteMethod, (JNIEnv* env, jobject, jobje
     JVMCI_THROW_MSG_NULL(InternalError, err_msg("Effectively static method %s should be handled in Java code", method->external_name()));
   }
 
+  if (method->is_abstract()) {
+    return NULL;
+  }
+
   methodHandle ucm;
   {
     MutexLocker locker(Compile_lock);
