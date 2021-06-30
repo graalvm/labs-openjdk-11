@@ -27,6 +27,8 @@
 
 #include "utilities/ostream.hpp"
 
+#define LIBJVMCI_ERR_FILE "hs_err_pid%p_libjvmci.log"
+
 //
 // Defines all global flags used by the JVMCI compiler. Only flags that need
 // to be accessible to the JVMCI C++ code should be defined here.
@@ -124,6 +126,11 @@
           "instead of loading it from class files and executing it "        \
           "on the HotSpot heap. Defaults to true if UseJVMCICompiler is "   \
           "true and a JVMCI native library is available.")                  \
+                                                                            \
+  experimental(ccstr, JVMCINativeLibraryErrorFile, NULL,                    \
+          "If an error in the JVMCI native library occurs, save the "       \
+          "error data to this file"                                         \
+          "[default: ./" LIBJVMCI_ERR_FILE "] (%p replaced with pid)")      \
                                                                             \
   NOT_COMPILER2(diagnostic(bool, UseMultiplyToLenIntrinsic, false,          \
           "Enables intrinsification of BigInteger.multiplyToLen()"))        \

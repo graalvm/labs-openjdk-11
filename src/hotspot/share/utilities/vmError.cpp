@@ -54,6 +54,9 @@
 #if INCLUDE_JFR
 #include "jfr/jfr.hpp"
 #endif
+#if INCLUDE_JVMCI
+#include "jvmci/jvmci.hpp"
+#endif
 
 #ifndef PRODUCT
 #include <signal.h>
@@ -1215,7 +1218,7 @@ static int expand_and_open(const char* pattern, char* buf, size_t buflen, size_t
  * Name and location depends on pattern, default_pattern params and access
  * permissions.
  */
-static int prepare_log_file(const char* pattern, const char* default_pattern, char* buf, size_t buflen) {
+int VMError::prepare_log_file(const char* pattern, const char* default_pattern, char* buf, size_t buflen) {
   int fd = -1;
 
   // If possible, use specified pattern to construct log file name
@@ -1554,6 +1557,13 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
       }
     }
   }
+
+#if INCLUDE_JVMCI
+  if (JVMCI::fatal_log_filename() != NULL) {
+    out.print_raw("#\n# The JVMCI shared library error report file is saved as:\n# ");
+    out.print_raw_cr(JVMCI::fatal_log_filename());
+  }
+#endif
 
   static bool skip_bug_url = !should_report_bug(_id);
   if (!skip_bug_url) {

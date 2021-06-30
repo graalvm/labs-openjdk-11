@@ -334,7 +334,11 @@ void SignatureStream::next_non_primitive(int t) {
       break;
     }
     case ')': _end++; next(); _at_return_type = true; break;
-    default : ShouldNotReachHere();
+
+    default : {
+      char buf[O_BUFLEN];
+      fatal("invalid character at index %d in symbol: %s", _end, _signature->as_C_string(buf, O_BUFLEN - 1));
+    }
   }
 }
 
