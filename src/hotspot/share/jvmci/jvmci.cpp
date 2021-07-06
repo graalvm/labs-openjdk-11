@@ -43,6 +43,9 @@ char* JVMCI::_shared_library_path = NULL;
 volatile bool JVMCI::_in_shutdown = false;
 StringEventLog* JVMCI::_events = NULL;
 StringEventLog* JVMCI::_verbose_events = NULL;
+volatile intx JVMCI::_fatal_log_init_thread = -1;
+volatile int JVMCI::_fatal_log_fd = -1;
+const char* JVMCI::_fatal_log_filename = NULL;
 
 bool JVMCI::can_initialize_JVMCI() {
   // Initializing JVMCI requires the module system to be initialized past phase 3.
@@ -213,6 +216,38 @@ void JVMCI::shutdown() {
 
 bool JVMCI::in_shutdown() {
   return _in_shutdown;
+}
+
+void JVMCI::fatal_log(const char* buf, size_t count) {
+  intx current_thread_id = os::current_thread_id();
+  intx invalid_id = -1;
+  if (_fatal_log_init_thread == invalid_id && Atomic::cmpxchg(current_thread_id, &_fatal_log_init_thread, invalid_id) == invalid_id) {
+    static char name_buffer[O_BUFLEN];
+    int log_fd = VMError::prepare_log_file(JVMCINativeLibraryErrorFile, LIBJVMCI_ERR_FILE, name_buffer, sizeof(name_buffer));
+    if (log_fd != -1) {
+      _fatal_log_filename = name_buffer;
+    } else {
+      int e = errno;
+      tty->print("Can't open JVMCI shared library error report file. Error: ");
+      tty->print_raw_cr(os::strerror(e));
+      tty->print_cr("JVMCI shared library error report will be written to console.");
+
+      // See notes in VMError::report_and_die about hard coding tty to 1
+      log_fd = 1;
+    }
+    _fatal_log_fd = log_fd;
+  } else {
+    // Another thread won the race to initialize the stream. Give it time
+    // to complete initialization. VM locks cannot be used as the current
+    // thread might not be attached to the VM (e.g. a native thread started
+    // within libjvmci).
+    while (_fatal_log_fd == -1) {
+      os::naked_short_sleep(50);
+    }
+  }
+  fdStream log(_fatal_log_fd);
+  log.write(buf, count);
+  log.flush();
 }
 
 void JVMCI::vlog(int level, const char* format, va_list ap) {

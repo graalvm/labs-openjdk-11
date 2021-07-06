@@ -194,5 +194,10 @@ public:
   // returns an address which is guaranteed to generate a SIGSEGV on read,
   // for test purposes, which is not NULL and contains bits in every word
   static void* get_segfault_address();
+
+  // Construct file name for a log file and return it's file descriptor.
+  // Name and location depends on pattern, default_pattern params and access
+  // permissions.
+  static int prepare_log_file(const char* pattern, const char* default_pattern, char* buf, size_t buflen);
 };
 #endif // SHARE_VM_UTILITIES_VMERROR_HPP
