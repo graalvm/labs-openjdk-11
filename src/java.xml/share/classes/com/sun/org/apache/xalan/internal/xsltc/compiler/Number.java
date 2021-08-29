@@ -594,4 +594,9 @@ final class Number extends Instruction implements Closure {
                                  CHARACTERSW_SIG);
         il.append(new INVOKEVIRTUAL(index));
     }
+
+    @Override
+    public String toString() {
+        return getClass().getName();
+    }
 }

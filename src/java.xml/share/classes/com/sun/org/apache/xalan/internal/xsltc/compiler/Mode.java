@@ -48,6 +48,7 @@ import com.sun.org.apache.xml.internal.dtm.Axis;
 import com.sun.org.apache.xml.internal.dtm.DTM;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -130,12 +131,12 @@ final class Mode implements Constants {
     /**
      * A mapping between templates and test sequences.
      */
-    private Map<Template, Object> _neededTemplates = new HashMap<>();
+    private Map<Template, Object> _neededTemplates = new LinkedHashMap<>();
 
     /**
      * A mapping between named templates and Mode objects.
      */
-    private Map<Template, Mode> _namedTemplates = new HashMap<>();
+    private Map<Template, Mode> _namedTemplates = new LinkedHashMap<>();
 
     /**
      * A mapping between templates and instruction handles.
@@ -198,7 +199,7 @@ final class Mode implements Constants {
 
     public String functionName(int min, int max) {
         if (_importLevels == null) {
-            _importLevels = new HashMap<>();
+            _importLevels = new LinkedHashMap<>();
         }
         _importLevels.put(max, min);
         return _methodName + '_' + max;
@@ -1053,8 +1054,8 @@ final class Mode implements Constants {
         final List<String> names = xsltc.getNamesIndex();
 
         // Clear some datastructures
-        _namedTemplates = new HashMap<>();
-        _neededTemplates = new HashMap<>();
+        _namedTemplates = new LinkedHashMap<>();
+        _neededTemplates = new LinkedHashMap<>();
         _templateIHs = new HashMap<>();
         _templateILs = new HashMap<>();
         _patternGroups = (List<LocationPathPattern>[])new ArrayList[32];
