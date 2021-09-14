@@ -26,12 +26,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
+<<<<<<< HEAD
 #ifdef INCLUDE_SA_ATTACH
 #include <thread_db.h>
 #else
 #include <dirent.h>
 #endif
+=======
+#include <sys/procfs.h>
+>>>>>>> jdk-11.0.13+5
 #include "libproc_impl.h"
+#include "proc_service.h"
 
 #define SA_ALTROOT "SA_ALTROOT"
 
@@ -120,6 +125,7 @@ JNIEXPORT bool JNICALL
 init_libproc(bool debug) {
    // init debug mode
    _libsaproc_debug = debug;
+<<<<<<< HEAD
 
 #ifdef INCLUDE_SA_ATTACH
    // initialize the thread_db library
@@ -129,6 +135,8 @@ init_libproc(bool debug) {
    }
 #endif
 
+=======
+>>>>>>> jdk-11.0.13+5
    return true;
 }
 
@@ -262,7 +270,7 @@ const char* symbol_for_pc(struct ps_prochandle* ph, uintptr_t addr, uintptr_t* p
 }
 
 // add a thread to ps_prochandle
-thread_info* add_thread_info(struct ps_prochandle* ph, pthread_t pthread_id, lwpid_t lwp_id) {
+thread_info* add_thread_info(struct ps_prochandle* ph, lwpid_t lwp_id) {
    thread_info* newthr;
    if ( (newthr = (thread_info*) calloc(1, sizeof(thread_info))) == NULL) {
       print_debug("can't allocate memory for thread_info\n");
@@ -270,7 +278,6 @@ thread_info* add_thread_info(struct ps_prochandle* ph, pthread_t pthread_id, lwp
    }
 
    // initialize thread info
-   newthr->pthread_id = pthread_id;
    newthr->lwp_id = lwp_id;
 
    // add new thread to the list
@@ -301,6 +308,7 @@ void delete_thread_info(struct ps_prochandle* ph, thread_info* thr_to_be_removed
     free(current_thr);
 }
 
+<<<<<<< HEAD
 #ifdef INCLUDE_SA_ATTACH
 // struct used for client data from thread_db callback
 struct thread_db_client_data {
@@ -386,6 +394,8 @@ bool read_thread_info(struct ps_prochandle* ph, thread_info_callback cb) {
   return true;
 }
 
+=======
+>>>>>>> jdk-11.0.13+5
 // get number of threads
 int get_num_threads(struct ps_prochandle* ph) {
    return ph->num_threads;
@@ -517,9 +527,3 @@ ps_lgetregs(struct ps_prochandle *ph, lwpid_t lid, prgregset_t gregset) {
   return PS_OK;
 }
 
-// new libthread_db of NPTL seem to require this symbol
-JNIEXPORT ps_err_e JNICALL
-ps_get_thread_area() {
-  print_debug("ps_get_thread_area not implemented\n");
-  return PS_OK;
-}

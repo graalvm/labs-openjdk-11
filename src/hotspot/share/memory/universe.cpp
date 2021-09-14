@@ -606,6 +606,7 @@ bool Universe::should_fill_in_stack_trace(Handle throwable) {
   // preallocated errors with backtrace have been consumed. Also need to avoid
   // a potential loop which could happen if an out of memory occurs when attempting
   // to allocate the backtrace.
+<<<<<<< HEAD
   return ((!oopDesc::equals(throwable(), Universe::_out_of_memory_error_java_heap)) &&
           (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_metaspace))  &&
           (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_class_metaspace))  &&
@@ -613,6 +614,14 @@ bool Universe::should_fill_in_stack_trace(Handle throwable) {
           (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_gc_overhead_limit)) &&
           (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_realloc_objects)) &&
           (!oopDesc::equals(throwable(), Universe::_out_of_memory_error_retry)));
+=======
+  return ((throwable() != Universe::_out_of_memory_error_java_heap) &&
+          (throwable() != Universe::_out_of_memory_error_metaspace)  &&
+          (throwable() != Universe::_out_of_memory_error_class_metaspace)  &&
+          (throwable() != Universe::_out_of_memory_error_array_size) &&
+          (throwable() != Universe::_out_of_memory_error_gc_overhead_limit) &&
+          (throwable() != Universe::_out_of_memory_error_realloc_objects));
+>>>>>>> jdk-11.0.13+5
 }
 
 
