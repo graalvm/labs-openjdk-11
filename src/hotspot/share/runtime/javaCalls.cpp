@@ -348,22 +348,9 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
   assert(!SafepointSynchronize::is_at_safepoint(), "call to Java code during VM operation");
   assert(!thread->handle_area()->no_handle_mark_active(), "cannot call out to Java here");
 
-<<<<<<< HEAD
-
-  CHECK_UNHANDLED_OOPS_ONLY(thread->clear_unhandled_oops();)
 
   // Verify the arguments
   if (JVMCI_ONLY(args->alternative_target().is_null() &&) (DEBUG_ONLY(true ||) CheckJNICalls)) {
-=======
-#if INCLUDE_JVMCI
-  // Gets the nmethod (if any) that should be called instead of normal target
-  nmethod* alternative_target = args->alternative_target();
-  if (alternative_target == NULL) {
-#endif
-// Verify the arguments
-
-  if (CheckJNICalls)  {
->>>>>>> jdk-11.0.13+5
     args->verify(method, result->get_type());
   }
   // Ignore call if method is empty
@@ -422,7 +409,6 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
   { JavaCallWrapper link(method, receiver, result, CHECK);
     { HandleMark hm(thread);  // HandleMark used by HandleMarkCleaner
 
-<<<<<<< HEAD
 #if INCLUDE_JVMCI
       // Gets the alternative target (if any) that should be called
       Handle alternative_target = args->alternative_target();
@@ -437,13 +423,11 @@ void JavaCalls::call_helper(JavaValue* result, const methodHandle& method, JavaC
         }
       }
 #endif
-=======
       // NOTE: if we move the computation of the result_val_address inside
       // the call to call_stub, the optimizer produces wrong code.
       intptr_t* result_val_address = (intptr_t*)(result->get_value_addr());
       intptr_t* parameter_address = args->parameters();
 
->>>>>>> jdk-11.0.13+5
       StubRoutines::call_stub()(
         (address)&link,
         // (intptr_t*)&(result->_value), // see NOTE above (compiler problem)

@@ -1097,13 +1097,8 @@ class JavaThread: public Thread {
   jlong*    _jvmci_counters;
 
   // Fast thread locals for use by JVMCI
-<<<<<<< HEAD
   jlong      _jvmci_reserved0;
   jlong      _jvmci_reserved1;
-=======
-  intptr_t*  _jvmci_reserved0;
-  intptr_t*  _jvmci_reserved1;
->>>>>>> jdk-11.0.13+5
   oop        _jvmci_reserved_oop0;
 
  public:

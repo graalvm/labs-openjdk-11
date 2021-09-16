@@ -450,10 +450,6 @@ C2V_VMENTRY_NULL(jobject, findUniqueConcreteMethod, (JNIEnv* env, jobject, jobje
     JVMCI_THROW_MSG_NULL(InternalError, err_msg("Effectively static method %s should be handled in Java code", method->external_name()));
   }
 
-  if (method->can_be_statically_bound()) {
-    THROW_MSG_0(vmSymbols::java_lang_InternalError(), err_msg("Effectively static method %s.%s should be handled in Java code", method->method_holder()->external_name(), method->external_name()));
-  }
-
   methodHandle ucm;
   {
     MutexLocker locker(Compile_lock);
@@ -614,7 +610,7 @@ C2V_VMENTRY_NULL(jobject, resolvePossiblyCachedConstantInPool, (JNIEnv* env, job
   oop obj = cp->resolve_possibly_cached_constant_at(index, CHECK_NULL);
   constantTag tag = cp->tag_at(index);
   if (tag.is_dynamic_constant() || tag.is_dynamic_constant_in_error()) {
-    if (oopDesc::equals(obj, Universe::the_null_sentinel())) {
+    if (obj == Universe::the_null_sentinel()) {
       return JVMCIENV->get_jobject(JVMCIENV->get_JavaConstant_NULL_POINTER());
     }
     BasicType bt = FieldType::basic_type(cp->uncached_signature_ref_at(index));
@@ -1321,15 +1317,10 @@ C2V_VMENTRY_NULL(jobject, iterateFrames, (JNIEnv* env, jobject compilerToVM, job
 
   HotSpotJVMCI::HotSpotStackFrameReference::klass()->initialize(CHECK_NULL);
 
-<<<<<<< HEAD
   vframeStream vfst(thread);
   jobjectArray methods = initial_methods;
   methodHandle visitor_method;
   GrowableArray<Method*>* resolved_methods = NULL;
-=======
-  int frame_number = 0;
-  vframe* vf = vframe::new_vframe(fst, thread);
->>>>>>> jdk-11.0.13+5
 
   while (!vfst.at_end()) { // frame loop
     bool realloc_called = false;
@@ -1453,44 +1444,12 @@ C2V_VMENTRY_NULL(jobject, iterateFrames, (JNIEnv* env, jobject compilerToVM, job
         assert(initialSkip == 0, "There should be no match before initialSkip == 0");
         if (HotSpotJVMCI::HotSpotStackFrameReference::objectsMaterialized(JVMCIENV, frame_reference()) == JNI_TRUE) {
           // the frame has been deoptimized, we need to re-synchronize the frame and vframe
-<<<<<<< HEAD
           prev_cvf = NULL;
           intptr_t* stack_pointer = (intptr_t*) HotSpotJVMCI::HotSpotStackFrameReference::stackPointer(JVMCIENV, frame_reference());
           resync_vframestream_to_compiled_frame(vfst, stack_pointer, frame_number, thread, CHECK_NULL);
-=======
-          intptr_t* stack_pointer = (intptr_t*) HotSpotStackFrameReference::stackPointer(frame_reference);
-          fst = StackFrameStream(thread);
-          while (fst.current()->sp() != stack_pointer && !fst.is_done()) {
-            fst.next();
-          }
-          if (fst.current()->sp() != stack_pointer) {
-            THROW_MSG_NULL(vmSymbols::java_lang_IllegalStateException(), "stack frame not found after deopt")
-          }
-          vf = vframe::new_vframe(fst, thread);
-          if (!vf->is_compiled_frame()) {
-            THROW_MSG_NULL(vmSymbols::java_lang_IllegalStateException(), "compiled stack frame expected")
-          }
-          for (int i = 0; i < frame_number; i++) {
-            if (vf->is_top()) {
-              THROW_MSG_NULL(vmSymbols::java_lang_IllegalStateException(), "vframe not found after deopt")
-            }
-            vf = vf->sender();
-            assert(vf->is_compiled_frame(), "Wrong frame type");
-          }
->>>>>>> jdk-11.0.13+5
         }
       }
     } // end of vframe loop
-<<<<<<< HEAD
-=======
-
-    if (fst.is_done()) {
-      break;
-    }
-    fst.next();
-    vf = vframe::new_vframe(fst, thread);
-    frame_number = 0;
->>>>>>> jdk-11.0.13+5
   } // end of frame loop
 
   // the end was reached without finding a matching method

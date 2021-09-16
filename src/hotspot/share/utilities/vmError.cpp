@@ -1558,7 +1558,6 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
     }
   }
 
-<<<<<<< HEAD
 #if INCLUDE_JVMCI
   if (JVMCI::fatal_log_filename() != NULL) {
     out.print_raw("#\n# The JVMCI shared library error report file is saved as:\n# ");
@@ -1566,10 +1565,7 @@ void VMError::report_and_die(int id, const char* message, const char* detail_fmt
   }
 #endif
 
-  static bool skip_bug_url = !should_report_bug(_id);
-=======
   static bool skip_bug_url = !should_submit_bug_report(_id);
->>>>>>> jdk-11.0.13+5
   if (!skip_bug_url) {
     skip_bug_url = true;
 
