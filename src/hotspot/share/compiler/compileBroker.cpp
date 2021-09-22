@@ -1665,16 +1665,10 @@ bool CompileBroker::init_compiler_runtime() {
   // Final sanity check - the compiler object must exist
   guarantee(comp != NULL, "Compiler object must exist");
 
-  int system_dictionary_modification_counter;
-  {
-    MutexLocker locker(Compile_lock, thread);
-    system_dictionary_modification_counter = SystemDictionary::number_of_modifications();
-  }
-
   {
     // Must switch to native to allocate ci_env
     ThreadToNativeFromVM ttn(thread);
-    ciEnv ci_env(NULL, system_dictionary_modification_counter);
+    ciEnv ci_env((CompileTask*)NULL);
     // Cache Jvmti state
     ci_env.cache_jvmti_state();
     // Cache DTrace flags
@@ -2120,12 +2114,6 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
   bool failure_reason_on_C_heap = false;
   const char* retry_message = NULL;
 
-  int system_dictionary_modification_counter;
-  {
-    MutexLocker locker(Compile_lock, thread);
-    system_dictionary_modification_counter = SystemDictionary::number_of_modifications();
-  }
-
 #if INCLUDE_JVMCI
   if (UseJVMCICompiler && comp != NULL && comp->is_jvmci()) {
     JVMCICompiler* jvmci = (JVMCICompiler*) comp;
@@ -2144,6 +2132,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
       retry_message = "not retryable";
       compilable = ciEnv::MethodCompilable_never;
     } else {
+<<<<<<< HEAD
       JVMCICompileState compile_state(task, jvmci, system_dictionary_modification_counter);
       JVMCIEnv env(thread, &compile_state, __FILE__, __LINE__);
       methodHandle method(thread, target_handle);
@@ -2159,6 +2148,17 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
       if (task->code() == NULL) {
         assert(failure_reason != NULL, "must specify failure_reason");
       }
+=======
+        JVMCIEnv env(task);
+        methodHandle method(thread, target_handle);
+        jvmci->compile_method(method, osr_bci, &env);
+
+        failure_reason = env.failure_reason();
+        if (!env.retryable()) {
+          retry_message = "not retryable";
+          compilable = ciEnv::MethodCompilable_not_at_tier;
+        }
+>>>>>>> 86cf496d4b (8222446: assert(C->env()->system_dictionary_modification_counter_changed()) failed: Must invalidate if TypeFuncs differ)
     }
     post_compile(thread, task, task->code() != NULL, NULL, compilable, failure_reason);
     if (event.should_commit()) {
@@ -2171,7 +2171,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     NoHandleMark  nhm;
     ThreadToNativeFromVM ttn(thread);
 
-    ciEnv ci_env(task, system_dictionary_modification_counter);
+    ciEnv ci_env(task);
     if (should_break) {
       ci_env.set_break_at_compile(true);
     }

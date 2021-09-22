@@ -2438,17 +2438,10 @@ public:
   uint decompile_count() const {
     return _compiler_counters.decompile_count();
   }
-<<<<<<< HEAD
-  void inc_decompile_count() {
-    _nof_decompiles += 1;
-    if (decompile_count() > (uint)PerMethodRecompilationCutoff) {
-      method()->set_not_compilable("decompile_count > PerMethodRecompilationCutoff", CompLevel_full_optimization);
-=======
   uint inc_decompile_count() {
     uint dec_count = _compiler_counters.inc_decompile_count();
     if (dec_count > (uint)PerMethodRecompilationCutoff) {
-      method()->set_not_compilable(CompLevel_full_optimization, true, "decompile_count > PerMethodRecompilationCutoff");
->>>>>>> 9437d45b4b (8252049: Native memory leak in ciMethodData ctor)
+        method()->set_not_compilable("decompile_count > PerMethodRecompilationCutoff", CompLevel_full_optimization, true);
     }
     return dec_count;
   }
