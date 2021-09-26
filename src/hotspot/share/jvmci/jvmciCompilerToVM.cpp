@@ -450,10 +450,6 @@ C2V_VMENTRY_NULL(jobject, findUniqueConcreteMethod, (JNIEnv* env, jobject, jobje
     JVMCI_THROW_MSG_NULL(InternalError, err_msg("Effectively static method %s should be handled in Java code", method->external_name()));
   }
 
-  if (method->is_abstract()) {
-    return NULL;
-  }
-
   methodHandle ucm;
   {
     MutexLocker locker(Compile_lock);
@@ -614,7 +610,7 @@ C2V_VMENTRY_NULL(jobject, resolvePossiblyCachedConstantInPool, (JNIEnv* env, job
   oop obj = cp->resolve_possibly_cached_constant_at(index, CHECK_NULL);
   constantTag tag = cp->tag_at(index);
   if (tag.is_dynamic_constant() || tag.is_dynamic_constant_in_error()) {
-    if (oopDesc::equals(obj, Universe::the_null_sentinel())) {
+    if (obj == Universe::the_null_sentinel()) {
       return JVMCIENV->get_jobject(JVMCIENV->get_JavaConstant_NULL_POINTER());
     }
     BasicType bt = FieldType::basic_type(cp->uncached_signature_ref_at(index));
