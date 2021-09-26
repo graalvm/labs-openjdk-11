@@ -1869,6 +1869,14 @@ void VM_HeapDumper::doit() {
   Universe::oops_do(&jni_dumper);  // technically not jni roots, but global roots
                                    // for things like preallocated throwable backtraces
 
+
+#if INCLUDE_JVMCI
+  // JVMCI - use jni roots
+  if (EnableJVMCI) {
+    JVMCI::oops_do(&jni_dumper);
+  }
+#endif
+
   // HPROF_GC_ROOT_STICKY_CLASS
   // These should be classes in the NULL class loader data, and not all classes
   // if !ClassUnloading
