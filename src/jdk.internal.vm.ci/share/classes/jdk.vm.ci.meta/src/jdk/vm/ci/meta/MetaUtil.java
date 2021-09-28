@@ -110,6 +110,29 @@ public class MetaUtil {
     }
 
     /**
+     * Classes for lambdas can have {@code /} characters that are not package separators. These are
+     * distinguished by being followed by a character that is not a
+     * {@link Character#isJavaIdentifierStart(char)} (e.g.,
+     * "jdk.vm.ci.runtime.test.TypeUniverse$$Lambda$1/869601985").
+     */
+    private static String replacePackageSeparatorsWithDot(String name) {
+        int length = name.length();
+        int i = 0;
+        StringBuilder buf = new StringBuilder(length);
+        while (i < length - 1) {
+            char ch = name.charAt(i);
+            if (ch == '/' && Character.isJavaIdentifierStart(name.charAt(i + 1))) {
+                buf.append('.');
+            } else {
+                buf.append(ch);
+            }
+            i++;
+        }
+        buf.append(name.charAt(length - 1));
+        return buf.toString();
+    }
+
+    /**
      * Converts a type name in internal form to an external form.
      *
      * @param name the internal name to convert

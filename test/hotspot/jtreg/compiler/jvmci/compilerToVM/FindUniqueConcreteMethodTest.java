@@ -114,11 +114,18 @@ public class FindUniqueConcreteMethodTest {
                 HotSpotResolvedJavaMethod concreteMethod = CompilerToVMHelper
                         .findUniqueConcreteMethod(resolvedType, testMethod);
 
+<<<<<<< HEAD
             } catch (Throwable t) {
                 Asserts.assertEQ(t.getClass(), tcase.exception, "Wrong exception thrown for " + tcase.methodName);
                 return;
             }
             Asserts.fail("Exception " + tcase.exception.getName() + " not thrown for " + tcase.methodName);
+=======
+                Asserts.fail("Exception " + tcase.exception.getName() + " not thrown for " + tcase.methodName);
+            } catch (Throwable t) {
+                Asserts.assertEQ(t.getClass(), tcase.exception, "Wrong exception thrown for " + tcase.methodName);
+            }
+>>>>>>> jdk-11.0.13+6
         } else {
             HotSpotResolvedJavaMethod concreteMethod = CompilerToVMHelper
                     .findUniqueConcreteMethod(resolvedType, testMethod);

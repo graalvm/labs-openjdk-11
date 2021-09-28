@@ -828,8 +828,16 @@ Window get_xawt_root_shell(JNIEnv *env) {
  */
 
 JNIEXPORT void JNICALL
+<<<<<<< HEAD
+=======
+#ifdef STATIC_BUILD
+>>>>>>> jdk-11.0.13+6
 Java_sun_xawt_motif_XsessionWMcommand(JNIEnv *env, jobject this,
     jobject frame, jstring jcommand)
+#else
+Java_sun_awt_motif_XsessionWMcommand(JNIEnv *env, jobject this,
+        jobject frame, jstring jcommand)
+#endif
 {
     const char *command;
     XTextProperty text_prop;
@@ -873,7 +881,15 @@ Java_sun_xawt_motif_XsessionWMcommand(JNIEnv *env, jobject this,
  * name.  It's not!  It's just a plain function.
  */
 JNIEXPORT void JNICALL
+<<<<<<< HEAD
 Java_sun_xawt_motif_XsessionWMcommand_New(JNIEnv *env, jobjectArray jarray)
+=======
+#ifdef STATIC_BUILD
+Java_sun_xawt_motif_XsessionWMcommand_New(JNIEnv *env, jobjectArray jarray)
+#else
+Java_sun_awt_motif_XsessionWMcommand_New(JNIEnv *env, jobjectArray jarray)
+#endif
+>>>>>>> jdk-11.0.13+6
 {
     jsize length;
     char ** array;

@@ -181,8 +181,14 @@
   nonstatic_field(JavaThread,                  _pending_failed_speculation,                   jlong)                                 \
   nonstatic_field(JavaThread,                  _pending_transfer_to_interpreter,              bool)                                  \
   nonstatic_field(JavaThread,                  _jvmci_counters,                               jlong*)                                \
+<<<<<<< HEAD
   nonstatic_field(JavaThread,                  _should_post_on_exceptions_flag,               int)                                   \
   nonstatic_field(JavaThread,                  _jni_environment,                              JNIEnv)                                \
+=======
+  nonstatic_field(JavaThread,                  _jvmci_reserved0,                              intptr_t*)                             \
+  nonstatic_field(JavaThread,                  _jvmci_reserved1,                              intptr_t*)                             \
+  nonstatic_field(JavaThread,                  _jvmci_reserved_oop0,                          oop)                                   \
+>>>>>>> jdk-11.0.13+6
   nonstatic_field(JavaThread,                  _reserved_stack_activation,                    address)                               \
                                                                                                                                      \
   static_field(java_lang_Class,                _klass_offset,                                 int)                                   \
@@ -656,11 +662,15 @@
   declare_function(JVMCIRuntime::dynamic_new_array) \
   declare_function(JVMCIRuntime::dynamic_new_instance) \
   \
+<<<<<<< HEAD
   declare_function(JVMCIRuntime::new_instance_or_null) \
   declare_function(JVMCIRuntime::new_array_or_null) \
   declare_function(JVMCIRuntime::new_multi_array_or_null) \
   declare_function(JVMCIRuntime::dynamic_new_array_or_null) \
   declare_function(JVMCIRuntime::dynamic_new_instance_or_null) \
+=======
+  declare_function(JVMCIRuntime::invoke_static_method_one_arg) \
+>>>>>>> jdk-11.0.13+6
   \
   declare_function(JVMCIRuntime::thread_is_interrupted) \
   declare_function(JVMCIRuntime::vm_message) \

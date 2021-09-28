@@ -461,8 +461,8 @@ C2V_VMENTRY_NULL(jobject, findUniqueConcreteMethod, (JNIEnv* env, jobject, jobje
     JVMCI_THROW_MSG_NULL(InternalError, err_msg("Effectively static method %s should be handled in Java code", method->external_name()));
   }
 
-  if (method->is_abstract()) {
-    return NULL;
+  if (method->can_be_statically_bound()) {
+    THROW_MSG_0(vmSymbols::java_lang_InternalError(), err_msg("Effectively static method %s.%s should be handled in Java code", method->method_holder()->external_name(), method->external_name()));
   }
 
   methodHandle ucm;
@@ -1239,7 +1239,7 @@ C2V_VMENTRY_NULL(jobject, iterateFrames, (JNIEnv* env, jobject compilerToVM, job
   jobjectArray methods = initial_methods;
 
   int frame_number = 0;
-  vframe* vf = vframe::new_vframe(fst.current(), fst.register_map(), thread);
+  vframe* vf = vframe::new_vframe(fst, thread);
 
   while (true) {
     // look for the given method
@@ -1347,7 +1347,7 @@ C2V_VMENTRY_NULL(jobject, iterateFrames, (JNIEnv* env, jobject compilerToVM, job
           if (fst.current()->sp() != stack_pointer) {
             THROW_MSG_NULL(vmSymbols::java_lang_IllegalStateException(), "stack frame not found after deopt")
           }
-          vf = vframe::new_vframe(fst.current(), fst.register_map(), thread);
+          vf = vframe::new_vframe(fst, thread);
           if (!vf->is_compiled_frame()) {
             THROW_MSG_NULL(vmSymbols::java_lang_IllegalStateException(), "compiled stack frame expected")
           }
@@ -1374,7 +1374,7 @@ C2V_VMENTRY_NULL(jobject, iterateFrames, (JNIEnv* env, jobject compilerToVM, job
       break;
     }
     fst.next();
-    vf = vframe::new_vframe(fst.current(), fst.register_map(), thread);
+    vf = vframe::new_vframe(fst, thread);
     frame_number = 0;
   } // end of frame loop
 
