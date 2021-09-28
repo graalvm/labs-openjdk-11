@@ -26,17 +26,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-<<<<<<< HEAD
-#ifdef INCLUDE_SA_ATTACH
-#include <thread_db.h>
-#else
-#include <dirent.h>
-#endif
-=======
 #include <sys/procfs.h>
->>>>>>> jdk-11.0.13+6
 #include "libproc_impl.h"
-#include "proc_service.h"
 
 #define SA_ALTROOT "SA_ALTROOT"
 
@@ -125,18 +116,6 @@ JNIEXPORT bool JNICALL
 init_libproc(bool debug) {
    // init debug mode
    _libsaproc_debug = debug;
-<<<<<<< HEAD
-
-#ifdef INCLUDE_SA_ATTACH
-   // initialize the thread_db library
-   if (td_init() != TD_OK) {
-     print_debug("libthread_db's td_init failed\n");
-     return false;
-   }
-#endif
-
-=======
->>>>>>> jdk-11.0.13+6
    return true;
 }
 
@@ -308,94 +287,6 @@ void delete_thread_info(struct ps_prochandle* ph, thread_info* thr_to_be_removed
     free(current_thr);
 }
 
-<<<<<<< HEAD
-#ifdef INCLUDE_SA_ATTACH
-// struct used for client data from thread_db callback
-struct thread_db_client_data {
-   struct ps_prochandle* ph;
-   thread_info_callback callback;
-};
-
-// callback function for libthread_db
-static int thread_db_callback(const td_thrhandle_t *th_p, void *data) {
-  struct thread_db_client_data* ptr = (struct thread_db_client_data*) data;
-  td_thrinfo_t ti;
-  td_err_e err;
-
-  memset(&ti, 0, sizeof(ti));
-  err = td_thr_get_info(th_p, &ti);
-  if (err != TD_OK) {
-    print_debug("libthread_db : td_thr_get_info failed, can't get thread info\n");
-    return err;
-  }
-
-  print_debug("thread_db : pthread %d (lwp %d)\n", ti.ti_tid, ti.ti_lid);
-
-  if (ti.ti_state == TD_THR_UNKNOWN || ti.ti_state == TD_THR_ZOMBIE) {
-    print_debug("Skipping pthread %d (lwp %d)\n", ti.ti_tid, ti.ti_lid);
-    return TD_OK;
-  }
-
-  if (ptr->callback(ptr->ph, ti.ti_tid, ti.ti_lid) != true)
-    return TD_ERR;
-
-  return TD_OK;
-}
-#endif // INCLUDE_SA_ATTACH
-
-// read thread_info using libthread_db or by iterating through the entries
-// in /proc/<pid>/task/
-bool read_thread_info(struct ps_prochandle* ph, thread_info_callback cb) {
-#ifdef INCLUDE_SA_ATTACH
-  struct thread_db_client_data mydata;
-  td_thragent_t* thread_agent = NULL;
-  if (td_ta_new(ph, &thread_agent) != TD_OK) {
-     print_debug("can't create libthread_db agent\n");
-     return false;
-  }
-
-  mydata.ph = ph;
-  mydata.callback = cb;
-
-  // we use libthread_db iterator to iterate thru list of threads.
-  if (td_ta_thr_iter(thread_agent, thread_db_callback, &mydata,
-                 TD_THR_ANY_STATE, TD_THR_LOWEST_PRIORITY,
-                 TD_SIGNO_MASK, TD_THR_ANY_USER_FLAGS) != TD_OK) {
-     td_ta_delete(thread_agent);
-     return false;
-  }
-
-  // delete thread agent
-  td_ta_delete(thread_agent);
-#else
-  DIR *dir = NULL;
-  struct dirent *ent = NULL;
-  char taskpath[80];
-  pid_t pid = ph->pid;
-
-  // Find the lwpids to attach to by traversing the /proc/<pid>/task/ directory.
-  snprintf(taskpath, sizeof (taskpath), "/proc/%ld/task", (unsigned long)pid);
-  if ((dir = opendir(taskpath)) != NULL) {
-    while ((ent = readdir(dir)) != NULL) {
-      unsigned long lwp;
-
-      if ((lwp = strtoul(ent->d_name, NULL, 10)) != 0) {
-        // Create and add the thread info.
-        (*cb)(ph, 0, lwp);
-      }
-    }
-  } else {
-    print_debug("Could not open /proc/%ld/task.\n", (unsigned long)pid);
-    return false;
-  }
-
-  closedir(dir);
-#endif
-  return true;
-}
-
-=======
->>>>>>> jdk-11.0.13+6
 // get number of threads
 int get_num_threads(struct ps_prochandle* ph) {
    return ph->num_threads;

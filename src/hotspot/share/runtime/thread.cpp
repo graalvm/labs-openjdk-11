@@ -1692,13 +1692,7 @@ void JavaThread::initialize() {
   _in_retryable_allocation = false;
   _jvmci._alternate_call_target = NULL;
   assert(_jvmci._implicit_exception_pc == NULL, "must be");
-<<<<<<< HEAD
   _jvmci_counters = NULL;
-=======
-  _jvmci_reserved0 = NULL;
-  _jvmci_reserved1 = NULL;
-  _jvmci_reserved_oop0 = NULL;
->>>>>>> jdk-11.0.13+6
   if (JVMCICounterSize > 0) {
     resize_counters(0, (int) JVMCICounterSize);
   }

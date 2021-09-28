@@ -24,11 +24,7 @@
 
 #include <jni.h>
 #include "libproc.h"
-<<<<<<< HEAD
 #include "libproc_impl.h"
-=======
-#include "proc_service.h"
->>>>>>> jdk-11.0.13+6
 
 #include <elf.h>
 #include <sys/types.h>

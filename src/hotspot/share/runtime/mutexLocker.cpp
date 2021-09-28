@@ -345,19 +345,16 @@ void mutex_init() {
 
   def(CodeHeapStateAnalytics_lock  , PaddedMutex  , nonleaf+6,   false, Monitor::_safepoint_check_always);
   def(ThreadIdTableCreate_lock     , PaddedMutex  , leaf,        false, Monitor::_safepoint_check_always);
-<<<<<<< HEAD
 #if INCLUDE_JVMCI
   def(JVMCI_lock                   , PaddedMonitor, nonleaf+2,   true,  Monitor::_safepoint_check_always);
   def(JVMCIGlobalAlloc_lock        , PaddedMutex  , nonleaf,     true,  Monitor::_safepoint_check_never);
   def(JVMCIGlobalActive_lock       , PaddedMutex  , nonleaf-1,   true,  Monitor::_safepoint_check_never);
 #endif
-=======
 
   def(NMethodSweeperStats_lock     , PaddedMutex  , special,     true,  Monitor::_safepoint_check_sometimes);
   def(ThreadsSMRDelete_lock        , PaddedMonitor, special,     false, Monitor::_safepoint_check_never);
   def(SharedDecoder_lock           , PaddedMutex  , native,      false, Monitor::_safepoint_check_never);
   def(DCmdFactory_lock             , PaddedMutex  , leaf,        true,  Monitor::_safepoint_check_never);
->>>>>>> jdk-11.0.13+6
 }
 
 GCMutexLocker::GCMutexLocker(Monitor * mutex) {
