@@ -30,6 +30,8 @@
 
 struct ps_prochandle;
 
+#include "proc_service.h"
+
 #include "libproc.h"
 #include "symtab.h"
 
