@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2000, 2020, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -215,7 +215,7 @@ Java_sun_awt_motif_XsessionWMcommand(JNIEnv *env, jobject this,
     }
 
     XsessionWMcommand = (XsessionWMcommand_type *)
-        dlsym(awtHandle, "Java_sun_xawt_motif_XsessionWMcommand");
+        dlsym(awtHandle, "Java_sun_awt_motif_XsessionWMcommand");
 #else
     XsessionWMcommand = (XsessionWMcommand_type *)Java_sun_xawt_motif_XsessionWMcommand;
 #endif
@@ -244,7 +244,7 @@ Java_sun_awt_motif_XsessionWMcommand_New(JNIEnv *env, jobjectArray jargv)
     }
 
     XsessionWMcommand = (XsessionWMcommand_New_type *)
-        dlsym(awtHandle, "Java_sun_xawt_motif_XsessionWMcommand_New");
+        dlsym(awtHandle, "Java_sun_awt_motif_XsessionWMcommand_New");
 #else
     XsessionWMcommand = (XsessionWMcommand_New_type *)Java_sun_xawt_motif_XsessionWMcommand_New;
 #endif
