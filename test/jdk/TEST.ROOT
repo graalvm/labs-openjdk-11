@@ -57,7 +57,7 @@ requires.properties= \
     release.implementor
 
 # Minimum jtreg version
-requiredVersion=5.1 b1
+requiredVersion=4.2 b13
 
 # Path to libraries in the topmost test directory. This is needed so @library
 # does not need ../../ notation to reach them

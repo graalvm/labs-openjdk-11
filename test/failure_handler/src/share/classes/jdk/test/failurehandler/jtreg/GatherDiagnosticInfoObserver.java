@@ -124,4 +124,29 @@ public class GatherDiagnosticInfoObserver implements Harness.Observer {
         compileJdk = map.get("regtest.compilejdk");
         testJdk = map.get("regtest.testjdk");
     }
+
+    @Override
+    public void startingTest(TestResult tr) {
+        // no-op
+    }
+
+    @Override
+    public void stoppingTestRun() {
+        // no-op
+    }
+
+    @Override
+    public void finishedTesting() {
+        // no-op
+    }
+
+    @Override
+    public void finishedTestRun(boolean allOK) {
+        // no-op
+    }
+
+    @Override
+    public void error(String msg) {
+        // no-op
+    }
 }
