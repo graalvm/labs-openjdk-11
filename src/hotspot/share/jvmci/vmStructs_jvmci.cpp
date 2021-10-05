@@ -183,6 +183,9 @@
   nonstatic_field(JavaThread,                  _jvmci_counters,                               jlong*)                                \
   nonstatic_field(JavaThread,                  _should_post_on_exceptions_flag,               int)                                   \
   nonstatic_field(JavaThread,                  _jni_environment,                              JNIEnv)                                \
+  nonstatic_field(JavaThread,                  _jvmci_reserved0,                              intptr_t*)                             \
+  nonstatic_field(JavaThread,                  _jvmci_reserved1,                              intptr_t*)                             \
+  nonstatic_field(JavaThread,                  _jvmci_reserved_oop0,                          oop)                                   \
   nonstatic_field(JavaThread,                  _reserved_stack_activation,                    address)                               \
                                                                                                                                      \
   static_field(java_lang_Class,                _klass_offset,                                 int)                                   \
