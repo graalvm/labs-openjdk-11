@@ -484,6 +484,7 @@
   declare_constant(CollectedHeap::CMS)                                    \
   declare_constant(CollectedHeap::G1)                                     \
   declare_constant(CollectedHeap::Epsilon)                                \
+  declare_constant(CollectedHeap::Z)                                      \
                                                                           \
   declare_constant(vmIntrinsics::FIRST_MH_SIG_POLY)                       \
   declare_constant(vmIntrinsics::LAST_MH_SIG_POLY)                        \
