@@ -258,10 +258,10 @@ def main():
     parser.add_argument('--boot-jdk', action='store', help='value for --boot-jdk configure option (default: $JAVA_HOME)',
                         default=env.get('JAVA_HOME'), required='JAVA_HOME' not in env, metavar='<path>')
     parser.add_argument('--clean-after-build', action='store_true', help='clean build directory after producing labsjdk binaries')
-    parser.add_argument('--jdk-debug-level', action='store', help='value for --with-debug-level JDK config option', default='release', choices=['release', 'fastdebug','slowdebug'])
+    parser.add_argument('--jdk-debug-level', action='store', help='value for --with-debug-level JDK config option', default='release', choices=['release', 'fastdebug', 'slowdebug'])
     parser.add_argument('--devkit', action='store', help='value for --with-devkit configure option', default=env.get('DEVKIT', ''), metavar='<path>')
     parser.add_argument('--jvmci-version', action='store', help='JVMCI version (e.g., 19.3-b03)', metavar='<version>')
-    
+
     extra_config = parser.add_mutually_exclusive_group()
     extra_config.add_argument('--configure-options', action='store', help='File containing extra options for configure script, one option per line', metavar='<path>')
     extra_config.add_argument('--configure-option', action='append', help='Extra option appended to configure script', metavar='<path>')
@@ -287,7 +287,10 @@ def main():
     java_version = get_java_version(version_numbers_file)
 
     tag_prefix = 'jdk-' + java_version + '+'
-    build_nums = [int(line[len(tag_prefix):]) for line in check_output(['git', '-C', jdk_src_dir, 'tag']).split() if line.startswith(tag_prefix)]
+    tag_command = ['git', '-C', jdk_src_dir, 'tag']
+    build_nums = [int(line[len(tag_prefix):]) for line in check_output(tag_command).split() if line.startswith(tag_prefix)]
+    if len(build_nums) == 0:
+        abort('No tags matching prefix "{}" in output of `{}`'.format(tag_prefix, ' '.join(tag_command)))
     build_num = sorted(build_nums, reverse=True)[0]
 
     debug_qualifier = '' if jdk_debug_level == 'release' else '-debug'
