@@ -1596,9 +1596,9 @@ JVMCI::CodeInstallResult JVMCIRuntime::validate_compile_task_dependencies(Depend
 
   // Dependencies must be checked when the system dictionary changes
   // or if we don't know whether it has changed (i.e., compile_state == NULL).
-  bool counter_changed = compile_state == NULL || compile_state->system_dictionary_modification_counter() != SystemDictionary::number_of_modifications();
+  bool counter_changed = compile_state == NULL;
   CompileTask* task = compile_state == NULL ? NULL : compile_state->task();
-  Dependencies::DepType result = dependencies->validate_dependencies(task, counter_changed, failure_detail);
+  Dependencies::DepType result = dependencies->validate_dependencies(task, failure_detail);
   if (result == Dependencies::end_marker) {
     return JVMCI::ok;
   }

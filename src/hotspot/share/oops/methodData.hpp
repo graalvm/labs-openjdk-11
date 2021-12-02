@@ -2448,7 +2448,7 @@ public:
   uint inc_decompile_count() {
     uint dec_count = _compiler_counters.inc_decompile_count();
     if (dec_count > (uint)PerMethodRecompilationCutoff) {
-      method()->set_not_compilable(decompile_count > PerMethodRecompilationCutoff", CompLevel_full_optimization, true");
+      method()->set_not_compilable("decompile_count > PerMethodRecompilationCutoff", CompLevel_full_optimization, true);
     }
     return dec_count;
   }

@@ -2114,6 +2114,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
   bool failure_reason_on_C_heap = false;
   const char* retry_message = NULL;
 
+
 #if INCLUDE_JVMCI
   if (UseJVMCICompiler && comp != NULL && comp->is_jvmci()) {
     JVMCICompiler* jvmci = (JVMCICompiler*) comp;
@@ -2132,6 +2133,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
       retry_message = "not retryable";
       compilable = ciEnv::MethodCompilable_never;
     } else {
+      JVMCICompileState compile_state(task, jvmci);
       JVMCIEnv env(thread, &compile_state, __FILE__, __LINE__);
       methodHandle method(thread, target_handle);
       runtime = env.runtime();
