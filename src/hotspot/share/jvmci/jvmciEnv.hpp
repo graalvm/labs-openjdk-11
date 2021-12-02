@@ -94,7 +94,6 @@ class JVMCICompileState : public ResourceObj {
  private:
   CompileTask*     _task;
   JVMCICompiler*   _compiler;
-  int              _system_dictionary_modification_counter;
 
   // Cache JVMTI state. Defined as bytes so that reading them from Java
   // via Unsafe is well defined (the C++ type for bool is implementation
@@ -118,11 +117,10 @@ class JVMCICompileState : public ResourceObj {
   jint             _compilation_ticks;
 
  public:
-  JVMCICompileState(CompileTask* task, JVMCICompiler* compiler, int system_dictionary_modification_counter);
+  JVMCICompileState(CompileTask* task, JVMCICompiler* compiler);
 
   CompileTask* task() { return _task; }
 
-  int system_dictionary_modification_counter() { return _system_dictionary_modification_counter; }
   bool  jvmti_state_changed() const;
   bool  jvmti_can_hotswap_or_post_breakpoint() const { return  _jvmti_can_hotswap_or_post_breakpoint != 0; }
   bool  jvmti_can_access_local_variables() const     { return  _jvmti_can_access_local_variables != 0; }
