@@ -362,7 +362,6 @@ class HotSpotVMConfig extends HotSpotVMConfigAccess {
 
     final int codeInstallResultOk = getConstant("JVMCI::ok", Integer.class);
     final int codeInstallResultDependenciesFailed = getConstant("JVMCI::dependencies_failed", Integer.class);
-    final int codeInstallResultDependenciesInvalid = getConstant("JVMCI::dependencies_invalid", Integer.class);
     final int codeInstallResultCacheFull = getConstant("JVMCI::cache_full", Integer.class);
     final int codeInstallResultCodeTooLarge = getConstant("JVMCI::code_too_large", Integer.class);
     final int codeInstallResultFirstPermanentBailout = getConstant("JVMCI::first_permanent_bailout", Integer.class);
@@ -373,9 +372,6 @@ class HotSpotVMConfig extends HotSpotVMConfigAccess {
         }
         if (codeInstallResult == codeInstallResultDependenciesFailed) {
             return "dependencies failed";
-        }
-        if (codeInstallResult == codeInstallResultDependenciesInvalid) {
-            return "dependencies invalid";
         }
         if (codeInstallResult == codeInstallResultCacheFull) {
             return "code cache is full";

@@ -579,7 +579,6 @@
                                                                           \
   declare_preprocessor_constant("JVMCI::ok",                      JVMCI::ok)                      \
   declare_preprocessor_constant("JVMCI::dependencies_failed",     JVMCI::dependencies_failed)     \
-  declare_preprocessor_constant("JVMCI::dependencies_invalid",    JVMCI::dependencies_invalid)    \
   declare_preprocessor_constant("JVMCI::cache_full",              JVMCI::cache_full)              \
   declare_preprocessor_constant("JVMCI::code_too_large",          JVMCI::code_too_large)          \
   declare_preprocessor_constant("JVMCI::first_permanent_bailout", JVMCI::first_permanent_bailout) \
