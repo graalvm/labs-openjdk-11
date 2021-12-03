@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2005, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -625,32 +625,10 @@ void Dependencies::check_valid_dependency_type(DepType dept) {
   guarantee(FIRST_TYPE <= dept && dept < TYPE_LIMIT, "invalid dependency type: %d", (int) dept);
 }
 
-Dependencies::DepType Dependencies::validate_dependencies(CompileTask* task, bool counter_changed, char** failure_detail) {
-  // First, check non-klass dependencies as we might return early and
-  // not check klass dependencies if the system dictionary
-  // modification counter hasn't changed (see below).
-  for (Dependencies::DepStream deps(this); deps.next(); ) {
-    if (deps.is_klass_type())  continue;  // skip klass dependencies
-    Klass* witness = deps.check_dependency();
-    if (witness != NULL) {
-      return deps.type();
-    }
-  }
-
-  // Klass dependencies must be checked when the system dictionary
-  // changes.  If logging is enabled all violated dependences will be
-  // recorded in the log.  In debug mode check dependencies even if
-  // the system dictionary hasn't changed to verify that no invalid
-  // dependencies were inserted.  Any violated dependences in this
-  // case are dumped to the tty.
-  if (!counter_changed && !trueInDebug) {
-    return end_marker;
-  }
-
+Dependencies::DepType Dependencies::validate_dependencies(CompileTask* task, char** failure_detail) {
   int klass_violations = 0;
   DepType result = end_marker;
   for (Dependencies::DepStream deps(this); deps.next(); ) {
-    if (!deps.is_klass_type())  continue;  // skip non-klass dependencies
     Klass* witness = deps.check_dependency();
     if (witness != NULL) {
       if (klass_violations == 0) {
@@ -665,12 +643,7 @@ Dependencies::DepType Dependencies::validate_dependencies(CompileTask* task, boo
         }
       }
       klass_violations++;
-      if (!counter_changed) {
-        // Dependence failed but counter didn't change.  Log a message
-        // describing what failed and allow the assert at the end to
-        // trigger.
-        deps.print_dependency(witness);
-      } else if (xtty == NULL) {
+      if (xtty == NULL) {
         // If we're not logging then a single violation is sufficient,
         // otherwise we want to log all the dependences which were
         // violated.
@@ -679,15 +652,6 @@ Dependencies::DepType Dependencies::validate_dependencies(CompileTask* task, boo
     }
   }
 
-  if (klass_violations != 0) {
-#ifdef ASSERT
-    if (task != NULL && !counter_changed && !PrintCompilation) {
-      // Print out the compile task that failed
-      task->print_tty();
-    }
-#endif
-    assert(counter_changed, "failed dependencies, but counter didn't change");
-  }
   return result;
 }
 
@@ -1881,6 +1845,26 @@ Klass* Dependencies::find_witness_AME(Klass* ctxk, Method* m, KlassDepChange* ch
   return NULL;
 }
 
+// This function is used by find_unique_concrete_method(non vtable based)
+// to check whether subtype method overrides the base method.
+static bool overrides(Method* sub_m, Method* base_m) {
+  assert(base_m != NULL, "base method should be non null");
+  if (sub_m == NULL) {
+    return false;
+  }
+  /**
+   *  If base_m is public or protected then sub_m always overrides.
+   *  If base_m is !public, !protected and !private (i.e. base_m is package private)
+   *  then sub_m should be in the same package as that of base_m.
+   *  For package private base_m this is conservative approach as it allows only subset of all allowed cases in
+   *  the jvm specification.
+   **/
+  if (base_m->is_public() || base_m->is_protected() ||
+      base_m->method_holder()->is_same_class_package(sub_m->method_holder())) {
+    return true;
+  }
+  return false;
+}
 
 // Find the set of all non-abstract methods under ctxk that match m.
 // (The method m must be defined or inherited in ctxk.)
@@ -1908,6 +1892,9 @@ Method* Dependencies::find_unique_concrete_method(Klass* ctxk, Method* m) {
     }
   } else if (Dependencies::find_witness_AME(ctxk, fm) != NULL) {
     // Found a concrete subtype which does not override abstract root method.
+    return NULL;
+  } else if (!overrides(fm, m)) {
+    // Found method doesn't override abstract root method.
     return NULL;
   }
   assert(Dependencies::is_concrete_root_method(fm, ctxk) == Dependencies::is_concrete_method(m, ctxk), "mismatch");
