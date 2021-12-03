@@ -248,7 +248,7 @@ var getJibProfilesCommon = function (input, data) {
         dependencies: ["boot_jdk", "gnumake", "jtreg", "jib", "autoconf"],
         default_make_targets: ["product-bundles", "test-bundles", "static-libs-bundles"],
         configure_args: concat(["--enable-jtreg-failure-handler"],
-            "--with-exclude-translations=de,es,fr,it,ko,pt_BR,sv,ca,tr,cs,sk,ja_JP_A,ja_JP_HA,ja_JP_HI,ja_JP_I,zh_TW,zh_HK",
+            "--with-exclude-translations=es,fr,it,ko,pt_BR,sv,ca,tr,cs,sk,ja_JP_A,ja_JP_HA,ja_JP_HI,ja_JP_I,zh_TW,zh_HK",
             "--disable-manpages",
             versionArgs(input, common))
     };
@@ -875,7 +875,11 @@ var getJibProfilesDependencies = function (input, common) {
 
     var devkit_platform_revisions = {
         linux_x64: "gcc7.3.0-OEL6.4+1.1",
+<<<<<<< HEAD
         macosx_x64: "Xcode10.1-MacOSX10.14+1.0",
+=======
+        macosx_x64: "Xcode11.3.1-MacOSX10.15+1.0",
+>>>>>>> jdk-11.0.14+5
         solaris_x64: "SS12u4-Solaris11u1+1.0",
         solaris_sparcv9: "SS12u4-Solaris11u1+2.0",
         windows_x64: "VS2017-15.9.24+1.0",
