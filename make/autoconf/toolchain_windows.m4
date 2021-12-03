@@ -130,15 +130,11 @@ AC_DEFUN([TOOLCHAIN_CHECK_POSSIBLE_VISUAL_STUDIO_ROOT],
         VCVARSFILES="vc/bin/vcvars32.bat vc/auxiliary/build/vcvars32.bat"
       elif test "x$OPENJDK_TARGET_CPU" = xx86_64; then
         VCVARSFILES="vc/bin/amd64/vcvars64.bat vc/bin/x86_amd64/vcvarsx86_amd64.bat \
-<<<<<<< HEAD
-            vc/auxiliary/build/vcvars64.bat vc/auxiliary/build/vcvarsx86_amd64.bat"
-=======
             vc/auxiliary/build/vcvarsx86_amd64.bat vc/auxiliary/build/vcvars64.bat"
       elif test "x$OPENJDK_TARGET_CPU" = xaarch64; then
         # for host x86-64, target aarch64
         VCVARSFILES="vc/auxiliary/build/vcvarsamd64_arm64.bat \
             vc/auxiliary/build/vcvarsx86_arm64.bat"
->>>>>>> jdk-11.0.14+5
       fi
 
       for VCVARSFILE in $VCVARSFILES; do

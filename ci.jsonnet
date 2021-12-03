@@ -88,7 +88,7 @@ local os(conf) = conf.environment.CI_OS;
             ac_cv_func_getentropy: "no",
             ac_cv_func_mkostemp: "no",
             ac_cv_func_mkostemps: "no",
-            MACOSX_DEPLOYMENT_TARGET: "10.11"
+            MACOSX_DEPLOYMENT_TARGET: "10.15"
         },
         name+: "-darwin",
         capabilities+: ["darwin_mojave_6"] # JIB only works on the darwin_mojave slaves
