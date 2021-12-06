@@ -1626,7 +1626,7 @@ define_pd_global(uint64_t,MaxRAM,                    1ULL*G);
           constraint(AllocatePrefetchInstrConstraintFunc, AfterMemoryInit)  \
                                                                             \
   /* deoptimization */                                                      \
-  develop(bool, TraceDeoptimization, false,                                 \
+  diagnostic(bool, TraceDeoptimization, false,                              \
           "Trace deoptimization")                                           \
                                                                             \
   develop(bool, PrintDeoptimizationDetails, false,                          \
