@@ -160,7 +160,7 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
         run+: [
             # To reduce load, the CI system does not fetch all tags so it must
             # be done explicitly as `build_labsjdk.py` relies on it.
-            ["git", "fetch", "--tags"],
+            ["git", "fetch", "--quiet", "--tags"],
         ] + (if conf.os == "windows" then [
             # Need to fix line endings on Windows to satisfy cygwin
             # https://stackoverflow.com/a/26408129
