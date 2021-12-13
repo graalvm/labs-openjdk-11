@@ -10,7 +10,13 @@ local os(conf) = conf.environment.CI_OS;
     overlay: "436e17726b16bb1af9552c0f096d1bfbe7abccd8",
     specVersion: "2",
 
-    OSBase:: {
+    local mx = {
+      packages+: {
+          "mx": "==5.273.0"
+      },
+    },
+
+    OSBase:: mx + {
         path(unixpath):: unixpath,
         exe(unixpath):: unixpath,
         jdk_home(java_home):: self.path(java_home),
@@ -32,7 +38,7 @@ local os(conf) = conf.environment.CI_OS;
         downloads+: {
             CYGWIN: {name: "cygwin", version: "3.0.7", platformspecific: true},
         },
-        packages : {
+        packages+: {
             "devkit:VS2017-15.5.5+1" : "==0"
         },
         capabilities+: ["windows"],
@@ -60,7 +66,7 @@ local os(conf) = conf.environment.CI_OS;
         },
     },
     LinuxDevkit:: self.Linux {
-        packages : {
+        packages+: {
             "devkit:gcc7.3.0-OEL6.4+1" : "==1"
         },
     },
@@ -286,7 +292,7 @@ local os(conf) = conf.environment.CI_OS;
         ]
     },
 
-    CompilerTests(conf):: conf + clone_graal + requireLabsJDK(conf) + {
+    CompilerTests(conf):: mx + conf + clone_graal + requireLabsJDK(conf) + {
         name: "test-compiler" + conf.name,
         timelimit: "1:00:00",
         logs: ["*.log"],
@@ -297,7 +303,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Build and test JavaScript on GraalVM
-    JavaScriptTests(conf):: conf + clone_graal + requireLabsJDK(conf) + {
+    JavaScriptTests(conf):: mx + conf + clone_graal + requireLabsJDK(conf) + {
         local jsvm = ["mx", "-p", "graal/vm",
             "--dynamicimports", "/graal-js,/substratevm",
             "--components=Graal.js,Native Image",
@@ -320,7 +326,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Build LibGraal
-    BuildLibGraal(conf):: conf + clone_graal + requireLabsJDK(conf) + {
+    BuildLibGraal(conf):: mx + conf + clone_graal + requireLabsJDK(conf) + {
         name: "build-libgraal" + conf.name,
         timelimit: "1:00:00",
         logs: ["*.log"],
@@ -350,7 +356,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Test LibGraal
-    TestLibGraal(conf):: conf + clone_graal + requireLabsJDK(conf) + requireLibGraal(conf) {
+    TestLibGraal(conf):: mx + conf + clone_graal + requireLabsJDK(conf) + requireLibGraal(conf) {
         name: "test-libgraal" + conf.name,
         timelimit: "1:00:00",
         logs: ["*.log"],
