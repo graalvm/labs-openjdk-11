@@ -81,7 +81,6 @@ class JVMCIKlassHandle : public StackObj {
   bool    operator == (Klass* o) const          { return klass() == o; }
   bool    operator == (const JVMCIKlassHandle& h) const  { return klass() == h.klass(); }
 
-<<<<<<< HEAD
   /* Null checks */
   bool    is_null() const                      { return _klass == NULL; }
   bool    not_null() const                     { return _klass != NULL; }
@@ -95,46 +94,6 @@ class JVMCICompileState : public ResourceObj {
  private:
   CompileTask*     _task;
   JVMCICompiler*   _compiler;
-  int              _system_dictionary_modification_counter;
-=======
-  enum CodeInstallResult {
-     ok,
-     dependencies_failed,
-     dependencies_invalid,
-     cache_full,
-     code_too_large
-  };
-
-  // Look up a klass by name from a particular class loader (the accessor's).
-  // If require_local, result must be defined in that class loader, or NULL.
-  // If !require_local, a result from remote class loader may be reported,
-  // if sufficient class loader constraints exist such that initiating
-  // a class loading request from the given loader is bound to return
-  // the class defined in the remote loader (or throw an error).
-  //
-  // Return an unloaded klass if !require_local and no class at all is found.
-  //
-  // The CI treats a klass as loaded if it is consistently defined in
-  // another loader, even if it hasn't yet been loaded in all loaders
-  // that could potentially see it via delegation.
-  static Klass* get_klass_by_name(Klass* accessing_klass, Symbol* klass_name, bool require_local);
-
-  // Constant pool access.
-  static Klass* get_klass_by_index(const constantPoolHandle& cpool,
-                                   int klass_index,
-                                   bool& is_accessible,
-                                   Klass* loading_klass);
-  static void   get_field_by_index(InstanceKlass* loading_klass, fieldDescriptor& fd,
-                                   int field_index);
-  static methodHandle  get_method_by_index(const constantPoolHandle& cpool,
-                                    int method_index, Bytecodes::Code bc,
-                                    InstanceKlass* loading_klass);
-
-  JVMCIEnv(CompileTask* task);
-
-private:
-  CompileTask*     _task;
->>>>>>> 86cf496d4b (8222446: assert(C->env()->system_dictionary_modification_counter_changed()) failed: Must invalidate if TypeFuncs differ)
 
   // Cache JVMTI state. Defined as bytes so that reading them from Java
   // via Unsafe is well defined (the C++ type for bool is implementation
@@ -158,11 +117,10 @@ private:
   jint             _compilation_ticks;
 
  public:
-  JVMCICompileState(CompileTask* task, JVMCICompiler* compiler, int system_dictionary_modification_counter);
+  JVMCICompileState(CompileTask* task, JVMCICompiler* compiler);
 
   CompileTask* task() { return _task; }
 
-  int system_dictionary_modification_counter() { return _system_dictionary_modification_counter; }
   bool  jvmti_state_changed() const;
   bool  jvmti_can_hotswap_or_post_breakpoint() const { return  _jvmti_can_hotswap_or_post_breakpoint != 0; }
   bool  jvmti_can_access_local_variables() const     { return  _jvmti_can_access_local_variables != 0; }

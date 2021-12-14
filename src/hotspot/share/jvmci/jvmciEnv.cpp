@@ -37,16 +37,10 @@
 #include "jvmci/jvmciCompiler.hpp"
 #include "jvmci/jvmciRuntime.hpp"
 
-<<<<<<< HEAD
-JVMCICompileState::JVMCICompileState(CompileTask* task, JVMCICompiler* compiler, int system_dictionary_modification_counter):
+JVMCICompileState::JVMCICompileState(CompileTask* task, JVMCICompiler* compiler):
   _task(task),
   _compiler(compiler),
-  _system_dictionary_modification_counter(system_dictionary_modification_counter),
   _retryable(true),
-=======
-JVMCIEnv::JVMCIEnv(CompileTask* task):
-  _task(task),
->>>>>>> 86cf496d4b (8222446: assert(C->env()->system_dictionary_modification_counter_changed()) failed: Must invalidate if TypeFuncs differ)
   _failure_reason(NULL),
   _failure_reason_on_C_heap(false) {
   // Get Jvmti capabilities under lock to get consistent values.
@@ -735,7 +729,6 @@ JVMCIObject JVMCIEnv::call_HotSpotJVMCIRuntime_runtime (JVMCIEnv* JVMCIENV) {
   }
 }
 
-<<<<<<< HEAD
 JVMCIObject JVMCIEnv::call_JVMCI_getRuntime (JVMCIEnv* JVMCIENV) {
   JavaThread* THREAD = JVMCI::compilation_tick(JavaThread::current());
   if (is_hotspot()) {
@@ -748,88 +741,6 @@ JVMCIObject JVMCIEnv::call_JVMCI_getRuntime (JVMCIEnv* JVMCIENV) {
     jobject result = jni()->CallStaticObjectMethod(JNIJVMCI::JVMCI::clazz(), JNIJVMCI::JVMCI::getRuntime_method());
     if (jni()->ExceptionCheck()) {
       return JVMCIObject();
-=======
-// ------------------------------------------------------------------
-methodHandle JVMCIEnv::get_method_by_index(const constantPoolHandle& cpool,
-                                     int index, Bytecodes::Code bc,
-                                     InstanceKlass* accessor) {
-  ResourceMark rm;
-  return get_method_by_index_impl(cpool, index, bc, accessor);
-}
-
-// ------------------------------------------------------------------
-// Check for changes to the system dictionary during compilation
-// class loads, evolution, breakpoints
-JVMCIEnv::CodeInstallResult JVMCIEnv::validate_compile_task_dependencies(Dependencies* dependencies, Handle compiled_code,
-                                                                         JVMCIEnv* env, char** failure_detail) {
-  // If JVMTI capabilities were enabled during compile, the compilation is invalidated.
-  if (env != NULL) {
-    if (!env->_jvmti_can_hotswap_or_post_breakpoint && JvmtiExport::can_hotswap_or_post_breakpoint()) {
-      *failure_detail = (char*) "Hotswapping or breakpointing was enabled during compilation";
-      return JVMCIEnv::dependencies_failed;
-    }
-  }
-
-  // Dependencies must be checked when the system dictionary changes
-  // or if we don't know whether it has changed (i.e., env == NULL).
-  CompileTask* task = env == NULL ? NULL : env->task();
-  Dependencies::DepType result = dependencies->validate_dependencies(task, failure_detail);
-  if (result == Dependencies::end_marker) {
-    return JVMCIEnv::ok;
-  }
-
-  if (!Dependencies::is_klass_type(result)) {
-    return JVMCIEnv::dependencies_failed;
-  }
-  // The dependencies were invalid at the time of installation
-  // without any intervening modification of the system
-  // dictionary.  That means they were invalidly constructed.
-  return JVMCIEnv::dependencies_invalid;
-}
-
-// ------------------------------------------------------------------
-JVMCIEnv::CodeInstallResult JVMCIEnv::register_method(
-                                const methodHandle& method,
-                                nmethod*& nm,
-                                int entry_bci,
-                                CodeOffsets* offsets,
-                                int orig_pc_offset,
-                                CodeBuffer* code_buffer,
-                                int frame_words,
-                                OopMapSet* oop_map_set,
-                                ExceptionHandlerTable* handler_table,
-                                AbstractCompiler* compiler,
-                                DebugInformationRecorder* debug_info,
-                                Dependencies* dependencies,
-                                JVMCIEnv* env,
-                                int compile_id,
-                                bool has_unsafe_access,
-                                bool has_wide_vector,
-                                Handle installed_code,
-                                Handle compiled_code,
-                                Handle speculation_log) {
-  JVMCI_EXCEPTION_CONTEXT;
-  nm = NULL;
-  int comp_level = CompLevel_full_optimization;
-  char* failure_detail = NULL;
-  JVMCIEnv::CodeInstallResult result;
-  {
-    // To prevent compile queue updates.
-    MutexLocker locker(MethodCompileQueue_lock, THREAD);
-
-    // Prevent SystemDictionary::add_to_hierarchy from running
-    // and invalidating our dependencies until we install this method.
-    MutexLocker ml(Compile_lock);
-
-    // Encode the dependencies now, so we can check them right away.
-    dependencies->encode_content_bytes();
-
-    // Record the dependencies for the current compile in the log
-    if (LogCompilation) {
-      for (Dependencies::DepStream deps(dependencies); deps.next(); ) {
-        deps.log_dependency();
-      }
->>>>>>> 86cf496d4b (8222446: assert(C->env()->system_dictionary_modification_counter_changed()) failed: Must invalidate if TypeFuncs differ)
     }
     return wrap(result);
   }

@@ -2132,8 +2132,7 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
       retry_message = "not retryable";
       compilable = ciEnv::MethodCompilable_never;
     } else {
-<<<<<<< HEAD
-      JVMCICompileState compile_state(task, jvmci, system_dictionary_modification_counter);
+      JVMCICompileState compile_state(task, jvmci);
       JVMCIEnv env(thread, &compile_state, __FILE__, __LINE__);
       methodHandle method(thread, target_handle);
       runtime = env.runtime();
@@ -2148,17 +2147,6 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
       if (task->code() == NULL) {
         assert(failure_reason != NULL, "must specify failure_reason");
       }
-=======
-        JVMCIEnv env(task);
-        methodHandle method(thread, target_handle);
-        jvmci->compile_method(method, osr_bci, &env);
-
-        failure_reason = env.failure_reason();
-        if (!env.retryable()) {
-          retry_message = "not retryable";
-          compilable = ciEnv::MethodCompilable_not_at_tier;
-        }
->>>>>>> 86cf496d4b (8222446: assert(C->env()->system_dictionary_modification_counter_changed()) failed: Must invalidate if TypeFuncs differ)
     }
     post_compile(thread, task, task->code() != NULL, NULL, compilable, failure_reason);
     if (event.should_commit()) {
