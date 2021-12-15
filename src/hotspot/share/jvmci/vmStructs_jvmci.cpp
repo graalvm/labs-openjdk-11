@@ -242,10 +242,10 @@
   nonstatic_field(MethodData,                  _data_size,                                    int)                                   \
   nonstatic_field(MethodData,                  _data[0],                                      intptr_t)                              \
   nonstatic_field(MethodData,                  _parameters_type_data_di,                      int)                                   \
-  nonstatic_field(MethodData,                  _nof_decompiles,                               uint)                                  \
-  nonstatic_field(MethodData,                  _nof_overflow_recompiles,                      uint)                                  \
-  nonstatic_field(MethodData,                  _nof_overflow_traps,                           uint)                                  \
-  nonstatic_field(MethodData,                  _trap_hist._array[0],                          u1)                                    \
+  nonstatic_field(MethodData,                  _compiler_counters._nof_decompiles,            uint)                                  \
+  nonstatic_field(MethodData,                  _compiler_counters._nof_overflow_recompiles,   uint)                                  \
+  nonstatic_field(MethodData,                  _compiler_counters._nof_overflow_traps,        uint)                                  \
+  nonstatic_field(MethodData,                  _compiler_counters._trap_hist._array[0],       u1)                                    \
   nonstatic_field(MethodData,                  _eflags,                                       intx)                                  \
   nonstatic_field(MethodData,                  _arg_local,                                    intx)                                  \
   nonstatic_field(MethodData,                  _arg_stack,                                    intx)                                  \
@@ -580,7 +580,6 @@
                                                                           \
   declare_preprocessor_constant("JVMCI::ok",                      JVMCI::ok)                      \
   declare_preprocessor_constant("JVMCI::dependencies_failed",     JVMCI::dependencies_failed)     \
-  declare_preprocessor_constant("JVMCI::dependencies_invalid",    JVMCI::dependencies_invalid)    \
   declare_preprocessor_constant("JVMCI::cache_full",              JVMCI::cache_full)              \
   declare_preprocessor_constant("JVMCI::code_too_large",          JVMCI::code_too_large)          \
   declare_preprocessor_constant("JVMCI::first_permanent_bailout", JVMCI::first_permanent_bailout) \
@@ -735,7 +734,7 @@
 #ifdef AARCH64
 
 #define VM_STRUCTS_CPU(nonstatic_field, static_field, unchecked_nonstatic_field, volatile_nonstatic_field, nonproduct_nonstatic_field, c2_nonstatic_field, unchecked_c1_static_field, unchecked_c2_static_field) \
-  static_field(VM_Version, _psr_info.dczid_el0, uint32_t)               \
+  static_field(VM_Version, _zva_length, int) \
   volatile_nonstatic_field(JavaFrameAnchor, _last_Java_fp, intptr_t*)
 
 #define VM_INT_CONSTANTS_CPU(declare_constant, declare_preprocessor_constant, declare_c1_constant, declare_c2_constant, declare_c2_preprocessor_constant) \
