@@ -81,7 +81,7 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
             ac_cv_func_getentropy: "no",
             ac_cv_func_mkostemp: "no",
             ac_cv_func_mkostemps: "no",
-            MACOSX_DEPLOYMENT_TARGET: "10.15"
+            MACOSX_DEPLOYMENT_TARGET: "10.13"
         },
         name+: "-darwin",
         capabilities+: ["darwin_mojave_6"] # JIB only works on the darwin_mojave slaves
