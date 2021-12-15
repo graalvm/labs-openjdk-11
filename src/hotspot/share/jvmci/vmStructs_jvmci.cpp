@@ -570,7 +570,6 @@
                                                                           \
   declare_preprocessor_constant("JVMCIEnv::ok",                   JVMCI::ok)                      \
   declare_preprocessor_constant("JVMCIEnv::dependencies_failed",  JVMCI::dependencies_failed)     \
-  declare_preprocessor_constant("JVMCIEnv::dependencies_invalid", JVMCI::dependencies_invalid)    \
   declare_preprocessor_constant("JVMCIEnv::cache_full",           JVMCI::cache_full)              \
   declare_preprocessor_constant("JVMCIEnv::code_too_large",       JVMCI::code_too_large)          \
   declare_constant(JVMCIRuntime::none)                                    \
