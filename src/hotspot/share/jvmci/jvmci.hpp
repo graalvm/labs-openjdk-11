@@ -93,7 +93,6 @@ class JVMCI : public AllStatic {
   enum CodeInstallResult {
      ok,
      dependencies_failed,
-     dependencies_invalid,
      cache_full,
      code_too_large,
      first_permanent_bailout = code_too_large
