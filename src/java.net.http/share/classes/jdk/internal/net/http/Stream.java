@@ -623,12 +623,6 @@ class Stream<T> extends ExchangeImpl<T> {
         // Filter context restricted from userHeaders
         userh = HttpHeaders.of(userh.map(), Utils.CONTEXT_RESTRICTED(client()));
 
-<<<<<<< HEAD
-        final HttpHeaders uh = userh;
-
-        // Filter any headers from systemHeaders that are set in userHeaders
-        sysh = HttpHeaders.of(sysh.map(), (k,v) -> uh.firstValue(k).isEmpty());
-=======
         // Don't override Cookie values that have been set by the CookieHandler.
         final HttpHeaders uh = userh;
         BiPredicate<String, String> overrides =
@@ -639,7 +633,6 @@ class Stream<T> extends ExchangeImpl<T> {
         //   except for "Cookie:" - user cookies will be appended to system
         //   cookies
         sysh = HttpHeaders.of(sysh.map(), overrides);
->>>>>>> jdk-11.0.14+7
 
         OutgoingHeaders<Stream<T>> f = new OutgoingHeaders<>(sysh, userh, this);
         if (contentLength == 0) {

@@ -108,12 +108,8 @@ class Http1Request {
         final HttpHeaders uh = userHeaders;
 
         // Filter any headers from systemHeaders that are set in userHeaders
-<<<<<<< HEAD
-        systemHeaders = HttpHeaders.of(systemHeaders.map(), (k,v) -> uh.firstValue(k).isEmpty());
-=======
         final HttpHeaders sh = HttpHeaders.of(systemHeaders.map(),
                 (k,v) -> uh.firstValue(k).isEmpty());
->>>>>>> jdk-11.0.14+7
 
         // If we're sending this request through a tunnel,
         // then don't send any preemptive proxy-* headers that

@@ -1950,7 +1950,6 @@ public:
 };
 
 
-<<<<<<< HEAD
 #if INCLUDE_JVMCI
 // Encapsulates an encoded speculation reason. These are linked together in
 // a list that is atomically appended to during deoptimization. Entries are
@@ -1986,8 +1985,6 @@ class FailedSpeculation: public CHeapObj<mtCompiler> {
   static void free_failed_speculations(FailedSpeculation** failed_speculations_address);
 };
 #endif
-=======
->>>>>>> jdk-11.0.14+7
 class ciMethodData;
 
 class MethodData : public Metadata {
@@ -2450,11 +2447,7 @@ public:
   uint inc_decompile_count() {
     uint dec_count = _compiler_counters.inc_decompile_count();
     if (dec_count > (uint)PerMethodRecompilationCutoff) {
-<<<<<<< HEAD
         method()->set_not_compilable("decompile_count > PerMethodRecompilationCutoff", CompLevel_full_optimization, true);
-=======
-      method()->set_not_compilable(CompLevel_full_optimization, true, "decompile_count > PerMethodRecompilationCutoff");
->>>>>>> jdk-11.0.14+7
     }
     return dec_count;
   }
