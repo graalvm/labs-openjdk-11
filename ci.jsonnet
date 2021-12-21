@@ -12,7 +12,7 @@ local os(conf) = conf.environment.CI_OS;
 
     local mx = {
       packages+: {
-          "mx": "==5.273.0"
+          "mx": "me/fix_open_directive"
       },
     },
 
