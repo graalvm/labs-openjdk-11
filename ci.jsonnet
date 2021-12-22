@@ -12,7 +12,7 @@ local os(conf) = conf.environment.CI_OS;
 
     local mx = {
       packages+: {
-          "mx": "me/fix_open_directive"
+          "mx": "cpu/graal-vm/20.3"
       },
     },
 
