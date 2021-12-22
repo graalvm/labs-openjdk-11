@@ -37,10 +37,9 @@
 #include "jvmci/jvmciCompiler.hpp"
 #include "jvmci/jvmciRuntime.hpp"
 
-JVMCICompileState::JVMCICompileState(CompileTask* task, JVMCICompiler* compiler, int system_dictionary_modification_counter):
+JVMCICompileState::JVMCICompileState(CompileTask* task, JVMCICompiler* compiler):
   _task(task),
   _compiler(compiler),
-  _system_dictionary_modification_counter(system_dictionary_modification_counter),
   _retryable(true),
   _failure_reason(NULL),
   _failure_reason_on_C_heap(false) {

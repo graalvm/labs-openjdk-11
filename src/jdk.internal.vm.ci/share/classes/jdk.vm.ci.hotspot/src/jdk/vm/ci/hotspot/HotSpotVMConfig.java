@@ -179,12 +179,12 @@ class HotSpotVMConfig extends HotSpotVMConfigAccess {
     final int methodDataSize = getFieldOffset("MethodData::_size", Integer.class, "int");
     final int methodDataDataSize = getFieldOffset("MethodData::_data_size", Integer.class, "int");
     final int methodDataOopDataOffset = getFieldOffset("MethodData::_data[0]", Integer.class, "intptr_t");
-    final int methodDataOopTrapHistoryOffset = getFieldOffset("MethodData::_trap_hist._array[0]", Integer.class, "u1");
+    final int methodDataOopTrapHistoryOffset = getFieldOffset("MethodData::_compiler_counters._trap_hist._array[0]", Integer.class, "u1");
     final int methodDataIRSizeOffset = getFieldOffset("MethodData::_jvmci_ir_size", Integer.class, "int");
 
-    final int methodDataDecompiles = getFieldOffset("MethodData::_nof_decompiles", Integer.class, "uint");
-    final int methodDataOverflowRecompiles = getFieldOffset("MethodData::_nof_overflow_recompiles", Integer.class, "uint");
-    final int methodDataOverflowTraps = getFieldOffset("MethodData::_nof_overflow_traps", Integer.class, "uint");
+    final int methodDataDecompiles = getFieldOffset("MethodData::_compiler_counters._nof_decompiles", Integer.class, "uint");
+    final int methodDataOverflowRecompiles = getFieldOffset("MethodData::_compiler_counters._nof_overflow_recompiles", Integer.class, "uint");
+    final int methodDataOverflowTraps = getFieldOffset("MethodData::_compiler_counters._nof_overflow_traps", Integer.class, "uint");
 
     final int nmethodCompLevelOffset = getFieldOffset("nmethod::_comp_level", Integer.class, "int");
 
@@ -360,7 +360,6 @@ class HotSpotVMConfig extends HotSpotVMConfigAccess {
 
     final int codeInstallResultOk = getConstant("JVMCIEnv::ok", Integer.class);
     final int codeInstallResultDependenciesFailed = getConstant("JVMCIEnv::dependencies_failed", Integer.class);
-    final int codeInstallResultDependenciesInvalid = getConstant("JVMCIEnv::dependencies_invalid", Integer.class);
     final int codeInstallResultCacheFull = getConstant("JVMCIEnv::cache_full", Integer.class);
     final int codeInstallResultCodeTooLarge = getConstant("JVMCIEnv::code_too_large", Integer.class);
 
@@ -370,9 +369,6 @@ class HotSpotVMConfig extends HotSpotVMConfigAccess {
         }
         if (codeInstallResult == codeInstallResultDependenciesFailed) {
             return "dependencies failed";
-        }
-        if (codeInstallResult == codeInstallResultDependenciesInvalid) {
-            return "dependencies invalid";
         }
         if (codeInstallResult == codeInstallResultCacheFull) {
             return "code cache is full";

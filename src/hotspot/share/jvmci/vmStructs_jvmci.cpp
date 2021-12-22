@@ -241,10 +241,10 @@
   nonstatic_field(MethodData,                  _data_size,                                    int)                                   \
   nonstatic_field(MethodData,                  _data[0],                                      intptr_t)                              \
   nonstatic_field(MethodData,                  _parameters_type_data_di,                      int)                                   \
-  nonstatic_field(MethodData,                  _nof_decompiles,                               uint)                                  \
-  nonstatic_field(MethodData,                  _nof_overflow_recompiles,                      uint)                                  \
-  nonstatic_field(MethodData,                  _nof_overflow_traps,                           uint)                                  \
-  nonstatic_field(MethodData,                  _trap_hist._array[0],                          u1)                                    \
+  nonstatic_field(MethodData,                  _compiler_counters._nof_decompiles,            uint)                                  \
+  nonstatic_field(MethodData,                  _compiler_counters._nof_overflow_recompiles,   uint)                                  \
+  nonstatic_field(MethodData,                  _compiler_counters._nof_overflow_traps,        uint)                                  \
+  nonstatic_field(MethodData,                  _compiler_counters._trap_hist._array[0],       u1)                                    \
   nonstatic_field(MethodData,                  _eflags,                                       intx)                                  \
   nonstatic_field(MethodData,                  _arg_local,                                    intx)                                  \
   nonstatic_field(MethodData,                  _arg_stack,                                    intx)                                  \
@@ -570,7 +570,6 @@
                                                                           \
   declare_preprocessor_constant("JVMCIEnv::ok",                   JVMCI::ok)                      \
   declare_preprocessor_constant("JVMCIEnv::dependencies_failed",  JVMCI::dependencies_failed)     \
-  declare_preprocessor_constant("JVMCIEnv::dependencies_invalid", JVMCI::dependencies_invalid)    \
   declare_preprocessor_constant("JVMCIEnv::cache_full",           JVMCI::cache_full)              \
   declare_preprocessor_constant("JVMCIEnv::code_too_large",       JVMCI::code_too_large)          \
   declare_constant(JVMCIRuntime::none)                                    \
