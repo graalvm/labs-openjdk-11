@@ -479,6 +479,7 @@
   template(long_int_signature,                        "(J)I")                                     \
   template(long_long_signature,                       "(J)J")                                     \
   template(long_double_signature,                     "(J)D")                                     \
+  template(long_void_signature,                       "(J)V")                                     \
   template(byte_signature,                            "B")                                        \
   template(char_signature,                            "C")                                        \
   template(double_signature,                          "D")                                        \
