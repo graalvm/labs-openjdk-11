@@ -197,8 +197,8 @@ local os(conf) = conf.environment.CI_OS;
         ],
     },
 
-    Build(conf, is_musl_build):: conf + setupJDKSources(conf) + {
-        packages+: if is_musl_build == "false" then {
+    Build(conf, is_musl_build):: conf + setupJDKSources(conf) + (if is_musl_build then self.MuslBootJDK else self.BootJDK) + {
+        packages+: if !is_musl_build then {
             # GR-19828
             "00:pip:logilab-common ": "==1.4.4",
             "01:pip:astroid" : "==1.1.0",
@@ -210,7 +210,31 @@ local os(conf) = conf.environment.CI_OS;
         logs: ["*.log"],
         targets: ["gate"],
 
-        run+: [
+        local build_labsjdk(jdk_debug_level, java_home_env_var) = [
+            ["set-export", java_home_env_var, conf.path("${PWD}/../%s-java-home" % jdk_debug_level)],
+            ["python3", "-u", conf.path("${LABSJDK_BUILDER_DIR}/build_labsjdk.py"),
+                "--boot-jdk=${BOOT_JDK}",
+                "--clean-after-build",
+                "--jdk-debug-level=" + jdk_debug_level,
+                "--test=" + run_test_spec,
+                "--java-home-link-target=${%s}" % java_home_env_var,
+            ] + (if is_musl_build then ['--bundles=only-static-libs'] else [])
+            + [
+                "${JDK_SRC_DIR}"
+            ]
+        ] + (if !is_musl_build then
+                [[conf.exe("${%s}/bin/java" % java_home_env_var), "-version"]]
+            else
+                []),
+
+        run+: (if !is_musl_build then [
+            # Run some basic mx based sanity checks. This is mostly to ensure
+            # IDE support does not regress.
+            ["set-export", "JAVA_HOME", "${BOOT_JDK}"],
+            ["mx", "-p", "${JDK_SUITE_DIR}", "checkstyle"],
+            ["mx", "-p", "${JDK_SUITE_DIR}", "eclipseinit"],
+            ["mx", "-p", "${JDK_SUITE_DIR}", "canonicalizeprojects"],
+        ] else []) + [
             ["set-export", "LABSJDK_BUILDER_DIR", conf.path("${PWD}/../labsjdk-builder")],
             ["git", "clone", "--quiet", "-c", "core.autocrlf=input", "-c", "gc.auto=0", defs.labsjdk_builder_url, "${LABSJDK_BUILDER_DIR}"],
             ["git", "-C", "${LABSJDK_BUILDER_DIR}", "checkout", labsjdk_builder_version],
@@ -222,38 +246,11 @@ local os(conf) = conf.environment.CI_OS;
             ["set-export", "JIB_DATA_DIR", conf.path("${PWD}/../jib")],
             ["set-export", "JIB_SERVER", defs.jib_server],
             ["set-export", "JIB_SERVER_MIRRORS", defs.jib_server_mirrors],
-
-            # Make release build
-            ["set-export", "JAVA_HOME", conf.path("${PWD}/../release-java-home")],
-            ["python3", "-u", conf.path("${LABSJDK_BUILDER_DIR}/build_labsjdk.py"),
-                "--boot-jdk=${BOOT_JDK}",
-                "--clean-after-build",
-                "--jdk-debug-level=release",
-                "--test=" + run_test_spec,
-                "--java-home-link-target=${JAVA_HOME}",
-                "${JDK_SRC_DIR}"
-            ],
-            [conf.exe("${JAVA_HOME}/bin/java"), "-version"],
-
-            # Make fastdebug build
-            ["set-export", "JAVA_HOME_FASTDEBUG", conf.path("${PWD}/../fastdebug-java-home")],
-            ["python3", "-u", conf.path("${LABSJDK_BUILDER_DIR}/build_labsjdk.py"),
-                "--boot-jdk=${BOOT_JDK}",
-                "--clean-after-build",
-                "--jdk-debug-level=fastdebug",
-                "--test=" + run_test_spec,
-                "--java-home-link-target=${JAVA_HOME_FASTDEBUG}",
-                "${JDK_SRC_DIR}"
-            ],
-            [conf.exe("${JAVA_HOME_FASTDEBUG}/bin/java"), "-version"],
-
+        ] +
+        build_labsjdk("release", "JAVA_HOME") +
+        build_labsjdk("fastdebug", "JAVA_HOME_FASTDEBUG") +
+        [
             ["set-export", "PATH", "${OLD_PATH}"],
-
-            # Run some basic mx based sanity checks. This is mostly to ensure
-            # IDE support does not regress.
-            ["mx", "-p", "${JDK_SUITE_DIR}", "checkstyle"],
-            ["mx", "-p", "${JDK_SUITE_DIR}", "eclipseinit"],
-            ["mx", "-p", "${JDK_SUITE_DIR}", "canonicalizeprojects"],
 
             # Prepare for publishing
             ["set-export", "JDK_HOME", conf.path("${PWD}/jdk_home")],
@@ -261,7 +258,7 @@ local os(conf) = conf.environment.CI_OS;
             conf.copydir(conf.jdk_home("."), "${JDK_HOME}")
         ],
 
-        publishArtifacts+: if is_musl_build == "false" then [
+        publishArtifacts+: if !is_musl_build then [
             {
                 name: "labsjdk" + conf.name,
                 dir: ".",
@@ -392,23 +389,23 @@ local os(conf) = conf.environment.CI_OS;
 
     # GR-18864 prevents self.GraalVMTest on AArch64
     local aarch64_confs = [
-        self.LinuxDocker + self.AArch64 + self.JTReg + self.BootJDK,
+        self.LinuxDocker + self.AArch64 + self.JTReg,
     ],
 
     local amd64_musl_confs = [
-        self.LinuxMuslDocker + self.AMD64Musl + self.MuslBootJDK,
+        self.LinuxMuslDocker + self.AMD64Musl,
     ],
 
-    builds: [ self.Build(conf, "false") for conf in build_confs ] +
+    builds: [ self.Build(conf, is_musl_build=false) for conf in build_confs ] +
             [ self.CompilerTests(conf) for conf in graal_confs ] +
             [ self.JavaScriptTests(conf) for conf in graal_confs ] +
             [ self.BuildLibGraal(conf) for conf in graal_confs ] +
             [ self.TestLibGraal(conf) for conf in graal_confs ] +
 
-            #[ self.Build(conf, "false") for conf in aarch64_confs ] +
+            #[ self.Build(conf, is_musl_build=false) for conf in aarch64_confs ] +
             #[ self.CompilerTests(conf) for conf in aarch64_confs ] +
 
-            [ self.Build(conf, "true") for conf in amd64_musl_confs ] +
+            [ self.Build(conf, is_musl_build=true) for conf in amd64_musl_confs ] +
 
             # GR-20001 prevents reliable Graal testing on Windows
             # but we want to "require" the JDK artifact so that it
