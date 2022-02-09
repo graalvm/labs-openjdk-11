@@ -194,10 +194,14 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
                 "--jdk-debug-level=" + jdk_debug_level,
                 "--test=" + run_test_spec,
                 "--java-home-link-target=${%s}" % java_home_env_var,
+            ] + (if is_musl_build then ['--bundles=only-static-libs'] else [])
+            + [
                 "${JDK_SRC_DIR}"
-            ],
-            [conf.exe("${%s}/bin/java" % java_home_env_var), "-version"]
-        ],
+            ]
+        ] + (if !is_musl_build then
+                [[conf.exe("${%s}/bin/java" % java_home_env_var), "-version"]]
+            else
+                []),
 
         run+: (if !is_musl_build then [
             # Run some basic mx based sanity checks. This is mostly to ensure
@@ -254,7 +258,7 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
             # Use branch recorded by previous builder or record it now for subsequent builder(s)
             ["test", "-f", "graal.commit", "||", "echo", downstream_branch, ">graal.commit"],
             ["git", "-C", "graal", "checkout", ["cat", "graal.commit"], "||", "true"],
-            ["git", "-C", "graal", "rev-list", "-n", "1", "HEAD", ">graal.commit"],            
+            ["git", "-C", "graal", "rev-list", "-n", "1", "HEAD", ">graal.commit"],
         ]
     },
 
