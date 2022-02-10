@@ -143,9 +143,9 @@ public class AArch64HotSpotRegisterConfig implements RegisterConfig {
      */
     private static final RegisterArray reservedRegisters = new RegisterArray(rscratch1, rscratch2, heapBaseRegister, threadRegister, fp, lr, r31, zr, sp);
 
-    private static RegisterArray initAllocatable(Architecture arch, boolean reserveForHeapBase, boolean canUsePlatformRegister) {
+    private static RegisterArray initAllocatable(Architecture arch, boolean canUsePlatformRegister) {
         RegisterArray allRegisters = arch.getAvailableValueRegisters();
-        Register[] registers = new Register[allRegisters.size() - reservedRegisters.size() - (reserveForHeapBase ? 1 : 0) - (!canUsePlatformRegister ? 1 : 0)];
+        Register[] registers = new Register[allRegisters.size() - reservedRegisters.size() - (!canUsePlatformRegister ? 1 : 0)];
         List<Register> reservedRegistersList = reservedRegisters.asList();
 
         int idx = 0;
@@ -158,10 +158,6 @@ public class AArch64HotSpotRegisterConfig implements RegisterConfig {
                 continue;
             }
             assert !(reg.equals(threadRegister) || reg.equals(fp) || reg.equals(lr) || reg.equals(r31) || reg.equals(zr) || reg.equals(sp));
-            if (reserveForHeapBase && reg.equals(heapBaseRegister)) {
-                // skip heap base register
-                continue;
-            }
 
             registers[idx++] = reg;
         }
@@ -170,9 +166,8 @@ public class AArch64HotSpotRegisterConfig implements RegisterConfig {
         return new RegisterArray(registers);
     }
 
-
-    public AArch64HotSpotRegisterConfig(TargetDescription target, boolean useCompressedOops, boolean canUsePlatformRegister) {
-        this(target, initAllocatable(target.arch, useCompressedOops, canUsePlatformRegister));
+    public AArch64HotSpotRegisterConfig(TargetDescription target, boolean canUsePlatformRegister) {
+        this(target, initAllocatable(target.arch, canUsePlatformRegister));
         assert callerSaved.size() >= allocatable.size();
     }
 
