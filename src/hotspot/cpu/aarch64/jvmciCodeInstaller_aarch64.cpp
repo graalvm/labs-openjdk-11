@@ -21,12 +21,8 @@
  * questions.
  */
 
-<<<<<<< HEAD
 #include "jvmci/jvmci.hpp"
-=======
 #include "precompiled.hpp"
-#include "asm/macroAssembler.hpp"
->>>>>>> jdk-11.0.15+1
 #include "jvmci/jvmciCodeInstaller.hpp"
 #include "asm/macroAssembler.hpp"
 #include "jvmci/jvmciRuntime.hpp"

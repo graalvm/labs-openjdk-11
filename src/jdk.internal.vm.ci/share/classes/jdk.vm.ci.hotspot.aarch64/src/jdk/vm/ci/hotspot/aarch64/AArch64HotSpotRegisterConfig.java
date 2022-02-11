@@ -143,15 +143,9 @@ public class AArch64HotSpotRegisterConfig implements RegisterConfig {
      */
     private static final RegisterArray reservedRegisters = new RegisterArray(rscratch1, rscratch2, heapBaseRegister, threadRegister, fp, lr, r31, zr, sp);
 
-<<<<<<< HEAD
-    private static RegisterArray initAllocatable(Architecture arch) {
-        RegisterArray allRegisters = arch.getAvailableValueRegisters();
-        Register[] registers = new Register[allRegisters.size() - reservedRegisters.size()];
-=======
     private static RegisterArray initAllocatable(Architecture arch, boolean reserveForHeapBase, boolean canUsePlatformRegister) {
         RegisterArray allRegisters = arch.getAvailableValueRegisters();
         Register[] registers = new Register[allRegisters.size() - reservedRegisters.size() - (reserveForHeapBase ? 1 : 0) - (!canUsePlatformRegister ? 1 : 0)];
->>>>>>> jdk-11.0.15+1
         List<Register> reservedRegistersList = reservedRegisters.asList();
 
         int idx = 0;
@@ -160,9 +154,6 @@ public class AArch64HotSpotRegisterConfig implements RegisterConfig {
                 // skip reserved registers
                 continue;
             }
-<<<<<<< HEAD
-            assert !(reg.equals(heapBaseRegister) || reg.equals(threadRegister) || reg.equals(fp) || reg.equals(lr) || reg.equals(r31) || reg.equals(zr) || reg.equals(sp)) : reg;
-=======
             if (!canUsePlatformRegister && reg.equals(platformRegister)) {
                 continue;
             }
@@ -172,7 +163,6 @@ public class AArch64HotSpotRegisterConfig implements RegisterConfig {
                 continue;
             }
 
->>>>>>> jdk-11.0.15+1
             registers[idx++] = reg;
         }
 
@@ -180,13 +170,9 @@ public class AArch64HotSpotRegisterConfig implements RegisterConfig {
         return new RegisterArray(registers);
     }
 
-<<<<<<< HEAD
-    public AArch64HotSpotRegisterConfig(TargetDescription target) {
-        this(target, initAllocatable(target.arch));
-=======
+
     public AArch64HotSpotRegisterConfig(TargetDescription target, boolean useCompressedOops, boolean canUsePlatformRegister) {
         this(target, initAllocatable(target.arch, useCompressedOops, canUsePlatformRegister));
->>>>>>> jdk-11.0.15+1
         assert callerSaved.size() >= allocatable.size();
     }
 
