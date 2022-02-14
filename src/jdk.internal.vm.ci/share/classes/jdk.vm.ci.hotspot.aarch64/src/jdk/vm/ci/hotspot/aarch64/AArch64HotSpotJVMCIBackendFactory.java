@@ -127,7 +127,7 @@ public class AArch64HotSpotJVMCIBackendFactory implements HotSpotJVMCIBackendFac
         return new HotSpotConstantReflectionProvider(runtime);
     }
 
-    protected RegisterConfig createRegisterConfig(AArch64HotSpotVMConfig config, TargetDescription target) {
+    private static RegisterConfig createRegisterConfig(AArch64HotSpotVMConfig config, TargetDescription target) {
         // ARMv8 defines r18 as being available to the platform ABI. Windows
         // and Darwin use it for such. Linux doesn't assign it and thus r18 can
         // be used as an additional register.
@@ -171,7 +171,7 @@ public class AArch64HotSpotJVMCIBackendFactory implements HotSpotJVMCIBackendFac
                 metaAccess = createMetaAccess(runtime);
             }
             try (InitTimer rt = timer("create RegisterConfig")) {
-                regConfig = createRegisterConfig(target);
+                regConfig = createRegisterConfig(config, target);
             }
             try (InitTimer rt = timer("create CodeCache provider")) {
                 codeCache = createCodeCache(runtime, target, regConfig);
