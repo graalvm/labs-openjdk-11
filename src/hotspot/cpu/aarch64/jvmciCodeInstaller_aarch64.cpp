@@ -22,6 +22,8 @@
  */
 
 #include "jvmci/jvmci.hpp"
+#include "precompiled.hpp"
+#include "asm/macroAssembler.hpp"
 #include "jvmci/jvmciCodeInstaller.hpp"
 #include "asm/macroAssembler.hpp"
 #include "jvmci/jvmciRuntime.hpp"
