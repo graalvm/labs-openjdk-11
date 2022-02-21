@@ -30,11 +30,24 @@
 #include "runtime/thread.hpp"
 
 class CompileTask;
+<<<<<<< HEAD
 class JVMCIObject;
 class JVMCIObjectArray;
 class JVMCIPrimitiveArray;
 class JVMCICompiler;
 class JVMCIRuntime;
+=======
+
+// Bring the JVMCI compiler thread into the VM state.
+#define JVMCI_VM_ENTRY_MARK                       \
+  JavaThread* thread = JavaThread::current(); \
+  MACOS_AARCH64_ONLY(ThreadWXEnable __wx(WXWrite, thread)); \
+  ThreadInVMfromNative __tiv(thread);       \
+  ResetNoHandleMark rnhm;                   \
+  HandleMarkCleaner __hm(thread);           \
+  Thread* THREAD = thread;                  \
+  debug_only(VMNativeEntryWrapper __vew;)
+>>>>>>> jdk-11.0.15+2
 
 #define JVMCI_EXCEPTION_CONTEXT \
   JavaThread* thread=JavaThread::current(); \
