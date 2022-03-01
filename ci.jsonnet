@@ -250,7 +250,7 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "tb/GR-35073_5",
+    local downstream_branch = "cpu/graal-vm/21.3",
 
     local clone_graal = {
         run+: [
