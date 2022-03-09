@@ -237,7 +237,7 @@ var getJibProfilesCommon = function (input, data) {
 
     // List of the main profile names used for iteration
     common.main_profile_names = [
-        "linux-x64", "linux-x64-musl", "linux-x86", "macosx-x64", "solaris-x64",
+        "linux-x64", "linux-x64-musl", "linux-x86", "macosx-aarch64", "macosx-x64", "solaris-x64",
         "solaris-sparcv9", "windows-x64", "windows-x86",
         "linux-aarch64", "linux-arm32", "linux-arm64", "linux-arm-vfp-hflt",
         "linux-arm-vfp-hflt-dyn"
@@ -380,7 +380,14 @@ var getJibProfilesCommon = function (input, data) {
         };
     };
 
-    common.boot_jdk_version = input.build_cpu == 'aarch64' ? "11.0.7" : "10";
+    if (input.build_os == 'macosx' && input.build_cpu == 'aarch64') {
+        common.boot_jdk_version = "11.0.15";
+    } else if (input.build_cpu == 'aarch64') {
+        common.boot_jdk_version = "11.0.7";
+    } else {
+        common.boot_jdk_version = "10";
+    }
+
     common.boot_jdk_home = input.get("boot_jdk", "home_path") + "/jdk-"
         + common.boot_jdk_version
         + (input.build_os == "macosx" ? ".jdk/Contents/Home" : "");
@@ -434,6 +441,14 @@ var getJibProfilesProfiles = function (input, common, data) {
                 // Use system SetFile instead of the one in the devkit as the
                 // devkit one may not work on Catalina.
                 "SETFILE=/usr/bin/SetFile"),
+        },
+
+        "macosx-aarch64": {
+            target_os: "macosx",
+            target_cpu: "aarch64",
+            dependencies: ["devkit"],
+            configure_args: concat(common.configure_args_64bit, "--with-zlib=system",
+                "--with-macosx-version-max=11.00.00"),
         },
 
         "solaris-x64": {
@@ -635,6 +650,10 @@ var getJibProfilesProfiles = function (input, common, data) {
         "macosx-x64": {
             platform: "osx-x64",
             jdk_subdir: "jdk-" + data.version +  ".jdk/Contents/Home",
+        },
+        "macosx-aarch64": {
+            platform: "osx-aarch64",
+            jdk_subdir: "jdk-" + data.version + ".jdk/Contents/Home",
         },
         "solaris-x64": {
             platform: "solaris-x64",
@@ -877,6 +896,7 @@ var getJibProfilesDependencies = function (input, common) {
     var devkit_platform_revisions = {
         linux_x64: "gcc7.3.0-OEL6.4+1.1",
         macosx_x64: "Xcode11.3.1-MacOSX10.15+1.0",
+        macosx: "Xcode12.4+1.0",
         solaris_x64: "SS12u4-Solaris11u1+1.0",
         solaris_sparcv9: "SS12u4-Solaris11u1+2.0",
         windows_x64: "VS2017-15.9.24+1.0",
@@ -892,9 +912,15 @@ var getJibProfilesDependencies = function (input, common) {
                     )
     };
 
-    var devkit_platform = (input.target_cpu == "x86"
-        ? input.target_os + "_x64"
-        : input.target_platform);
+    var devkit_platform = "";
+    if (input.build_os == 'macosx' && input.build_cpu == 'aarch64') {
+        devkit_platform = "macosx";
+    } else if (input.target_cpu == "x86") {
+        devkit_platform = input.target_os + "_x64";
+    } else {
+        devkit_platform = input.target_platform;
+    }
+
 
     var boot_jdk_platform = (input.build_os == "macosx" ? "osx" : input.build_os)
         + "-" + input.build_cpu +
@@ -904,7 +930,16 @@ var getJibProfilesDependencies = function (input, common) {
         ? input.get("gnumake", "install_path") + "/cygwin/bin"
         : input.get("gnumake", "install_path") + "/bin");
 
-    if (input.build_cpu == 'aarch64') {
+    if (boot_jdk_platform == 'osx-aarch64') {
+        boot_jdk = {
+            organization: common.organization,
+            ext: "tar.gz",
+            module: "jdk-macosx_aarch64",
+            revision: "11.0.15-adhoc-2021-12-14+1.0",
+            configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
+            environment_path: common.boot_jdk_home + "/bin"
+        }
+    } else if (input.build_cpu == 'aarch64') {
         boot_jdk = {
             organization: common.organization,
             ext: "tar.gz",
