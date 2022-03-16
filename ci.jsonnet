@@ -72,6 +72,9 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
             # available once Xcode has been installed.
         },
         os:: "darwin",
+        name+: "-darwin",
+    },
+    DarwinAMD64:: self.Darwin + self.AMD64 + {
         environment+: {
             ac_cv_func_basename_r: "no",
             ac_cv_func_clock_getres: "no",
@@ -83,8 +86,16 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
             ac_cv_func_mkostemps: "no",
             MACOSX_DEPLOYMENT_TARGET: "10.13"
         },
-        name+: "-darwin",
         capabilities+: ["darwin_mojave_6"] # JIB only works on the darwin_mojave slaves
+    },
+    DarwinAArch64:: self.Darwin + self.AArch64 + {
+        capabilities+: ["darwin"],
+        packages+: {
+           'python3': '==3.9.9',
+           '00:pip:logilab-common': '==1.8.3',
+           '01:pip:astroid': '==2.11.0',
+           'pip:pylint': '==2.12.2',
+        },
     },
 
     AMD64:: {
@@ -174,7 +185,7 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
     },
 
     Build(conf, is_musl_build):: conf + setupJDKSources(conf) + (if is_musl_build then self.MuslBootJDK else self.BootJDK) + {
-        packages+: if !is_musl_build then {
+        packages+: if !is_musl_build && !std.endsWith(conf.name, 'darwin-aarch64') then {
             # GR-19828
             "00:pip:logilab-common ": "==1.4.4",
             "01:pip:astroid" : "==1.1.0",
@@ -374,14 +385,16 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
     local build_confs = [
         self.LinuxDevkitAMD64 + self.AMD64,
         self.Linux + self.AArch64,
-        self.Darwin + self.AMD64,
+        self.DarwinAMD64,
+        self.DarwinAArch64,
         self.Windows + self.AMD64
     ],
 
     local graal_confs = [
         self.LinuxDevkitAMD64 + self.AMD64,
         self.Linux + self.AArch64 + self.JTReg + self.BootJDK,
-        self.Darwin + self.AMD64,
+        self.DarwinAMD64,
+        self.DarwinAArch64,
     ],
 
     local amd64_musl_confs = [
