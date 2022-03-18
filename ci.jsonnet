@@ -268,7 +268,7 @@ local os(conf) = conf.environment.CI_OS;
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "tb/GR-36838_Fix-Intrinsics",
+    local downstream_branch = "me/GR-36838_fix-intrinsics",
 
     local clone_graal = {
         run+: [
