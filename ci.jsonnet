@@ -3,7 +3,7 @@ local defs = import "defs.jsonnet";
 # https://github.com/graalvm/labs-openjdk-11/blob/master/doc/testing.md
 local run_test_spec = "test/hotspot/jtreg/compiler/jvmci";
 
-local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
+local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
 
 {
     overlay: "509baaf0d06e0fd662ba236954bacf62c6676360",
@@ -145,6 +145,17 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
         }
     },
 
+    # GR-37479: use some aarch64 jdk until we have a proper oraclejdk build in place for darwin-aarch64
+    DarwinAArch64BootJDK:: {
+        downloads+: {
+            BOOT_JDK: {
+                name : "jdk",
+                version : "17.0.24",
+                platformspecific: true
+            }
+        }
+    },
+
     MuslBootJDK:: {
         downloads+: {
             BOOT_JDK: {
@@ -184,7 +195,7 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
         ],
     },
 
-    Build(conf, is_musl_build):: conf + setupJDKSources(conf) + (if is_musl_build then self.MuslBootJDK else self.BootJDK) + {
+    Build(conf, is_musl_build):: conf + setupJDKSources(conf) + (if is_musl_build then self.MuslBootJDK else (if std.endsWith(conf.name, 'darwin-aarch64') then self.DarwinAArch64BootJDK else self.BootJDK)) + {
         packages+: if !is_musl_build && !std.endsWith(conf.name, 'darwin-aarch64') then {
             # GR-19828
             "00:pip:logilab-common ": "==1.4.4",
@@ -205,7 +216,7 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
                 "--jdk-debug-level=" + jdk_debug_level,
                 "--test=" + run_test_spec,
                 "--java-home-link-target=${%s}" % java_home_env_var,
-            ] + (if is_musl_build then ['--bundles=only-static-libs'] else [])
+            ] + (if is_musl_build then ['--bundles=static-libs'] else [])
             + [
                 "${JDK_SRC_DIR}"
             ]
@@ -218,7 +229,7 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
             # Run some basic mx based sanity checks. This is mostly to ensure
             # IDE support does not regress.
             ["set-export", "JAVA_HOME", "${BOOT_JDK}"],
-            ["mx", "-p", "${JDK_SUITE_DIR}", "checkstyle"],
+            (if std.endsWith(conf.name, 'darwin-aarch64') then ['echo', 'no checkstyle available on darwin-aarch64'] else ["mx", "-p", "${JDK_SUITE_DIR}", "checkstyle"]),
             ["mx", "-p", "${JDK_SUITE_DIR}", "eclipseinit"],
             ["mx", "-p", "${JDK_SUITE_DIR}", "canonicalizeprojects"],
         ] else []) + [
@@ -310,11 +321,11 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
             # Build and test JavaScript on GraalVM
             jsvm + ["build"],
             ["set-export", "GRAALVM_HOME", jsvm + ["graalvm-home"]],
-            ["${GRAALVM_HOME}/bin/js", "test/nashorn/opt/add.js"],
+            ["${GRAALVM_HOME}/bin/js", "js/graal-js/test/smoketest/primes.js"],
         ] +
         if conf.os != "windows" then [
             # Native launchers do not yet support --jvm mode on Windows
-            ["${GRAALVM_HOME}/bin/js", "--jvm", "test/nashorn/opt/add.js"]
+            ["${GRAALVM_HOME}/bin/js", "--jvm", "js/graal-js/test/smoketest/primes.js"]
             ] else []
     },
 
