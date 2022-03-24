@@ -150,7 +150,7 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
         downloads+: {
             BOOT_JDK: {
                 name : "jdk",
-                version : "17.0.24",
+                version : "11.0.15",
                 platformspecific: true
             }
         }
