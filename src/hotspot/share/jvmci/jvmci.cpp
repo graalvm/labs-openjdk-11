@@ -34,8 +34,9 @@
 #include "jvmci/metadataHandles.hpp"
 #include "memory/resourceArea.hpp"
 
-JVMCIRuntime* JVMCI::_compiler_runtime = NULL;
+JVMCIRuntime* JVMCI::_compiler_runtimes = NULL;
 JVMCIRuntime* JVMCI::_java_runtime = NULL;
+JVMCIRuntime* JVMCI::_shutdown_compiler_runtime = NULL;
 volatile bool JVMCI::_is_initialized = false;
 bool JVMCI::_box_caches_initialized = false;
 void* JVMCI::_shared_library_handle = NULL;
@@ -65,7 +66,7 @@ void* JVMCI::get_shared_library(char*& path, bool load) {
     path = _shared_library_path;
     return sl_handle;
   }
-  assert(JVMCI_lock->owner() == Thread::current(), "must be");
+  MutexLocker locker(JVMCI_lock);
   path = NULL;
   if (_shared_library_handle == NULL) {
     char path[JVM_MAXPATHLEN];
@@ -98,8 +99,13 @@ void JVMCI::initialize_compiler(TRAPS) {
     JNIJVMCI::initialize_ids(NULL);
     ShouldNotReachHere();
   }
-
-  JVMCI::compiler_runtime()->call_getCompiler(CHECK);
+  JVMCIRuntime* runtime;
+  if (UseJVMCINativeLibrary) {
+      runtime = JVMCI::compiler_runtime((JavaThread*) THREAD);
+  } else {
+      runtime = JVMCI::java_runtime();
+  }
+  runtime->call_getCompiler(CHECK);
 }
 
 void JVMCI::initialize_globals() {
@@ -116,13 +122,9 @@ void JVMCI::initialize_globals() {
       }
     }
   }
-  if (UseJVMCINativeLibrary) {
-    // There are two runtimes.
-    _compiler_runtime = new JVMCIRuntime(0);
-    _java_runtime = new JVMCIRuntime(-1);
-  } else {
-    // There is only a single runtime
-    _java_runtime = _compiler_runtime = new JVMCIRuntime(0);
+  _java_runtime = new JVMCIRuntime(NULL, -1, false);
+  if (using_singleton_shared_library_runtime()) {
+    JVMCI::_compiler_runtimes = new JVMCIRuntime(NULL, 0, true);
   }
 }
 
@@ -152,6 +154,16 @@ void JVMCI::ensure_box_caches_initialized(TRAPS) {
   _box_caches_initialized = true;
 }
 
+JVMCIRuntime* JVMCI::compiler_runtime(JavaThread* thread, bool create) {
+  assert(thread->is_Java_thread(), "must be") ;
+  assert(UseJVMCINativeLibrary, "must be");
+  JVMCIRuntime* runtime = thread->libjvmci_runtime();
+  if (runtime == NULL && create) {
+    runtime = JVMCIRuntime::for_thread(thread);
+  }
+  return runtime;
+}
+
 JavaThread* JVMCI::compilation_tick(JavaThread* thread) {
   if (thread->is_Compiler_thread()) {
     CompileTask *task = thread->as_CompilerThread()->task();
@@ -169,8 +181,11 @@ void JVMCI::oops_do(OopClosure* f) {
   if (_java_runtime != NULL) {
     _java_runtime->_object_handles->oops_do(f);
   }
-  if (_compiler_runtime != NULL && _compiler_runtime != _java_runtime) {
-    _compiler_runtime->_object_handles->oops_do(f);
+  for (JVMCIRuntime* runtime = _compiler_runtimes; runtime != NULL; runtime = runtime->_next) {
+    runtime->_object_handles->oops_do(f);
+  }
+  if (_shutdown_compiler_runtime != NULL) {
+    _shutdown_compiler_runtime->_object_handles->oops_do(f);
   }
 }
 
@@ -178,8 +193,11 @@ void JVMCI::metadata_do(void f(Metadata*)) {
   if (_java_runtime != NULL) {
     _java_runtime->_metadata_handles->metadata_do(f);
   }
-  if (_compiler_runtime != NULL && _compiler_runtime != _java_runtime) {
-    _compiler_runtime->_metadata_handles->metadata_do(f);
+  for (JVMCIRuntime* runtime = _compiler_runtimes; runtime != NULL; runtime = runtime->_next) {
+    runtime->_metadata_handles->metadata_do(f);
+  }
+  if (_shutdown_compiler_runtime != NULL) {
+    _shutdown_compiler_runtime->_metadata_handles->metadata_do(f);
   }
 }
 
@@ -188,66 +206,17 @@ void JVMCI::do_unloading(bool unloading_occurred) {
     if (_java_runtime != NULL) {
       _java_runtime->_metadata_handles->do_unloading();
     }
-    if (_compiler_runtime != NULL && _compiler_runtime != _java_runtime) {
-      _compiler_runtime->_metadata_handles->do_unloading();
+    for (JVMCIRuntime* runtime = _compiler_runtimes; runtime != NULL; runtime = runtime->_next) {
+     runtime->_metadata_handles->do_unloading();
+    }
+    if (_shutdown_compiler_runtime != NULL) {
+      _shutdown_compiler_runtime->_metadata_handles->do_unloading();
     }
   }
 }
 
 bool JVMCI::is_compiler_initialized() {
   return _is_initialized;
-}
-
-void JVMCI::shutdown() {
-  ResourceMark rm;
-  {
-    MutexLocker locker(JVMCI_lock);
-    _in_shutdown = true;
-    JVMCI_event_1("shutting down JVMCI");
-  }
-  JVMCIRuntime* java_runtime = _java_runtime;
-  if (java_runtime != compiler_runtime()) {
-    java_runtime->shutdown();
-  }
-  if (compiler_runtime() != NULL) {
-    compiler_runtime()->shutdown();
-  }
-}
-
-bool JVMCI::in_shutdown() {
-  return _in_shutdown;
-}
-
-void JVMCI::fatal_log(const char* buf, size_t count) {
-  intx current_thread_id = os::current_thread_id();
-  intx invalid_id = -1;
-  if (_fatal_log_init_thread == invalid_id && Atomic::cmpxchg(current_thread_id, &_fatal_log_init_thread, invalid_id) == invalid_id) {
-    static char name_buffer[O_BUFLEN];
-    int log_fd = VMError::prepare_log_file(JVMCINativeLibraryErrorFile, LIBJVMCI_ERR_FILE, name_buffer, sizeof(name_buffer));
-    if (log_fd != -1) {
-      _fatal_log_filename = name_buffer;
-    } else {
-      int e = errno;
-      tty->print("Can't open JVMCI shared library error report file. Error: ");
-      tty->print_raw_cr(os::strerror(e));
-      tty->print_cr("JVMCI shared library error report will be written to console.");
-
-      // See notes in VMError::report_and_die about hard coding tty to 1
-      log_fd = 1;
-    }
-    _fatal_log_fd = log_fd;
-  } else {
-    // Another thread won the race to initialize the stream. Give it time
-    // to complete initialization. VM locks cannot be used as the current
-    // thread might not be attached to the VM (e.g. a native thread started
-    // within libjvmci).
-    while (_fatal_log_fd == -1) {
-      os::naked_short_sleep(50);
-    }
-  }
-  fdStream log(_fatal_log_fd);
-  log.write(buf, count);
-  log.flush();
 }
 
 void JVMCI::vlog(int level, const char* format, va_list ap) {
@@ -286,3 +255,73 @@ void JVMCI::event3(const char* format, ...) LOG_TRACE(3)
 void JVMCI::event4(const char* format, ...) LOG_TRACE(4)
 
 #undef LOG_TRACE
+
+void JVMCI::shutdown(JavaThread* thread) {
+  ResourceMark rm;
+  {
+    MutexLocker locker(JVMCI_lock);
+    _in_shutdown = true;
+    JVMCI_event_1("shutting down JVMCI");
+  }
+  JVMCIRuntime* java_runtime = _java_runtime;
+  if (java_runtime != NULL) {
+    java_runtime->shutdown();
+  }
+  JVMCIRuntime* runtime = thread->libjvmci_runtime();
+  if (runtime != NULL) {
+    runtime->detach_thread(thread, "JVMCI shutdown");
+  }
+  {
+    // Attach to JVMCI initialized runtimes that are not already shutting down
+    // and shut them down. This ensures HotSpotJVMCIRuntime.shutdown() is called
+    // for each JVMCI runtime.
+    MutexLocker locker(JVMCI_lock);
+    for (JVMCIRuntime* rt = JVMCI::_compiler_runtimes; rt != NULL; rt = rt->_next) {
+      if (rt->is_HotSpotJVMCIRuntime_initialized() && rt->_num_attached_threads != JVMCIRuntime::cannot_be_attached) {
+        rt->_num_attached_threads++;
+        {
+          MutexUnlocker unlocker(JVMCI_lock);
+          rt->attach_thread(thread);
+          rt->shutdown();
+          rt->detach_thread(thread, "JVMCI shutdown");
+        }
+      }
+    }
+  }
+}
+
+bool JVMCI::in_shutdown() {
+  return _in_shutdown;
+}
+
+void JVMCI::fatal_log(const char* buf, size_t count) {
+  intx current_thread_id = os::current_thread_id();
+  intx invalid_id = -1;
+  if (_fatal_log_init_thread == invalid_id && Atomic::cmpxchg(current_thread_id, &_fatal_log_init_thread, invalid_id) == invalid_id) {
+    static char name_buffer[O_BUFLEN];
+    int log_fd = VMError::prepare_log_file(JVMCINativeLibraryErrorFile, LIBJVMCI_ERR_FILE, name_buffer, sizeof(name_buffer));
+    if (log_fd != -1) {
+      _fatal_log_filename = name_buffer;
+    } else {
+      int e = errno;
+      tty->print("Can't open JVMCI shared library error report file. Error: ");
+      tty->print_raw_cr(os::strerror(e));
+      tty->print_cr("JVMCI shared library error report will be written to console.");
+
+      // See notes in VMError::report_and_die about hard coding tty to 1
+      log_fd = 1;
+    }
+    _fatal_log_fd = log_fd;
+  } else {
+    // Another thread won the race to initialize the stream. Give it time
+    // to complete initialization. VM locks cannot be used as the current
+    // thread might not be attached to the VM (e.g. a native thread started
+    // within libjvmci).
+    while (_fatal_log_fd == -1) {
+      os::naked_short_sleep(50);
+    }
+  }
+  fdStream log(_fatal_log_fd);
+  log.write(buf, count);
+  log.flush();
+}
