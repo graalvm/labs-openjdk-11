@@ -3469,6 +3469,7 @@ void *Type_ProfileSequenceId_Read(struct _cms_typehandler_struct* self, cmsIOHAN
     *nItems = 1;
     return OutSeq;
 
+    cmsUNUSED_PARAMETER(SizeOfTag);
 }
 
 
@@ -5213,6 +5214,8 @@ Error:
    FreeArray(&a);
    cmsDictFree(hDict);
    return NULL;
+
+   cmsUNUSED_PARAMETER(SizeOfTag);
 }
 
 
