@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2021, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,7 +47,7 @@
   static_field(CompilerToVM::Data,             SharedRuntime_ic_miss_stub,             address)                                      \
   static_field(CompilerToVM::Data,             SharedRuntime_handle_wrong_method_stub, address)                                      \
   static_field(CompilerToVM::Data,             SharedRuntime_deopt_blob_unpack,        address)                                      \
-  static_field(CompilerToVM::Data,             SharedRuntime_deopt_blob_unpack_with_exception_in_tls,        address)                       \
+  static_field(CompilerToVM::Data,             SharedRuntime_deopt_blob_unpack_with_exception_in_tls, address)                       \
   static_field(CompilerToVM::Data,             SharedRuntime_deopt_blob_uncommon_trap, address)                                      \
                                                                                                                                      \
   static_field(CompilerToVM::Data,             ThreadLocalAllocBuffer_alignment_reserve, size_t)                                     \
@@ -734,9 +734,9 @@
 #ifdef AARCH64
 
 #define VM_STRUCTS_CPU(nonstatic_field, static_field, unchecked_nonstatic_field, volatile_nonstatic_field, nonproduct_nonstatic_field, c2_nonstatic_field, unchecked_c1_static_field, unchecked_c2_static_field) \
-  static_field(VM_Version, _zva_length, int) \
   static_field(StubRoutines::aarch64, _has_negatives, address)          \
   static_field(StubRoutines::aarch64, _has_negatives_long, address)     \
+  static_field(VM_Version, _zva_length, int)                            \
   volatile_nonstatic_field(JavaFrameAnchor, _last_Java_fp, intptr_t*)
 
 #define VM_INT_CONSTANTS_CPU(declare_constant, declare_preprocessor_constant, declare_c1_constant, declare_c2_constant, declare_c2_preprocessor_constant) \

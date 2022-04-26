@@ -117,6 +117,11 @@ bool JVMCIGlobals::check_jvmci_flags_are_consistent() {
       jio_fprintf(defaultStream::error_stream(), "-XX:+BootstrapJVMCI is not compatible with -XX:+UseJVMCINativeLibrary\n");
       return false;
     }
+    if (BootstrapJVMCI && (TieredStopAtLevel < CompLevel_full_optimization)) {
+      jio_fprintf(defaultStream::error_stream(),
+          "-XX:+BootstrapJVMCI is not compatible with -XX:TieredStopAtLevel=%d\n", TieredStopAtLevel);
+      return false;
+    }
   }
 
   if (!EnableJVMCI) {
@@ -128,18 +133,20 @@ bool JVMCIGlobals::check_jvmci_flags_are_consistent() {
   }
   JVMCI_FLAG_CHECKED(EagerJVMCI)
 
-  CHECK_NOT_SET(JVMCIEventLogLevel,           EnableJVMCI)
-  CHECK_NOT_SET(JVMCITraceLevel,              EnableJVMCI)
-  CHECK_NOT_SET(JVMCICounterSize,             EnableJVMCI)
-  CHECK_NOT_SET(JVMCICountersExcludeCompiler, EnableJVMCI)
-  CHECK_NOT_SET(JVMCIUseFastLocking,          EnableJVMCI)
-  CHECK_NOT_SET(JVMCINMethodSizeLimit,        EnableJVMCI)
-  CHECK_NOT_SET(MethodProfileWidth,           EnableJVMCI)
-  CHECK_NOT_SET(JVMCIPrintProperties,         EnableJVMCI)
-  CHECK_NOT_SET(UseJVMCINativeLibrary,        EnableJVMCI)
-  CHECK_NOT_SET(JVMCILibPath,                 EnableJVMCI)
-  CHECK_NOT_SET(JVMCINativeLibraryErrorFile,  EnableJVMCI)
-  CHECK_NOT_SET(JVMCILibDumpJNIConfig,        EnableJVMCI)
+  CHECK_NOT_SET(JVMCIEventLogLevel,                  EnableJVMCI)
+  CHECK_NOT_SET(JVMCITraceLevel,                     EnableJVMCI)
+  CHECK_NOT_SET(JVMCICounterSize,                    EnableJVMCI)
+  CHECK_NOT_SET(JVMCICountersExcludeCompiler,        EnableJVMCI)
+  CHECK_NOT_SET(JVMCIUseFastLocking,                 EnableJVMCI)
+  CHECK_NOT_SET(JVMCINMethodSizeLimit,               EnableJVMCI)
+  CHECK_NOT_SET(JVMCIPrintProperties,                EnableJVMCI)
+  CHECK_NOT_SET(MethodProfileWidth,                  EnableJVMCI)
+  CHECK_NOT_SET(JVMCIThreadsPerNativeLibraryRuntime, EnableJVMCI)
+  CHECK_NOT_SET(JVMCICompilerIdleDelay,              EnableJVMCI)
+  CHECK_NOT_SET(UseJVMCINativeLibrary,               EnableJVMCI)
+  CHECK_NOT_SET(JVMCILibPath,                        EnableJVMCI)
+  CHECK_NOT_SET(JVMCINativeLibraryErrorFile,         EnableJVMCI)
+  CHECK_NOT_SET(JVMCILibDumpJNIConfig,               EnableJVMCI)
 
 #ifndef PRODUCT
 #define JVMCI_CHECK4(type, name, value, doc) assert(name##checked, #name " flag not checked");
@@ -173,6 +180,8 @@ bool JVMCIGlobals::enable_jvmci_product_mode(JVMFlag::Flags origin) {
     "EnableJVMCI",
     "EnableJVMCIProduct",
     "UseJVMCICompiler",
+    "JVMCIThreadsPerNativeLibraryRuntime",
+    "JVMCICompilerIdleDelay",
     "JVMCIPrintProperties",
     "EagerJVMCI",
     "JVMCIThreads",
@@ -189,7 +198,7 @@ bool JVMCIGlobals::enable_jvmci_product_mode(JVMFlag::Flags origin) {
   };
 
   for (int i = 0; JVMCIFlags[i] != NULL; i++) {
-    JVMFlag *jvmciFlag = JVMFlag::find_flag(JVMCIFlags[i]);
+    JVMFlag *jvmciFlag = (JVMFlag *)JVMFlag::find_flag(JVMCIFlags[i]);
     if (jvmciFlag == NULL) {
       return false;
     }
@@ -198,7 +207,8 @@ bool JVMCIGlobals::enable_jvmci_product_mode(JVMFlag::Flags origin) {
   }
 
   bool value = true;
-  if (JVMFlag::boolAtPut("EnableJVMCIProduct", &value, origin) != JVMFlag::SUCCESS) {
+  JVMFlag *jvmciEnableFlag = JVMFlag::find_flag("EnableJVMCIProduct");
+  if (JVMFlag::boolAtPut(jvmciEnableFlag, &value, origin) != JVMFlag::SUCCESS) {
     return false;
   }
 
@@ -209,7 +219,6 @@ bool JVMCIGlobals::enable_jvmci_product_mode(JVMFlag::Flags origin) {
 
   return true;
 }
-
 
 bool JVMCIGlobals::gc_supports_jvmci() {
   return UseSerialGC || UseParallelGC || UseG1GC;

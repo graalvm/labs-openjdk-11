@@ -1698,6 +1698,7 @@ void JavaThread::initialize() {
   _in_retryable_allocation = false;
   _jvmci._alternate_call_target = NULL;
   assert(_jvmci._implicit_exception_pc == NULL, "must be");
+  _libjvmci_runtime = NULL;
   _jvmci_counters = NULL;
   _jvmci_reserved0 = 0;
   _jvmci_reserved1 = 0;

@@ -88,6 +88,7 @@ class IdealGraphPrinter;
 
 class JVMCIEnv;
 class JVMCIPrimitiveArray;
+class JVMCIRuntime;
 
 class Metadata;
 template <class T, MEMFLAGS F> class ChunkedList;
@@ -1103,6 +1104,9 @@ class JavaThread: public Thread {
     address   _alternate_call_target;
   } _jvmci;
 
+  // The JVMCIRuntime in a JVMCI shared library
+  JVMCIRuntime* _libjvmci_runtime;
+
   // Support for high precision, thread sensitive counters in JVMCI compiled code.
   jlong*    _jvmci_counters;
 
@@ -1544,6 +1548,12 @@ class JavaThread: public Thread {
 
   virtual bool in_retryable_allocation() const    { return _in_retryable_allocation; }
   void set_in_retryable_allocation(bool b)        { _in_retryable_allocation = b; }
+
+  JVMCIRuntime* libjvmci_runtime() const          { return _libjvmci_runtime; }
+  void set_libjvmci_runtime(JVMCIRuntime* rt) {
+    assert((_libjvmci_runtime == NULL && rt != NULL) || (_libjvmci_runtime != NULL && rt == NULL), "must be");
+    _libjvmci_runtime = rt;
+  }
 #endif // INCLUDE_JVMCI
 
   // Exception handling for compiled methods
