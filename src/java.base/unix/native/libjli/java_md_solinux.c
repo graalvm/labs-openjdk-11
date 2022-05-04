@@ -236,6 +236,7 @@ RequiresSetenv(const char *jvmpath) {
     char *dmllp = NULL;
     char *p; /* a utility pointer */
 
+<<<<<<< HEAD
 #ifdef __linux
 #ifndef LIBC
 #error "LIBC not set"
@@ -267,6 +268,14 @@ RequiresSetenv(const char *jvmpath) {
        */
       return JNI_TRUE;
     }
+=======
+#ifdef MUSL_LIBC
+    /*
+     * The musl library loader requires LD_LIBRARY_PATH to be set in order
+     * to correctly resolve the dependency libjava.so has on libjvm.so.
+     */
+    return JNI_TRUE;
+>>>>>>> jdk-11.0.16+1
 #endif
 
 #ifdef AIX
