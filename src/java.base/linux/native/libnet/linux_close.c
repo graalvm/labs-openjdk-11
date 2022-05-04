@@ -60,11 +60,7 @@ typedef struct {
 /*
  * Signal to unblock thread
  */
-<<<<<<< HEAD
-static int sigWakeup;
-=======
 #define WAKEUP_SIGNAL (SIGRTMAX - 2)
->>>>>>> jdk-11.0.16+1
 
 /*
  * fdTable holds one entry per file descriptor, up to a certain

@@ -504,32 +504,12 @@ public class VMProps implements Callable<Map<String, String>> {
     }
 
     /**
-<<<<<<< HEAD
-     * Check if we run with musl libc.
-     *
-     * @return true if we run with musl libc.
-     */
-    protected String isMusl() {
-        try {
-            ProcessBuilder pb = new ProcessBuilder("ldd", "--version");
-            pb.redirectErrorStream(true);
-            final Process p = pb.start();
-            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            String line = br.readLine();
-            if (line != null && line.contains("musl")) {
-                return "true";
-            }
-        } catch (Exception e) {
-        }
-        return "false";
-=======
      * Checks musl libc.
      *
      * @return true if musl libc is used.
      */
     protected String isMusl() {
         return Boolean.toString(WB.getLibcName().contains("musl"));
->>>>>>> jdk-11.0.16+1
     }
 
     private String implementor() {

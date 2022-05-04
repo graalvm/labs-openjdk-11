@@ -166,13 +166,8 @@ pthread_t os::Linux::_main_thread;
 int os::Linux::_page_size = -1;
 bool os::Linux::_supports_fast_thread_cpu_time = false;
 uint32_t os::Linux::_os_version = 0;
-<<<<<<< HEAD
-const char * os::Linux::_glibc_version = "unknown";
-const char * os::Linux::_libpthread_version = "unknown";
-=======
 const char * os::Linux::_libc_version = NULL;
 const char * os::Linux::_libpthread_version = NULL;
->>>>>>> jdk-11.0.16+1
 
 #ifdef __GLIBC__
 os::Linux::mallinfo_func_t os::Linux::_mallinfo = NULL;
@@ -631,23 +626,6 @@ void os::Linux::libpthread_init() {
   #error "glibc too old (< 2.3.2)"
 #endif
 
-<<<<<<< HEAD
-  size_t n;
-
-  n = confstr(_CS_GNU_LIBC_VERSION, NULL, 0);
-  if (n > 0) {
-    char* str = (char *)malloc(n, mtInternal);
-    confstr(_CS_GNU_LIBC_VERSION, str, n);
-    os::Linux::set_glibc_version(str);
-  }
-
-  n = confstr(_CS_GNU_LIBPTHREAD_VERSION, NULL, 0);
-  if (n > 0) {
-    char* str = (char *)malloc(n, mtInternal);
-    confstr(_CS_GNU_LIBPTHREAD_VERSION, str, n);
-    os::Linux::set_libpthread_version(str);
-  }
-=======
 #ifdef MUSL_LIBC
   // confstr() from musl libc returns EINVAL for
   // _CS_GNU_LIBC_VERSION and _CS_GNU_LIBPTHREAD_VERSION
@@ -666,7 +644,6 @@ void os::Linux::libpthread_init() {
   confstr(_CS_GNU_LIBPTHREAD_VERSION, str, n);
   os::Linux::set_libpthread_version(str);
 #endif
->>>>>>> jdk-11.0.16+1
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -5418,16 +5395,9 @@ extern void report_error(char* file_name, int line_no, char* title,
                          char* format, ...);
 
 // Some linux distributions (notably: Alpine Linux) include the
-<<<<<<< HEAD
-// grsecurity in the kernel by default. Of particular interest from a
-// JVM perspective is PaX (https://pax.grsecurity.net/), which adds
-// some security features related to page attributes. Specifically,
-// the MPROTECT PaX functionality
-=======
 // grsecurity in the kernel. Of particular interest from a JVM perspective
 // is PaX (https://pax.grsecurity.net/), which adds some security features
 // related to page attributes. Specifically, the MPROTECT PaX functionality
->>>>>>> jdk-11.0.16+1
 // (https://pax.grsecurity.net/docs/mprotect.txt) prevents dynamic
 // code generation by disallowing a (previously) writable page to be
 // marked as executable. This is, of course, exactly what HotSpot does
@@ -5443,47 +5413,15 @@ static void check_pax(void) {
 
   void* p = ::mmap(NULL, size, PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
   if (p == MAP_FAILED) {
-<<<<<<< HEAD
-=======
     log_debug(os)("os_linux.cpp: check_pax: mmap failed (%s)" , os::strerror(errno));
->>>>>>> jdk-11.0.16+1
     vm_exit_out_of_memory(size, OOM_MMAP_ERROR, "failed to allocate memory for PaX check.");
   }
 
   int res = ::mprotect(p, size, PROT_WRITE|PROT_EXEC);
   if (res == -1) {
-<<<<<<< HEAD
-    vm_exit_during_initialization("Failed to mark memory page as executable",
-                                  "Please check if grsecurity/PaX is enabled in your kernel.\n"
-                                  "\n"
-                                  "For example, you can do this by running (note: you may need root privileges):\n"
-                                  "\n"
-                                  "    sysctl kernel.pax.softmode\n"
-                                  "\n"
-                                  "If PaX is included in the kernel you will see something like this:\n"
-                                  "\n"
-                                  "    kernel.pax.softmode = 0\n"
-                                  "\n"
-                                  "In particular, if the value is 0 (zero), then PaX is enabled.\n"
-                                  "\n"
-                                  "PaX includes security functionality which interferes with the dynamic code\n"
-                                  "generation the JVM relies on. Specifically, the MPROTECT functionality as\n"
-                                  "described on https://pax.grsecurity.net/docs/mprotect.txt is not compatible\n"
-                                  "with the JVM. If you want to allow the JVM to run you will have to disable PaX.\n"
-                                  "You can do this on a per-executable basis using the paxctl tool, for example:\n"
-                                  "\n"
-                                  "    paxctl -cm bin/java\n"
-                                  "\n"
-                                  "Please note that this modifies the executable binary in-place, so you may want\n"
-                                  "to make a backup of it first. Also note that you have to repeat this for other\n"
-                                  "executables like javac, jar, jcmd, etc.\n"
-                                  );
-
-=======
     log_debug(os)("os_linux.cpp: check_pax: mprotect failed (%s)" , os::strerror(errno));
     vm_exit_during_initialization(
       "Failed to mark memory page as executable - check if grsecurity/PaX is enabled");
->>>>>>> jdk-11.0.16+1
   }
 
   ::munmap(p, size);

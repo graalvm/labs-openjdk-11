@@ -673,36 +673,21 @@ public class Basic {
         }
     }
 
-<<<<<<< HEAD
-    // On alpine linux, /bin/true and /bin/false are just links to /bin/busybox.
-    // Some tests copy /bin/true and /bin/false to files with a different filename.
-    // However, copying the busbox executable into a file with a different name
-    // won't result in the expected return codes. As workaround, we create
-    // executable files that can be copied and produce the exepected return
-    // values. We use this workaround, if we find the busybox executable.
-=======
+
     // On Alpine Linux, /bin/true and /bin/false are just links to /bin/busybox.
     // Some tests copy /bin/true and /bin/false to files with a different filename.
     // However, copying the busbox executable into a file with a different name
     // won't result in the expected return codes. As workaround, we create
     // executable files that can be copied and produce the expected return
     // values.
->>>>>>> jdk-11.0.16+1
 
     private static class TrueExe {
         public static String path() { return path; }
         private static final String path = path0();
         private static String path0(){
-<<<<<<< HEAD
-            if (!BusyBox.is()) {
-                return "/bin/true";
-            }
-            else {
-=======
             if (!Platform.isBusybox("/bin/true")) {
                 return "/bin/true";
             } else {
->>>>>>> jdk-11.0.16+1
                 File trueExe = new File("true");
                 setFileContents(trueExe, "#!/bin/true\n");
                 trueExe.setExecutable(true);
@@ -715,23 +700,9 @@ public class Basic {
         public static String path() { return path; }
         private static final String path = path0();
         private static String path0(){
-<<<<<<< HEAD
-            if (!BusyBox.is()) {
-                return "/bin/false";
-            }
-            else {
-=======
-            if (!Platform.isBusybox("/bin/false")) {
-                return "/bin/false";
-            } else {
->>>>>>> jdk-11.0.16+1
-                File falseExe = new File("false");
-                setFileContents(falseExe, "#!/bin/false\n");
-                falseExe.setExecutable(true);
                 return falseExe.getAbsolutePath();
             }
         }
-    }
 
     static class EnglishUnix {
         private static final Boolean is =

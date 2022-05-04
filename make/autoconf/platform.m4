@@ -327,11 +327,7 @@ AC_DEFUN([PLATFORM_EXTRACT_TARGET_AND_BUILD],
     AC_MSG_RESULT([$OPENJDK_BUILD_LIBC])
   fi
 
-<<<<<<< HEAD
-  # Convert the autoconf OS/CPU value to our own data, into the VAR_OS/CPU variables.
-=======
   # Convert the autoconf OS/CPU value to our own data, into the VAR_OS/CPU/LIBC variables.
->>>>>>> jdk-11.0.16+1
   PLATFORM_EXTRACT_VARS_FROM_OS($host_os)
   PLATFORM_EXTRACT_VARS_FROM_CPU($host_cpu)
   PLATFORM_EXTRACT_VARS_FROM_LIBC($host_os)
@@ -515,11 +511,7 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
   fi
 
   OPENJDK_$1_LIBC_BUNDLE=""
-<<<<<<< HEAD
-  if test "x$OPENJDK_$1_LIBC" = "xmusl"; then  
-=======
   if test "x$OPENJDK_$1_LIBC" = "xmusl"; then
->>>>>>> jdk-11.0.16+1
     OPENJDK_$1_LIBC_BUNDLE="-$OPENJDK_$1_LIBC"
   fi
 
@@ -594,15 +586,7 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
   fi
   AC_SUBST(HOTSPOT_$1_CPU_DEFINE)
 
-<<<<<<< HEAD
-  if test "x$OPENJDK_$1_LIBC" = "xmusl"; then
-    HOTSPOT_$1_LIBC=$OPENJDK_$1_LIBC
-  else
-    HOTSPOT_$1_LIBC=""
-  fi
-=======
-  HOTSPOT_$1_LIBC=$OPENJDK_$1_LIBC
->>>>>>> jdk-11.0.16+1
+HOTSPOT_$1_LIBC=$OPENJDK_$1_LIBC
   AC_SUBST(HOTSPOT_$1_LIBC)
 
   # For historical reasons, the OS include directories have odd names.
