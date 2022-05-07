@@ -37,11 +37,15 @@
 #define ISNAND(d) isnan(d)
 #elif defined(__linux__) || defined(_ALLBSD_SOURCE)
 #include <math.h>
+<<<<<<< HEAD
 #ifdef __GLIBC__
 #define ISNANF(f) isnanf(f)
 #else
 #define ISNANF(f) isnan(f)
 #endif
+=======
+#define ISNANF(f) isnan(f)
+>>>>>>> jdk-11.0.16+1
 #define ISNAND(d) isnan(d)
 #elif defined(_AIX)
 #include <math.h>

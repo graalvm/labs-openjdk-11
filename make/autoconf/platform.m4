@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2011, 2021, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -222,6 +222,24 @@ AC_DEFUN([PLATFORM_EXTRACT_VARS_FROM_OS],
 
 # Support macro for PLATFORM_EXTRACT_TARGET_AND_BUILD.
 # Converts autoconf style OS name to OpenJDK style, into
+# VAR_LIBC.
+AC_DEFUN([PLATFORM_EXTRACT_VARS_FROM_LIBC],
+[
+  case "$1" in
+    *linux*-musl)
+      VAR_LIBC=musl
+      ;;
+    *linux*-gnu)
+      VAR_LIBC=gnu
+      ;;
+    *)
+      VAR_LIBC=default
+      ;;
+  esac
+])
+
+# Support macro for PLATFORM_EXTRACT_TARGET_AND_BUILD.
+# Converts autoconf style OS name to OpenJDK style, into
 # VAR_ABI.
 AC_DEFUN([PLATFORM_EXTRACT_VARS_FROM_ABI],
 [
@@ -264,9 +282,10 @@ AC_DEFUN([PLATFORM_EXTRACT_TARGET_AND_BUILD],
   AC_SUBST(OPENJDK_TARGET_AUTOCONF_NAME)
   AC_SUBST(OPENJDK_BUILD_AUTOCONF_NAME)
 
-  # Convert the autoconf OS/CPU value to our own data, into the VAR_OS/CPU variables.
+  # Convert the autoconf OS/CPU value to our own data, into the VAR_OS/CPU/LIBC variables.
   PLATFORM_EXTRACT_VARS_FROM_OS($build_os)
   PLATFORM_EXTRACT_VARS_FROM_CPU($build_cpu)
+  PLATFORM_EXTRACT_VARS_FROM_LIBC($build_os)
   PLATFORM_EXTRACT_VARS_FROM_ABI($build_os)
   # ..and setup our own variables. (Do this explicitly to facilitate searching)
   OPENJDK_BUILD_OS="$VAR_OS"
@@ -286,6 +305,7 @@ AC_DEFUN([PLATFORM_EXTRACT_TARGET_AND_BUILD],
   OPENJDK_BUILD_CPU_ENDIAN="$VAR_CPU_ENDIAN"
   OPENJDK_BUILD_LIBC="$VAR_LIBC"
   OPENJDK_BUILD_CPU_AUTOCONF="$build_cpu"
+  OPENJDK_BUILD_LIBC="$VAR_LIBC"
   OPENJDK_BUILD_ABI="$VAR_ABI"
   AC_SUBST(OPENJDK_BUILD_OS)
   AC_SUBST(OPENJDK_BUILD_OS_TYPE)
@@ -296,6 +316,7 @@ AC_DEFUN([PLATFORM_EXTRACT_TARGET_AND_BUILD],
   AC_SUBST(OPENJDK_BUILD_CPU_ENDIAN)
   AC_SUBST(OPENJDK_BUILD_LIBC)
   AC_SUBST(OPENJDK_BUILD_CPU_AUTOCONF)
+  AC_SUBST(OPENJDK_BUILD_LIBC)
   AC_SUBST(OPENJDK_BUILD_ABI)
 
   AC_MSG_CHECKING([openjdk-build os-cpu])
@@ -306,9 +327,14 @@ AC_DEFUN([PLATFORM_EXTRACT_TARGET_AND_BUILD],
     AC_MSG_RESULT([$OPENJDK_BUILD_LIBC])
   fi
 
+<<<<<<< HEAD
   # Convert the autoconf OS/CPU value to our own data, into the VAR_OS/CPU variables.
+=======
+  # Convert the autoconf OS/CPU value to our own data, into the VAR_OS/CPU/LIBC variables.
+>>>>>>> jdk-11.0.16+1
   PLATFORM_EXTRACT_VARS_FROM_OS($host_os)
   PLATFORM_EXTRACT_VARS_FROM_CPU($host_cpu)
+  PLATFORM_EXTRACT_VARS_FROM_LIBC($host_os)
   PLATFORM_EXTRACT_VARS_FROM_ABI($host_os)
   # ... and setup our own variables. (Do this explicitly to facilitate searching)
   OPENJDK_TARGET_OS="$VAR_OS"
@@ -341,6 +367,7 @@ AC_DEFUN([PLATFORM_EXTRACT_TARGET_AND_BUILD],
   AC_SUBST(OPENJDK_TARGET_CPU_ENDIAN)
   AC_SUBST(OPENJDK_TARGET_LIBC)
   AC_SUBST(OPENJDK_TARGET_CPU_AUTOCONF)
+  AC_SUBST(OPENJDK_TARGET_LIBC)
   AC_SUBST(OPENJDK_TARGET_ABI)
 
   AC_MSG_CHECKING([openjdk-target os-cpu])
@@ -473,9 +500,11 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
   fi
 
   # The new version string in JDK 9 also defined new naming of OS and ARCH for bundles
-  # Macosx is osx and x86_64 is x64
+  # The macOS bundle name was revised in JDK 17
+  #
+  # macosx is macos and x86_64 is x64
   if test "x$OPENJDK_$1_OS" = xmacosx; then
-    OPENJDK_$1_OS_BUNDLE="osx"
+    OPENJDK_$1_OS_BUNDLE="macos"
   else
     OPENJDK_$1_OS_BUNDLE="$OPENJDK_TARGET_OS"
   fi
@@ -486,7 +515,11 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
   fi
 
   OPENJDK_$1_LIBC_BUNDLE=""
+<<<<<<< HEAD
   if test "x$OPENJDK_$1_LIBC" = "xmusl"; then  
+=======
+  if test "x$OPENJDK_$1_LIBC" = "xmusl"; then
+>>>>>>> jdk-11.0.16+1
     OPENJDK_$1_LIBC_BUNDLE="-$OPENJDK_$1_LIBC"
   fi
 
@@ -561,11 +594,15 @@ AC_DEFUN([PLATFORM_SETUP_LEGACY_VARS_HELPER],
   fi
   AC_SUBST(HOTSPOT_$1_CPU_DEFINE)
 
+<<<<<<< HEAD
   if test "x$OPENJDK_$1_LIBC" = "xmusl"; then
     HOTSPOT_$1_LIBC=$OPENJDK_$1_LIBC
   else
     HOTSPOT_$1_LIBC=""
   fi
+=======
+  HOTSPOT_$1_LIBC=$OPENJDK_$1_LIBC
+>>>>>>> jdk-11.0.16+1
   AC_SUBST(HOTSPOT_$1_LIBC)
 
   # For historical reasons, the OS include directories have odd names.
@@ -596,9 +633,11 @@ AC_DEFUN([PLATFORM_SET_RELEASE_FILE_OS_VALUES],
     RELEASE_FILE_OS_NAME="AIX"
   fi
   RELEASE_FILE_OS_ARCH=${OPENJDK_TARGET_CPU}
+  RELEASE_FILE_LIBC=${OPENJDK_TARGET_LIBC}
 
   AC_SUBST(RELEASE_FILE_OS_NAME)
   AC_SUBST(RELEASE_FILE_OS_ARCH)
+  AC_SUBST(RELEASE_FILE_LIBC)
 ])
 
 AC_DEFUN([PLATFORM_SET_MODULE_TARGET_OS_VALUES],
