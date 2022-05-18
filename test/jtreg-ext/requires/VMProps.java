@@ -504,7 +504,6 @@ public class VMProps implements Callable<Map<String, String>> {
     }
 
     /**
-<<<<<<< HEAD
      * Check if we run with musl libc.
      *
      * @return true if we run with musl libc.
@@ -522,14 +521,6 @@ public class VMProps implements Callable<Map<String, String>> {
         } catch (Exception e) {
         }
         return "false";
-=======
-     * Checks musl libc.
-     *
-     * @return true if musl libc is used.
-     */
-    protected String isMusl() {
-        return Boolean.toString(WB.getLibcName().contains("musl"));
->>>>>>> jdk-11.0.16+1
     }
 
     private String implementor() {
