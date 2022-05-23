@@ -448,7 +448,7 @@ var getJibProfilesProfiles = function (input, common, data) {
             target_cpu: "aarch64",
             dependencies: ["devkit"],
             configure_args: concat(common.configure_args_64bit, "--with-zlib=system",
-                "--with-macosx-version-max=10.12.00"),
+                "--with-macosx-version-max=11.00.00"),
         },
 
         "solaris-x64": {
