@@ -644,7 +644,7 @@ var getJibProfilesProfiles = function (input, common, data) {
             platform: "linux-x86",
         },
         "macosx-x64": {
-            platform: "macos-x64",
+            platform: "macos-aarch64",
             jdk_subdir: "jdk-" + data.version +  ".jdk/Contents/Home",
         },
         "macosx-aarch64": {
