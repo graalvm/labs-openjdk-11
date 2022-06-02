@@ -628,13 +628,6 @@ public class Basic {
              new File("/bin/false").exists());
     }
 
-    static class BusyBox {
-        public static boolean is() { return is; }
-        private static final boolean is =
-            (! Windows.is() &&
-             new File("/bin/busybox").exists());
-    }
-
     static class UnicodeOS {
         public static boolean is() { return is; }
         private static final String osName = System.getProperty("os.name");

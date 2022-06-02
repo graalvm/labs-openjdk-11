@@ -3310,36 +3310,16 @@ void os::Linux::sched_getcpu_init() {
 extern "C" JNIEXPORT void numa_warn(int number, char *where, ...) { }
 extern "C" JNIEXPORT void numa_error(char *where) { }
 
-static void* dlvsym_if_available(void* handle, const char* name, const char* version) {
-  typedef void* (*dlvsym_func_type)(void* handle, const char* name, const char* version);
-  static dlvsym_func_type dlvsym_func;
-  static bool initialized = false;
-
-  if (!initialized) {
-    dlvsym_func = (dlvsym_func_type)dlsym(RTLD_NEXT, "dlvsym");
-    initialized = true;
-  }
-
-  if (dlvsym_func != NULL) {
-    void *f = dlvsym_func(handle, name, version);
-    if (f != NULL) {
-      return f;
-    }
-  }
-
-  return dlsym(handle, name);
-}
-
 // Handle request to load libnuma symbol version 1.1 (API v1). If it fails
 // load symbol from base version instead.
 void* os::Linux::libnuma_dlsym(void* handle, const char *name) {
-  return dlvsym_if_available(handle, name, "libnuma_1.1");
+  return dlvsym(handle, name, "libnuma_1.1");
 }
 
 // Handle request to load libnuma symbol version 1.2 (API v2) only.
 // Return NULL if the symbol is not defined in this particular version.
 void* os::Linux::libnuma_v2_dlsym(void* handle, const char* name) {
-  return dlvsym_if_available(handle, name, "libnuma_1.2");
+  return dlvsym(handle, name, "libnuma_1.2");
 }
 
 // Check numa dependent syscalls

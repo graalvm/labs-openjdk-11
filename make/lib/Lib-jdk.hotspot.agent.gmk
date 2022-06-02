@@ -60,8 +60,6 @@ ifeq ($(INCLUDE_SA_ATTACH), true)
   endif
 endif
 
-SA_CFLAGS += -DLIBC=\"$(OPENJDK_TARGET_LIBC)\"
-
 ################################################################################
 
 $(eval $(call SetupJdkLibrary, BUILD_LIBSA, \
