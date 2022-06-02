@@ -31,6 +31,7 @@
  * @key intermittent
  * @summary Basic tests for Process and Environment Variable code
  * @modules java.base/java.lang:open
+ * @library /test/lib
  * @run main/othervm/timeout=300 Basic
  * @run main/othervm/timeout=300 -Djdk.lang.Process.launchMechanism=fork Basic
  * @author Martin Buchholz
@@ -40,6 +41,7 @@
  * @test
  * @modules java.base/java.lang:open
  * @requires (os.family == "linux")
+ * @library /test/lib
  * @run main/othervm/timeout=300 -Djdk.lang.Process.launchMechanism=posix_spawn Basic
  */
 
@@ -62,6 +64,8 @@ import static java.lang.System.getenv;
 import static java.lang.System.out;
 import static java.lang.Boolean.TRUE;
 import static java.util.AbstractMap.SimpleImmutableEntry;
+
+import jdk.test.lib.Platform;
 
 public class Basic {
 
@@ -624,13 +628,6 @@ public class Basic {
              new File("/bin/false").exists());
     }
 
-    static class BusyBox {
-        public static boolean is() { return is; }
-        private static final boolean is =
-            (! Windows.is() &&
-             new File("/bin/busybox").exists());
-    }
-
     static class UnicodeOS {
         public static boolean is() { return is; }
         private static final String osName = System.getProperty("os.name");
@@ -669,21 +666,21 @@ public class Basic {
         }
     }
 
-    // On alpine linux, /bin/true and /bin/false are just links to /bin/busybox.
+
+    // On Alpine Linux, /bin/true and /bin/false are just links to /bin/busybox.
     // Some tests copy /bin/true and /bin/false to files with a different filename.
     // However, copying the busbox executable into a file with a different name
     // won't result in the expected return codes. As workaround, we create
-    // executable files that can be copied and produce the exepected return
-    // values. We use this workaround, if we find the busybox executable.
+    // executable files that can be copied and produce the expected return
+    // values.
 
     private static class TrueExe {
         public static String path() { return path; }
         private static final String path = path0();
         private static String path0(){
-            if (!BusyBox.is()) {
+            if (!Platform.isBusybox("/bin/true")) {
                 return "/bin/true";
-            }
-            else {
+            } else {
                 File trueExe = new File("true");
                 setFileContents(trueExe, "#!/bin/true\n");
                 trueExe.setExecutable(true);
@@ -696,17 +693,9 @@ public class Basic {
         public static String path() { return path; }
         private static final String path = path0();
         private static String path0(){
-            if (!BusyBox.is()) {
-                return "/bin/false";
-            }
-            else {
-                File falseExe = new File("false");
-                setFileContents(falseExe, "#!/bin/false\n");
-                falseExe.setExecutable(true);
                 return falseExe.getAbsolutePath();
             }
         }
-    }
 
     static class EnglishUnix {
         private static final Boolean is =

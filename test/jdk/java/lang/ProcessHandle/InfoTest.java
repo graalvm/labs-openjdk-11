@@ -301,7 +301,7 @@ public class InfoTest {
                     String expected = "sleep";
                     if (Platform.isWindows()) {
                         expected = "sleep.exe";
-                    } else if (new File("/bin/busybox").exists()) {
+                    } else if (Platform.isBusybox("/bin/sleep")) {
                         // With busybox sleep is just a sym link to busybox.
                         // The busbox executable is seen as ProcessHandle.Info command.
                         expected = "busybox";
