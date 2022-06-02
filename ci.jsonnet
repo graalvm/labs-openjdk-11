@@ -7,9 +7,18 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
 
 {
     overlay: "509baaf0d06e0fd662ba236954bacf62c6676360",
-    specVersion: "2",
+    specVersion: "3",
 
-    OSBase:: {
+ mxDependencies:: {
+        "python_version": "3",
+        packages+: {
+          "mx": "HEAD",
+          "python3": "==3.8.10",
+          'pip:pylint': '==2.4.4',
+      },
+    },
+
+    OSBase:: self.mxDependencies + {
         path(unixpath):: unixpath,
         exe(unixpath):: unixpath,
         jdk_home(java_home):: self.path(java_home),
@@ -19,6 +28,7 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
             JIB_PATH: "${PATH}",
             MAKE : "make",
             ZLIB_BUNDLING: "system",
+            MX_PYTHON: "python3.8"
         },
     },
 
@@ -31,7 +41,7 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
         downloads+: {
             CYGWIN: {name: "cygwin", version: "3.0.7", platformspecific: true},
         },
-        packages : {
+        packages+: {
             # devkit_platform_revisions in make/conf/jib-profiles.js
             "devkit:VS2017-15.5.5+1" : "==0"
         },
@@ -58,9 +68,10 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
         docker: {
             image: defs.linux_docker_image_amd64_musl
         },
+        packages: {},
     },
     LinuxDevkitAMD64:: self.Linux {
-        packages : {
+        packages+: {
             "devkit:gcc7.3.0-OEL6.4+1" : "==1"
         },
     },
@@ -90,12 +101,6 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
     },
     DarwinAArch64:: self.Darwin + self.AArch64 + {
         capabilities+: ["darwin"],
-        packages+: {
-           'python3': '==3.9.9',
-           '00:pip:logilab-common': '==1.8.3',
-           '01:pip:astroid': '==2.11.0',
-           'pip:pylint': '==2.12.2',
-        },
     },
 
     AMD64:: {
@@ -196,12 +201,6 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
     },
 
     Build(conf, is_musl_build):: conf + setupJDKSources(conf) + (if is_musl_build then self.MuslBootJDK else (if std.endsWith(conf.name, 'darwin-aarch64') then self.DarwinAArch64BootJDK else self.BootJDK)) + {
-        packages+: if !is_musl_build && !std.endsWith(conf.name, 'darwin-aarch64') then {
-            # GR-19828
-            "00:pip:logilab-common ": "==1.4.4",
-            "01:pip:astroid" : "==1.1.0",
-            "pip:pylint" : "==1.1.0",
-        } else {},
         name: "build-jdk" + conf.name,
         timelimit: "1:50:00",
         diskspace_required: "10G",
