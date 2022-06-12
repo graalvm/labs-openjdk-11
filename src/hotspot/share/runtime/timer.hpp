@@ -39,6 +39,7 @@ class elapsedTimer {
   elapsedTimer()             { _active = false; reset(); }
   elapsedTimer(jlong time, jlong timeUnitsPerSecond);
   void add(elapsedTimer t);
+  void add_nanoseconds(jlong ns);
   void start();
   void stop();
   void reset()               { _counter = 0; }
