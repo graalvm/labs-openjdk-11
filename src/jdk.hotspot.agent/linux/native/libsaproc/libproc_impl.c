@@ -26,9 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
-#include "proc_service.h"
 #include <sys/procfs.h>
 #include "libproc_impl.h"
+#include "proc_service.h"
 
 #define SA_ALTROOT "SA_ALTROOT"
 

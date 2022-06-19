@@ -58,10 +58,8 @@
  * input.build_id
  * input.target_os
  * input.target_cpu
- * input.target_libc
  * input.build_os
  * input.build_cpu
- * input.build_libc
  * input.target_platform
  * input.build_platform
  * // The build_osenv_* variables describe the unix layer on Windows systems,
@@ -101,16 +99,12 @@
  *       target_os; <string>
  *       // Name of cpu the profile is built to run on
  *       target_cpu; <string>
- *       // Optional libc string if non standard
- *       target_libc; <string>
  *       // Optional combination of target_os and target_cpu for convenience
  *       target_platform; <string>
  *       // Name of os the profile is built on
  *       build_os; <string>
  *       // Name of cpu the profile is built on
  *       build_cpu; <string>
- *       // Optional libc string if non standard
- *       build_libc; <string>
  *       // Optional combination of build_os and build_cpu for convenience
  *       build_platform; <string>
  *
@@ -237,7 +231,7 @@ var getJibProfilesCommon = function (input, data) {
 
     // List of the main profile names used for iteration
     common.main_profile_names = [
-        "linux-x64", "linux-x64-musl", "linux-x86", "macosx-x64", "solaris-x64",
+        "linux-x64", "linux-x86", "macosx-x64", "solaris-x64",
         "solaris-sparcv9", "windows-x64", "windows-x86",
         "linux-aarch64", "linux-arm32", "linux-arm64", "linux-arm-vfp-hflt",
         "linux-arm-vfp-hflt-dyn"
@@ -407,14 +401,6 @@ var getJibProfilesProfiles = function (input, common, data) {
             default_make_targets: ["docs-bundles"],
         },
 
-        "linux-x64-musl": {
-            target_os: "linux",
-            target_cpu: "x64",
-            target_libc: "musl",
-            configure_args: concat(common.configure_args_64bit,
-                "--with-zlib=system"),
-        },
-
         "linux-x86": {
             target_os: "linux",
             target_cpu: "x86",
@@ -429,10 +415,7 @@ var getJibProfilesProfiles = function (input, common, data) {
             target_cpu: "x64",
             dependencies: ["devkit", "graalunit_lib"],
             configure_args: concat(common.configure_args_64bit, "--with-zlib=system",
-                "--with-macosx-version-max=10.9.0",
-                // Use system SetFile instead of the one in the devkit as the
-                // devkit one may not work on Catalina.
-                "SETFILE=/usr/bin/SetFile"),
+                "--with-macosx-version-max=10.12.00"),
         },
 
         "solaris-x64": {
@@ -615,24 +598,16 @@ var getJibProfilesProfiles = function (input, common, data) {
             profiles[bootcyclePrebuiltName].default_make_targets = [ "product-images" ];
         });
 
-    //
     // Define artifacts for profiles
-    //
-    // Macosx bundles are named osx
-    // tar.gz.
     var artifactData = {
         "linux-x64": {
             platform: "linux-x64",
-        },
-        "linux-x64-musl": {
-            platform: "linux-x64-musl",
-            demo_ext: "tar.gz"
         },
         "linux-x86": {
             platform: "linux-x86",
         },
         "macosx-x64": {
-            platform: "osx-x64",
+            platform: "macos-x64",
             jdk_subdir: "jdk-" + data.version +  ".jdk/Contents/Home",
         },
         "solaris-x64": {
@@ -896,14 +871,22 @@ var getJibProfilesDependencies = function (input, common) {
         : input.target_platform);
 
     var boot_jdk_platform = (input.build_os == "macosx" ? "osx" : input.build_os)
-        + "-" + input.build_cpu +
-        (input.build_libc ? "-" + input.build_libc : "");
+        + "-" + input.build_cpu;
 
     var makeBinDir = (input.build_os == "windows"
         ? input.get("gnumake", "install_path") + "/cygwin/bin"
         : input.get("gnumake", "install_path") + "/bin");
 
-    if (input.build_cpu == 'aarch64') {
+    if (boot_jdk_platform == 'osx-aarch64') {
+        boot_jdk = {
+            organization: common.organization,
+            ext: "tar.gz",
+            module: "jdk-macosx_aarch64",
+            revision: "11.0.15-adhoc-2021-12-14+1.0",
+            configure_args: "--with-boot-jdk=" + common.boot_jdk_home,
+            environment_path: common.boot_jdk_home + "/bin"
+        }
+    } else if (input.build_cpu == 'aarch64') {
         boot_jdk = {
             organization: common.organization,
             ext: "tar.gz",

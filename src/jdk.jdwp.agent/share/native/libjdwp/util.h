@@ -32,18 +32,24 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#ifdef LINUX
+// Note. On Alpine Linux pthread.h includes calloc/malloc functions declaration.
+// We need to include pthread.h before the following stdlib names poisoning.
+#include <pthread.h>
+#endif
+
 #ifdef DEBUG
     /* Just to make sure these interfaces are not used here. */
     #undef free
-    #define free do_not_use_this_interface_free
+    #define free(p) Do not use this interface.
     #undef malloc
-    #define malloc do_not_use_this_interface_malloc
+    #define malloc(p) Do not use this interface.
     #undef calloc
-    #define calloc do_not_use_this_interface_calloc
+    #define calloc(p) Do not use this interface.
     #undef realloc
-    #define realloc do_not_use_this_interface_realloc
+    #define realloc(p) Do not use this interface.
     #undef strdup
-    #define strdup do_not_use_this_interface_strdup
+    #define strdup(p) Do not use this interface.
 #endif
 
 #include "log_messages.h"
