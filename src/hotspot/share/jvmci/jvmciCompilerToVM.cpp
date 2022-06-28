@@ -449,7 +449,7 @@ C2V_VMENTRY_NULL(jobject, findUniqueConcreteMethod, (JNIEnv* env, jobject, jobje
   // allocated vtable indexes as of JDK-8024368 and can_be_statically_bound()
   // is based on vtable indexes.
   if (method->can_be_statically_bound() || method->is_private()) {
-    JVMCI_THROW_MSG_NULL(InternalError, err_msg("Effectively static method %s should be handled in Java code", method->external_name()));
+    JVMCI_THROW_MSG_NULL(InternalError, err_msg("Effectively static method %s.%s should be handled in Java code", method->method_holder()->external_name(), method->name_and_sig_as_C_string()));
   }
 
   methodHandle ucm;
@@ -620,6 +620,7 @@ C2V_VMENTRY_NULL(jobject, resolvePossiblyCachedConstantInPool, (JNIEnv* env, job
       if (!is_java_primitive(bt)) {
         return JVMCIENV->get_jobject(JVMCIENV->get_JavaConstant_ILLEGAL());
       }
+
       jvalue value;
       jlong raw_value;
       JVMCIObject kind;
@@ -636,7 +637,6 @@ C2V_VMENTRY_NULL(jobject, resolvePossiblyCachedConstantInPool, (JNIEnv* env, job
         case T_BOOLEAN: kind = JVMCIENV->get_JavaKind_Boolean(); raw_value = value.z; break;
         default:        return JVMCIENV->get_jobject(JVMCIENV->get_JavaConstant_ILLEGAL());
       }
-
       JVMCIObject result = JVMCIENV->call_JavaConstant_forPrimitive(kind, raw_value, JVMCI_CHECK_NULL);
       return JVMCIENV->get_jobject(result);
     }
@@ -867,10 +867,8 @@ C2V_VMENTRY_0(jint, installCode, (JNIEnv *env, jobject, jobject target, jobject 
   JVMCICompiler* compiler = JVMCICompiler::instance(true, CHECK_JNI_ERR);
 
   TraceTime install_time("installCode", JVMCICompiler::codeInstallTimer(!thread->is_Compiler_thread()));
-  bool is_immutable_PIC = JVMCIENV->get_HotSpotCompiledCode_isImmutablePIC(compiled_code_handle) > 0;
-
   nmethodLocker nmethod_handle;
-  CodeInstaller installer(JVMCIENV, is_immutable_PIC);
+  CodeInstaller installer(JVMCIENV);
   JVMCI::CodeInstallResult result = installer.install(compiler,
       target_handle,
       compiled_code_handle,
@@ -913,85 +911,7 @@ C2V_VMENTRY_0(jint, installCode, (JNIEnv *env, jobject, jobject target, jobject 
 C2V_END
 
 C2V_VMENTRY_0(jint, getMetadata, (JNIEnv *env, jobject, jobject target, jobject compiled_code, jobject metadata))
-#if INCLUDE_AOT
-  HandleMark hm;
-  assert(JVMCIENV->is_hotspot(), "AOT code is executed only in HotSpot mode");
-
-  JVMCIObject target_handle = JVMCIENV->wrap(target);
-  JVMCIObject compiled_code_handle = JVMCIENV->wrap(compiled_code);
-  JVMCIObject metadata_handle = JVMCIENV->wrap(metadata);
-
-  CodeMetadata code_metadata;
-
-  CodeInstaller installer(JVMCIENV, true /* immutable PIC compilation */);
-  JVMCI::CodeInstallResult result = installer.gather_metadata(target_handle, compiled_code_handle, code_metadata, JVMCI_CHECK_0);
-  if (result != JVMCI::ok) {
-    return result;
-  }
-
-  if (code_metadata.get_nr_pc_desc() > 0) {
-    int size = sizeof(PcDesc) * code_metadata.get_nr_pc_desc();
-    JVMCIPrimitiveArray array = JVMCIENV->new_byteArray(size, JVMCI_CHECK_(JVMCI::cache_full));
-    JVMCIENV->copy_bytes_from((jbyte*) code_metadata.get_pc_desc(), array, 0, size);
-    HotSpotJVMCI::HotSpotMetaData::set_pcDescBytes(JVMCIENV, metadata_handle, array);
-  }
-
-  if (code_metadata.get_scopes_size() > 0) {
-    int size = code_metadata.get_scopes_size();
-    JVMCIPrimitiveArray array = JVMCIENV->new_byteArray(size, JVMCI_CHECK_(JVMCI::cache_full));
-    JVMCIENV->copy_bytes_from((jbyte*) code_metadata.get_scopes_desc(), array, 0, size);
-    HotSpotJVMCI::HotSpotMetaData::set_scopesDescBytes(JVMCIENV, metadata_handle, array);
-  }
-
-  RelocBuffer* reloc_buffer = code_metadata.get_reloc_buffer();
-  int size = (int) reloc_buffer->size();
-  JVMCIPrimitiveArray array = JVMCIENV->new_byteArray(size, JVMCI_CHECK_(JVMCI::cache_full));
-  JVMCIENV->copy_bytes_from((jbyte*) reloc_buffer->begin(), array, 0, size);
-  HotSpotJVMCI::HotSpotMetaData::set_relocBytes(JVMCIENV, metadata_handle, array);
-
-  const OopMapSet* oopMapSet = installer.oopMapSet();
-  {
-    ResourceMark mark;
-    ImmutableOopMapBuilder builder(oopMapSet);
-    int size = builder.heap_size();
-    JVMCIPrimitiveArray array = JVMCIENV->new_byteArray(size, JVMCI_CHECK_(JVMCI::cache_full));
-    builder.generate_into((address) HotSpotJVMCI::resolve(array)->byte_at_addr(0));
-    HotSpotJVMCI::HotSpotMetaData::set_oopMaps(JVMCIENV, metadata_handle, array);
-  }
-
-  AOTOopRecorder* recorder = code_metadata.get_oop_recorder();
-
-  int nr_meta_refs = recorder->nr_meta_refs();
-  JVMCIObjectArray metadataArray = JVMCIENV->new_Object_array(nr_meta_refs, JVMCI_CHECK_(JVMCI::cache_full));
-  for (int i = 0; i < nr_meta_refs; ++i) {
-    jobject element = recorder->meta_element(i);
-    if (element == NULL) {
-      return JVMCI::cache_full;
-    }
-    JVMCIENV->put_object_at(metadataArray, i, JVMCIENV->wrap(element));
-  }
-  HotSpotJVMCI::HotSpotMetaData::set_metadata(JVMCIENV, metadata_handle, metadataArray);
-
-  ExceptionHandlerTable* handler = code_metadata.get_exception_table();
-  int table_size = handler->size_in_bytes();
-  JVMCIPrimitiveArray exceptionArray = JVMCIENV->new_byteArray(table_size, JVMCI_CHECK_(JVMCI::cache_full));
-  if (table_size > 0) {
-    handler->copy_bytes_to((address) HotSpotJVMCI::resolve(exceptionArray)->byte_at_addr(0));
-  }
-  HotSpotJVMCI::HotSpotMetaData::set_exceptionBytes(JVMCIENV, metadata_handle, exceptionArray);
-
-  ImplicitExceptionTable* implicit = code_metadata.get_implicit_exception_table();
-  int implicit_table_size = implicit->size_in_bytes();
-  JVMCIPrimitiveArray implicitExceptionArray = JVMCIENV->new_byteArray(implicit_table_size, JVMCI_CHECK_(JVMCI::cache_full));
-  if (implicit_table_size > 0) {
-    implicit->copy_bytes_to((address) HotSpotJVMCI::resolve(implicitExceptionArray)->byte_at_addr(0), implicit_table_size);
-  }
-  HotSpotJVMCI::HotSpotMetaData::set_implicitExceptionBytes(JVMCIENV, metadata_handle, implicitExceptionArray);
-
-  return result;
-#else
   JVMCI_THROW_MSG_0(InternalError, "unimplemented");
-#endif
 C2V_END
 
 C2V_VMENTRY(void, resetCompilationStatistics, (JNIEnv* env, jobject))
@@ -1697,16 +1617,7 @@ C2V_VMENTRY_0(jint, methodDataProfileDataSize, (JNIEnv* env, jobject, jlong meta
 C2V_END
 
 C2V_VMENTRY_0(jlong, getFingerprint, (JNIEnv* env, jobject, jlong metaspace_klass))
-#if INCLUDE_AOT
-  Klass *k = (Klass*) (address) metaspace_klass;
-  if (k->is_instance_klass()) {
-    return InstanceKlass::cast(k)->get_stored_fingerprint();
-  } else {
-    return 0;
-  }
-#else
   JVMCI_THROW_MSG_0(InternalError, "unimplemented");
-#endif
 C2V_END
 
 C2V_VMENTRY_NULL(jobject, getHostClass, (JNIEnv* env, jobject, jobject jvmci_type))

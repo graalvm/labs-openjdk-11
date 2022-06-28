@@ -248,9 +248,15 @@ public final class HotSpotJVMCIRuntime implements JVMCIRuntime {
     }
 
     /**
-     * Set of recognized {@code "jvmci.*"} system properties.
+     * Set of recognized {@code "jvmci.*"} system properties. Entries not associated with an
+     * {@link Option} have this object as their value.
      */
     static final Map<String, Object> options = new HashMap<>();
+    static {
+        options.put("jvmci.class.path.append", options);
+        options.put("jvmci.CompilerIdleDelay", options);
+        options.put("jvmci.ThreadsPerNativeLibraryRuntime", options);
+    }
 
     /**
      * A list of all supported JVMCI options.
@@ -274,7 +280,7 @@ public final class HotSpotJVMCIRuntime implements JVMCIRuntime {
         TraceMethodDataFilter(String.class, null,
                 "Enables tracing of profiling info when read by JVMCI.",
                 "Empty value: trace all methods",
-                        "Non-empty value: trace methods whose fully qualified name contains the value."),
+                "Non-empty value: trace methods whose fully qualified name contains the value."),
         UseProfilingInformation(Boolean.class, true, "");
         // @formatter:on
 
@@ -679,10 +685,10 @@ public final class HotSpotJVMCIRuntime implements JVMCIRuntime {
 
         WeakReferenceHolder<HotSpotResolvedJavaType> ref = resolvedJavaType.get(javaClass);
         HotSpotResolvedJavaType javaType = ref.get();
-            if (javaType == null) {
-                /*
+        if (javaType == null) {
+            /*
              * If the referent has become null, create a new value and update cached weak reference.
-                 */
+             */
             javaType = createClass(javaClass);
             ref.set(javaType);
         }

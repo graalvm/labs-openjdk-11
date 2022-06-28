@@ -373,7 +373,7 @@ final class CompilerToVM {
      *         {@link HotSpotVMConfig#codeInstallResultOk},
      *         {@link HotSpotVMConfig#codeInstallResultCacheFull},
      *         {@link HotSpotVMConfig#codeInstallResultCodeTooLarge} or
-     *         {@link HotSpotVMConfig#codeInstallResultDependenciesFailed}
+     *         {@link HotSpotVMConfig#codeInstallResultDependenciesFailed}.
      * @throws JVMCIError if there is something wrong with the compiled code or the associated
      *             metadata.
      */
@@ -390,7 +390,7 @@ final class CompilerToVM {
      *         {@link HotSpotVMConfig#codeInstallResultOk},
      *         {@link HotSpotVMConfig#codeInstallResultCacheFull},
      *         {@link HotSpotVMConfig#codeInstallResultCodeTooLarge} or
-     *         {@link HotSpotVMConfig#codeInstallResultDependenciesFailed}
+     *         {@link HotSpotVMConfig#codeInstallResultDependenciesFailed}.
      * @throws JVMCIError if there is something wrong with the compiled code or the metadata
      */
     native int getMetadata(TargetDescription target, HotSpotCompiledCode compiledCode, HotSpotMetaData metaData);
@@ -724,6 +724,11 @@ final class CompilerToVM {
     native Object getFlagValue(String name);
 
     /**
+     * Forces linking of {@code type}.
+     */
+    native void ensureLinked(HotSpotResolvedObjectTypeImpl type);
+
+    /**
      * Gets the host class for {@code type}.
      */
     native HotSpotResolvedObjectTypeImpl getHostClass(HotSpotResolvedObjectTypeImpl type);
@@ -748,11 +753,6 @@ final class CompilerToVM {
      * Forces initialization of {@code type}.
      */
     native void ensureInitialized(HotSpotResolvedObjectTypeImpl type);
-
-    /**
-     * Forces linking of {@code type}.
-     */
-    native void ensureLinked(HotSpotResolvedObjectTypeImpl type);
 
     /**
      * Checks if {@code object} is a String and is an interned string value.

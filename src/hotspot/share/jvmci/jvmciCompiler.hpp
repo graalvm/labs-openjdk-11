@@ -109,7 +109,7 @@ public:
 
   // Print compilation timers and statistics
   virtual void print_timers();
-   
+
   // Gets the number of methods that have been successfully compiled by
   // a call to JVMCICompiler::compile_method().
   int methods_compiled() { return _methods_compiled; }

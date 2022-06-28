@@ -179,6 +179,13 @@ void JVMCICompiler::on_empty_queue(CompileQueue* queue, CompilerThread* thread) 
   }
 }
 
+// Print non-CompileBroker compilation timers
+void JVMCICompiler::print_hosted_timers() {
+  double code_install_time = _hostedCodeInstallTimer.seconds();
+  tty->print_cr("    JVMCI Hosted Time:");
+  tty->print_cr("       Install Code:   %7.3f s", code_install_time);
+}
+
 // Print CompileBroker compilation timers
 void JVMCICompiler::print_timers() {
   double code_install_time = _codeInstallTimer.seconds();
@@ -187,12 +194,6 @@ void JVMCICompiler::print_timers() {
   tty->print_cr("       Install Code:   %7.3f s", code_install_time);
 }
 
-// Print non-CompileBroker compilation timers
-void JVMCICompiler::print_hosted_timers() {
-  double code_install_time = _hostedCodeInstallTimer.seconds();
-  tty->print_cr("    JVMCI Hosted Time:");
-  tty->print_cr("       Install Code:   %7.3f s", code_install_time);
-}
 
 void JVMCICompiler::inc_methods_compiled() {
   Atomic::inc(&_methods_compiled);
