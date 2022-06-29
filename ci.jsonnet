@@ -143,20 +143,11 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
     BootJDK:: {
         downloads+: {
             BOOT_JDK: {
-                name : "oraclejdk",
-                version : "11.0.3+12",
-                platformspecific: true
-            }
-        }
-    },
-
-    # GR-37479: use some aarch64 jdk until we have a proper oraclejdk build in place for darwin-aarch64
-    DarwinAArch64BootJDK:: {
-        downloads+: {
-            BOOT_JDK: {
-                name : "jdk",
-                version : "11.0.15",
-                platformspecific: true
+                "version": "11.0.16",
+                "build_id": "11",
+                "name": "jpg-jdk",
+                "extrabundles": ["static-libs"],
+                "release": true
             }
         }
     },
@@ -200,7 +191,7 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
         ],
     },
 
-    Build(conf, is_musl_build):: conf + setupJDKSources(conf) + (if is_musl_build then self.MuslBootJDK else (if std.endsWith(conf.name, 'darwin-aarch64') then self.DarwinAArch64BootJDK else self.BootJDK)) + {
+    Build(conf, is_musl_build):: conf + setupJDKSources(conf) + (if is_musl_build then self.MuslBootJDK else self.BootJDK) + {
         name: "build-jdk" + conf.name,
         timelimit: "1:50:00",
         diskspace_required: "10G",
