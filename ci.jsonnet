@@ -143,9 +143,11 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
     BootJDK:: {
         downloads+: {
             BOOT_JDK: {
-                name : "oraclejdk",
-                version : "11.0.16+11",
-                platformspecific: true
+                "version": "11.0.16",
+                "build_id": "11",
+                "name": "jpg-jdk",
+                "extrabundles": ["static-libs"],
+                "release": true
             }
         }
     },
