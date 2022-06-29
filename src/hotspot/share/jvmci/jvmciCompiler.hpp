@@ -27,7 +27,30 @@
 #include "compiler/abstractCompiler.hpp"
 
 class JVMCICompiler : public AbstractCompiler {
-private:
+ public:
+  // Code installation specific statistics.
+  class CodeInstallStats {
+   private:
+    elapsedTimer _timer;
+    volatile int _count;
+    volatile int _codeBlobs_size;
+    volatile int _codeBlobs_code_size;
+   public:
+    CodeInstallStats() :
+      _count(0),
+      _codeBlobs_size(0),
+      _codeBlobs_code_size(0)
+    {}
+
+    elapsedTimer* timer() { return &_timer; }
+    void print_on(outputStream* st, const char* prefix) const;
+
+    // Notifies this object that `cb` has just been
+    // installed in the code cache.
+    void on_install(CodeBlob* cb);
+  };
+
+ private:
   bool _bootstrapping;
 
   /**
@@ -47,11 +70,8 @@ private:
 
   static JVMCICompiler* _instance;
 
-  // Code installation timer for CompileBroker compilations
-  static elapsedTimer _codeInstallTimer;
-
-  // Code installation timer for non-CompileBroker compilations
-  static elapsedTimer _hostedCodeInstallTimer;
+  CodeInstallStats _jit_code_installs;     // CompileBroker compilations
+  CodeInstallStats _hosted_code_installs;  // Non-CompileBroker compilations
 
   /**
    * Exits the VM due to an unexpected exception.
@@ -109,7 +129,7 @@ public:
 
   // Print compilation timers and statistics
   virtual void print_timers();
-   
+
   // Gets the number of methods that have been successfully compiled by
   // a call to JVMCICompiler::compile_method().
   int methods_compiled() { return _methods_compiled; }
@@ -121,14 +141,11 @@ public:
   int global_compilation_ticks() const { return _global_compilation_ticks; }
   void inc_global_compilation_ticks();
 
-  // Print timers related to non-CompileBroker compilations
-  static void print_hosted_timers();
-
-  static elapsedTimer* codeInstallTimer(bool hosted) {
+  CodeInstallStats* code_install_stats(bool hosted) {
     if (!hosted) {
-      return &_codeInstallTimer;
+      return &_jit_code_installs;
     } else {
-      return &_hostedCodeInstallTimer;
+      return &_hosted_code_installs;
     }
   }
 };

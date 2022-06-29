@@ -119,7 +119,7 @@ public class TestInvalidCompilationResult extends CodeInstallerTest {
         installEmptyCode(new Site[0], new Assumption[0], new Comment[0], 16, new DataPatch[]{new DataPatch(0, ref)}, null);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = JVMCIError.class)
     public void testNullConstantInDataSection() {
         ConstantReference ref = new ConstantReference(null);
         installEmptyCode(new Site[0], new Assumption[0], new Comment[0], 16, new DataPatch[]{new DataPatch(0, ref)}, null);
@@ -131,12 +131,12 @@ public class TestInvalidCompilationResult extends CodeInstallerTest {
         installEmptyCode(new Site[0], new Assumption[0], new Comment[0], 16, new DataPatch[]{new DataPatch(0, ref)}, null);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = JVMCIError.class)
     public void testNullReferenceInCode() {
         installEmptyCode(new Site[]{new DataPatch(0, null)}, new Assumption[0], new Comment[0], 16, new DataPatch[0], null);
     }
 
-    @Test(expected = NullPointerException.class)
+    @Test(expected = JVMCIError.class)
     public void testNullConstantInCode() {
         ConstantReference ref = new ConstantReference(null);
         installEmptyCode(new Site[]{new DataPatch(0, ref)}, new Assumption[0], new Comment[0], 16, new DataPatch[0], null);
