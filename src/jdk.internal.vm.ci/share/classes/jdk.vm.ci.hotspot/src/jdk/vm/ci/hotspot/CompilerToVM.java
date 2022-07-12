@@ -855,6 +855,17 @@ final class CompilerToVM {
     }
 
     /**
+     * Reads a {@code Klass*} from {@code address} (i.e., {@code address} is a {@code Klass**}
+     * value) and wraps it in a {@link HotSpotResolvedObjectTypeImpl}. This VM call must be used for
+     * any {@code Klass*} value not known to be already wrapped in a
+     * {@link HotSpotResolvedObjectTypeImpl}. The VM call is necessary so that the {@code Klass*} is
+     * wrapped in a {@code JVMCIKlassHandle} to protect it from the concurrent scanning done by G1.
+     */
+    HotSpotResolvedObjectTypeImpl getResolvedJavaType(long address) {
+        return getResolvedJavaType0(null, address, false);
+    }
+
+    /**
      * Return the size of the HotSpot ProfileData* pointed at by {@code position}. If
      * {@code position} is outside the space of the MethodData then an
      * {@link IllegalArgumentException} is thrown. A {@code position} inside the MethodData but that
