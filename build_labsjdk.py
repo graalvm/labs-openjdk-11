@@ -308,7 +308,7 @@ def main():
         "--with-debug-level=" + jdk_debug_level,
         "--with-extra-asflags=", # To prevent a compilation fail when building with libmusl
         "--enable-aot=no", # HotSpot AOT is omitted from labsjdk
-        "--with-jvm-features=graal",
+        "--with-jvm-features=-graal", # Do not build Graal since it is effectively dead in OpenJDK (JDK-8263327)
         "--with-jvm-variants=server",
         "--with-conf-name=" + conf_name,
         "--with-boot-jdk=" + opts.boot_jdk,
