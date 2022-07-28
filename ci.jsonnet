@@ -8,7 +8,7 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
     specVersion: "3",
 
     mxDependencies:: {
-        "python_version": "3",
+        python_version: "3",
         packages+: {
           "mx": "HEAD",
           "python3": "==3.8.10",
