@@ -1360,7 +1360,7 @@ void nmethod::flush() {
   assert(!is_osr_method() || is_unloaded() || is_zombie(),
          "osr nmethod must be unloaded or zombie before flushing");
   assert(is_zombie() || is_osr_method(), "must be a zombie method");
-  assert (!is_locked_by_vm(), "locked methods shouldn't be flushed");
+  guarantee(!is_locked_by_vm(), "locked methods shouldn't be flushed");
   assert_locked_or_safepoint(CodeCache_lock);
 
   // completely deallocate this method
