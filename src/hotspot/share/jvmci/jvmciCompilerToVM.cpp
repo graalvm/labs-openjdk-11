@@ -2470,17 +2470,21 @@ C2V_VMENTRY_0(jlong, translate, (JNIEnv* env, jobject, jobject obj_handle, jbool
     Handle constant = thisEnv->asConstant(obj, JVMCI_CHECK_0);
     result = peerEnv->get_object_constant(constant());
   } else if (thisEnv->isa_HotSpotNmethod(obj)) {
-    nmethodLocker locker;
-    nmethod* nm = JVMCIENV->get_nmethod(obj, locker);
-    if (nm != NULL) {
-      JVMCINMethodData* data = nm->jvmci_nmethod_data();
-      if (data != NULL) {
-        if (peerEnv->is_hotspot()) {
-          // Only the mirror in the HotSpot heap is accessible
-          // through JVMCINMethodData
-          oop nmethod_mirror = data->get_nmethod_mirror(nm, /* phantom_ref */ true);
-          if (nmethod_mirror != NULL) {
-            result = HotSpotJVMCI::wrap(nmethod_mirror);
+    {
+      // Limit the scope of the nmethodLocker as it does not
+      // seem to protect nm as well as it should.
+      nmethodLocker locker;
+      nmethod* nm = JVMCIENV->get_nmethod(obj, locker);
+      if (nm != NULL) {
+        JVMCINMethodData* data = nm->jvmci_nmethod_data();
+        if (data != NULL) {
+          if (peerEnv->is_hotspot()) {
+            // Only the mirror in the HotSpot heap is accessible
+            // through JVMCINMethodData
+            oop nmethod_mirror = data->get_nmethod_mirror(nm, /* phantom_ref */ true);
+            if (nmethod_mirror != NULL) {
+              result = HotSpotJVMCI::wrap(nmethod_mirror);
+            }
           }
         }
       }
@@ -2496,22 +2500,29 @@ C2V_VMENTRY_0(jlong, translate, (JNIEnv* env, jobject, jobject obj_handle, jbool
       result = peerEnv->new_HotSpotNmethod(mh(), cstring, isDefault, compileIdSnapshot, JVMCI_CHECK_0);
       if (result.is_null()) {
         // exception occurred (e.g. OOME) creating a new HotSpotNmethod
-      } else if (nm == NULL) {
-        // nmethod must have been unloaded
       } else {
-        // Link the new HotSpotNmethod to the nmethod
-        peerEnv->initialize_installed_code(result, nm, JVMCI_CHECK_0);
-        // Only HotSpotNmethod instances in the HotSpot heap are tracked directly by the runtime.
-        if (peerEnv->is_hotspot()) {
-          JVMCINMethodData* data = nm->jvmci_nmethod_data();
-          if (data == NULL) {
-            JVMCI_THROW_MSG_0(IllegalArgumentException, "Cannot set HotSpotNmethod mirror for default nmethod");
+        // Re-fetch the nmethod to keep the window of the/ nmethodLocker as short as possible.
+        // It seems possible for a HotSpot heap allocation done by new_HotSpotNmethod
+        // above can cause `nm` to be unloaded, despite being protected by an nmethodLocker.
+        nmethodLocker locker;
+        nmethod* nm = JVMCIENV->get_nmethod(obj, locker);
+        if (nm == NULL) {
+          // nmethod must have been unloaded
+        } else {
+          // Link the new HotSpotNmethod to the nmethod
+          peerEnv->initialize_installed_code(result, nm, JVMCI_CHECK_0);
+          // Only HotSpotNmethod instances in the HotSpot heap are tracked directly by the runtime.
+          if (peerEnv->is_hotspot()) {
+            JVMCINMethodData* data = nm->jvmci_nmethod_data();
+            if (data == NULL) {
+              JVMCI_THROW_MSG_0(IllegalArgumentException, "Cannot set HotSpotNmethod mirror for default nmethod");
+            }
+            if (data->get_nmethod_mirror(nm, /* phantom_ref */ false) != NULL) {
+              JVMCI_THROW_MSG_0(IllegalArgumentException, "Cannot overwrite existing HotSpotNmethod mirror for nmethod");
+            }
+            oop nmethod_mirror = HotSpotJVMCI::resolve(result);
+            data->set_nmethod_mirror(nm, nmethod_mirror);
           }
-          if (data->get_nmethod_mirror(nm, /* phantom_ref */ false) != NULL) {
-            JVMCI_THROW_MSG_0(IllegalArgumentException, "Cannot overwrite existing HotSpotNmethod mirror for nmethod");
-          }
-          oop nmethod_mirror = HotSpotJVMCI::resolve(result);
-          data->set_nmethod_mirror(nm, nmethod_mirror);
         }
       }
     }
