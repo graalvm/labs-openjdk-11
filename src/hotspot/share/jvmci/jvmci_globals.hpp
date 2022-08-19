@@ -54,9 +54,10 @@
           "JVMCI flags to be non-experimental and defaults "                \
           "UseJVMCICompiler and EnableJVMCI to true.")                      \
                                                                             \
-  experimental(uint, JVMCIThreadsPerNativeLibraryRuntime, 0,                \
+  experimental(uint, JVMCIThreadsPerNativeLibraryRuntime, 1,                \
           "Max number of threads per JVMCI native runtime. "                \
-          "Specify 0 to force use of a single JVMCI native runtime. ")      \
+          "Specify 0 to force use of a single JVMCI native runtime. "       \
+          "Specify 1 to force a single JVMCI native runtime per thread. ")  \
                                                                             \
   experimental(uint, JVMCICompilerIdleDelay, DEFAULT_COMPILER_IDLE_DELAY,   \
           "Number of milliseconds a JVMCI compiler queue should wait for "  \
@@ -136,10 +137,15 @@
           "and methods the JVMCI shared library must provide")              \
                                                                             \
   experimental(bool, UseJVMCINativeLibrary, false,                          \
-          "Execute JVMCI Java code from a shared library "                  \
+          "Execute JVMCI Java code from a shared library (\"libjvmci\") "   \
           "instead of loading it from class files and executing it "        \
           "on the HotSpot heap. Defaults to true if UseJVMCICompiler is "   \
           "true and a JVMCI native library is available.")                  \
+                                                                            \
+  experimental(double, JVMCINativeLibraryThreadFraction, 0.33,              \
+          "The fraction of compiler threads used by libjvmci. "             \
+          "The remaining compiler threads are used by C1.")                 \
+          range(0.0, 1.0)                                                   \
                                                                             \
   experimental(ccstr, JVMCINativeLibraryErrorFile, NULL,                    \
           "If an error in the JVMCI native library occurs, save the "       \
