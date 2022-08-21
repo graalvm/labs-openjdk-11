@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 Welcome to LabsJDK CE 11.
 
 The latest release is available at https://github.com/graalvm/labs-openjdk-11/releases/latest
@@ -36,16 +35,3 @@ You can verify the labsjdk build with:
 
 The original JDK README is [here](README).
 Further information on building JDK 11 is [here](doc/building.md).
-=======
-# Welcome to the JDK!
-
-For build instructions please see the
-[online documentation](https://openjdk.java.net/groups/build/doc/building.html),
-or either of these files:
-
-- [doc/building.html](doc/building.html) (html version)
-- [doc/building.md](doc/building.md) (markdown version)
-
-See <https://openjdk.java.net/> for more information about
-the OpenJDK Community and the JDK.
->>>>>>> jdk-11.0.17+3
