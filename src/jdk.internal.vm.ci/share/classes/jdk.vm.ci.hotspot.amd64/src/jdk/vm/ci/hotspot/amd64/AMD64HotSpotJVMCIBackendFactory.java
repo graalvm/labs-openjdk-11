@@ -127,6 +127,9 @@ public class AMD64HotSpotJVMCIBackendFactory implements HotSpotJVMCIBackendFacto
         if ((config.vmVersionFeatures & config.amd64FMA) != 0) {
             features.add(AMD64.CPUFeature.FMA);
         }
+        if ((config.vmVersionFeatures & config.amd64CLMUL) != 0) {
+            features.add(AMD64.CPUFeature.CLMUL);
+        }
         return features;
     }
 
