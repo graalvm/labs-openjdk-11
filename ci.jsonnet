@@ -94,6 +94,9 @@ local labsjdk_builder_version = "1c0fbd474e84a393681729bf0794e59ea55300a5";
 
     AMD64Musl:: self.AMD64 + {
         name+: "-musl",
+        packages+: {
+            "devkit:gcc7.3.0-Alpine3.8+0:musl": "==1"
+        }
     },
 
     AArch64:: {
