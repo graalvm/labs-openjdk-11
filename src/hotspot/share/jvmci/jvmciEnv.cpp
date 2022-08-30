@@ -143,7 +143,7 @@ void JVMCIEnv::copy_saved_properties() {
   }
 }
 
-void JVMCIEnv::init_env_mode_runtime(JavaThread* thread, JNIEnv* parent_env) {
+void JVMCIEnv::init_env_mode_runtime(JavaThread* thread, JNIEnv* parent_env, bool attach_OOME_is_fatal) {
   assert(thread != NULL, "npe");
   _env = NULL;
   _pop_frame_on_close = false;
@@ -195,10 +195,16 @@ void JVMCIEnv::init_env_mode_runtime(JavaThread* thread, JNIEnv* parent_env) {
       attach_args.version = JNI_VERSION_1_2;
       attach_args.name = thread->name();
       attach_args.group = NULL;
-      if (_runtime->AttachCurrentThread(thread, (void**) &_env, &attach_args) != JNI_OK) {
+      jint attach_result = _runtime->AttachCurrentThread(thread, (void**) &_env, &attach_args);
+      if (attach_result == JNI_OK) {
+        _detach_on_close = true;
+      } else if (!attach_OOME_is_fatal && attach_result == JNI_ENOMEM) {
+        _env = NULL;
+        _attach_threw_OOME = true;
+        return;
+      } else {
         fatal("Error attaching current thread (%s) to JVMCI shared library JNI interface", attach_args.name);
       }
-      _detach_on_close = true;
     }
   }
 
@@ -216,17 +222,22 @@ void JVMCIEnv::init_env_mode_runtime(JavaThread* thread, JNIEnv* parent_env) {
 }
 
 JVMCIEnv::JVMCIEnv(JavaThread* thread, JVMCICompileState* compile_state, const char* file, int line):
-    _throw_to_caller(false), _file(file), _line(line), _compile_state(compile_state) {
-  init_env_mode_runtime(thread, NULL);
+    _throw_to_caller(false), _file(file), _line(line), _attach_threw_OOME(false), _compile_state(compile_state) {
+  // In case of OOME, there's a good chance a subsequent attempt to attach might succeed.
+  // Other errors most likely indicate a non-recoverable error in the JVMCI runtime.
+  init_env_mode_runtime(thread, NULL, false);
+  if (_attach_threw_OOME) {
+    compile_state->set_failure(true, "Out of memory while attaching JVMCI compiler to current thread");
+  }
 }
 
 JVMCIEnv::JVMCIEnv(JavaThread* thread, const char* file, int line):
-    _throw_to_caller(false), _file(file), _line(line), _compile_state(NULL) {
+    _throw_to_caller(false), _file(file), _line(line), _attach_threw_OOME(false), _compile_state(NULL) {
   init_env_mode_runtime(thread, NULL);
 }
 
 JVMCIEnv::JVMCIEnv(JavaThread* thread, JNIEnv* parent_env, const char* file, int line):
-    _throw_to_caller(true), _file(file), _line(line), _compile_state(NULL) {
+    _throw_to_caller(true), _file(file), _line(line), _attach_threw_OOME(false), _compile_state(NULL) {
   init_env_mode_runtime(thread, parent_env);
   assert(_env == NULL || parent_env == _env, "mismatched JNIEnvironment");
 }
@@ -236,6 +247,7 @@ void JVMCIEnv::init(JavaThread* thread, bool is_hotspot, const char* file, int l
   _throw_to_caller = false;
   _file = file;
   _line = line;
+  _attach_threw_OOME = false;
   if (is_hotspot) {
     _env = NULL;
     _pop_frame_on_close = false;
@@ -402,6 +414,9 @@ jboolean JVMCIEnv::transfer_pending_exception(JavaThread* THREAD, JVMCIEnv* peer
 
 
 JVMCIEnv::~JVMCIEnv() {
+  if (_attach_threw_OOME) {
+    return;
+  }
   if (_throw_to_caller) {
     if (is_hotspot()) {
       // Nothing to do

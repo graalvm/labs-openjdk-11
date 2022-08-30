@@ -2149,18 +2149,21 @@ void CompileBroker::invoke_compiler_on_method(CompileTask* task) {
     } else {
       JVMCICompileState compile_state(task, jvmci);
       JVMCIEnv env(thread, &compile_state, __FILE__, __LINE__);
-      methodHandle method(thread, target_handle);
-      runtime = env.runtime();
-      runtime->compile_method(&env, jvmci, method, osr_bci);
-
       failure_reason = compile_state.failure_reason();
-      failure_reason_on_C_heap = compile_state.failure_reason_on_C_heap();
-      if (!compile_state.retryable()) {
-        retry_message = "not retryable";
-        compilable = ciEnv::MethodCompilable_not_at_tier;
-      }
-      if (task->code() == NULL) {
-        assert(failure_reason != NULL, "must specify failure_reason");
+      if (failure_reason == NULL) {
+        methodHandle method(thread, target_handle);
+        runtime = env.runtime();
+        runtime->compile_method(&env, jvmci, method, osr_bci);
+
+        failure_reason = compile_state.failure_reason();
+        failure_reason_on_C_heap = compile_state.failure_reason_on_C_heap();
+        if (!compile_state.retryable()) {
+          retry_message = "not retryable";
+          compilable = ciEnv::MethodCompilable_not_at_tier;
+        }
+        if (task->code() == NULL) {
+          assert(failure_reason != NULL, "must specify failure_reason");
+        }
       }
     }
     post_compile(thread, task, task->code() != NULL, NULL, compilable, failure_reason);
