@@ -257,8 +257,18 @@ void TieredThresholdPolicy::initialize() {
     // No C2 compiler thread required
     set_c1_count(count);
   } else {
-    set_c1_count(MAX2(count / 3, 1));
-    set_c2_count(MAX2(count - c1_count(), 1));
+#if INCLUDE_JVMCI
+    if (UseJVMCICompiler && UseJVMCINativeLibrary) {
+      int libjvmci_count = MAX2((int) (count * JVMCINativeLibraryThreadFraction), 1);
+      int c1_count = MAX2(count - libjvmci_count, 1);
+      set_c2_count(libjvmci_count);
+      set_c1_count(c1_count);
+    } else
+#endif
+    {
+      set_c1_count(MAX2(count / 3, 1));
+      set_c2_count(MAX2(count - c1_count(), 1));
+    }
   }
   assert(count == c1_count() + c2_count(), "inconsistent compiler thread count");
 
