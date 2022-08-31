@@ -7,7 +7,7 @@ local labsjdk_builder_version = "66c43e01a537017021f186f9063796e2f82cd2aa";
 local os(conf) = conf.environment.CI_OS;
 
 {
-    overlay: "436e17726b16bb1af9552c0f096d1bfbe7abccd8",
+    overlay: "1d730959cb421d5798a3b10ef998855822fcfcbd",
     specVersion: "2",
 
     local mx = {
@@ -72,7 +72,7 @@ local os(conf) = conf.environment.CI_OS;
     },
     LinuxMuslDocker:: self.Linux {
         "docker": {
-            "image": "phx.ocir.io/oraclelabs2/c_graal/jdk-musl-snapshot-builder"
+            "image": defs.linux_docker_image_amd64_musl
         },
     },
     Darwin:: self.OSBase + {
@@ -113,6 +113,9 @@ local os(conf) = conf.environment.CI_OS;
         name+: "-musl",
         environment+: {
             CI_ARCH+: "-musl",
+        },
+        packages+: {
+            "devkit:gcc7.3.0-Alpine3.8+0:musl": "==1"
         }
     },
 
