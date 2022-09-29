@@ -69,6 +69,7 @@ module jdk.jlink {
         jdk.tools.jlink.internal.plugins.ExcludeJmodSectionPlugin,
         jdk.tools.jlink.internal.plugins.LegalNoticeFilePlugin,
         jdk.tools.jlink.internal.plugins.SystemModulesPlugin,
+        jdk.tools.jlink.internal.plugins.CopyFilesPlugin,
         jdk.tools.jlink.internal.plugins.StripNativeCommandsPlugin,
         jdk.tools.jlink.internal.plugins.OrderResourcesPlugin,
         jdk.tools.jlink.internal.plugins.DefaultCompressPlugin,
@@ -79,6 +80,7 @@ module jdk.jlink {
         jdk.tools.jlink.internal.plugins.AddOptionsPlugin,
         jdk.tools.jlink.internal.plugins.VendorBugURLPlugin,
         jdk.tools.jlink.internal.plugins.VendorVMBugURLPlugin,
-        jdk.tools.jlink.internal.plugins.VendorVersionPlugin;
+        jdk.tools.jlink.internal.plugins.VendorVersionPlugin,
+        jdk.tools.jlink.internal.plugins.SaveJlinkArgfilesPlugin;
 
 }

@@ -1,5 +1,5 @@
 # https://github.com/graalvm/labs-openjdk-11/blob/master/doc/testing.md
-local run_test_spec = "test/hotspot/jtreg/compiler/jvmci";
+local run_test_spec = "test/hotspot/jtreg/compiler/jvmci test/jdk/tools/jlink/plugins";
 
 local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
 
