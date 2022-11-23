@@ -139,7 +139,26 @@ def create_bundle(input_bundles, bundle, jdk_debug_level, install_prefix, extrac
         else:
             with tarfile.open(input_bundle, 'r:gz') as tf:
                 root_name = get_root(tf.getnames(), input_bundle, root_name)
-                tf.extractall(tmp_dir)
+                def is_within_directory(directory, target):
+                    
+                    abs_directory = os.path.abspath(directory)
+                    abs_target = os.path.abspath(target)
+                
+                    prefix = os.path.commonprefix([abs_directory, abs_target])
+                    
+                    return prefix == abs_directory
+                
+                def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+                
+                    for member in tar.getmembers():
+                        member_path = os.path.join(path, member.name)
+                        if not is_within_directory(path, member_path):
+                            raise Exception("Attempted Path Traversal in Tar File")
+                
+                    tar.extractall(path, members, numeric_owner=numeric_owner) 
+                    
+                
+                safe_extract(tf, tmp_dir)
         os.remove(input_bundle)
     root_dir = join(tmp_dir, root_name)
     if jdk_debug_level == 'fastdebug':
@@ -183,7 +202,26 @@ def create_bundle(input_bundles, bundle, jdk_debug_level, install_prefix, extrac
     if extract:
         with tarfile.open(bundle, 'r:gz') as tf:
             log('Extracting {}'.format(bundle))
-            tf.extractall(dirname(bundle))
+            def is_within_directory(directory, target):
+                
+                abs_directory = os.path.abspath(directory)
+                abs_target = os.path.abspath(target)
+            
+                prefix = os.path.commonprefix([abs_directory, abs_target])
+                
+                return prefix == abs_directory
+            
+            def safe_extract(tar, path=".", members=None, *, numeric_owner=False):
+            
+                for member in tar.getmembers():
+                    member_path = os.path.join(path, member.name)
+                    if not is_within_directory(path, member_path):
+                        raise Exception("Attempted Path Traversal in Tar File")
+            
+                tar.extractall(path, members, numeric_owner=numeric_owner) 
+                
+            
+            safe_extract(tf, dirname(bundle))
 
 def get_os():
     p = sys.platform
