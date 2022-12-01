@@ -231,13 +231,8 @@ var getJibProfilesCommon = function (input, data) {
 
     // List of the main profile names used for iteration
     common.main_profile_names = [
-<<<<<<< HEAD
         "linux-x64", "linux-x86", "macosx-aarch64", "macosx-x64", "solaris-x64",
-        "solaris-sparcv9", "windows-x64", "windows-x86",
-=======
-        "linux-x64", "linux-x86", "macosx-x64", "solaris-x64",
         "solaris-sparcv9", "windows-x64", "windows-x86", "windows-aarch64",
->>>>>>> jdk-11.0.18+5
         "linux-aarch64", "linux-arm32", "linux-arm64", "linux-arm-vfp-hflt",
         "linux-arm-vfp-hflt-dyn"
     ];
@@ -894,13 +889,8 @@ var getJibProfilesDependencies = function (input, common) {
         macosx_x64: "Xcode11.3.1-MacOSX10.15+1.0",
         macosx: "Xcode12.4+1.0",
         solaris_x64: "SS12u4-Solaris11u1+1.0",
-<<<<<<< HEAD
         solaris_sparcv9: "SS12u4-Solaris11u1+2.0",
         windows_x64: "VS2017-15.9.24+1.0",
-=======
-        solaris_sparcv9: "SS12u4-Solaris11u1+1.1",
-        windows_x64: "VS2017-15.9.16+1.1",
->>>>>>> jdk-11.0.18+5
         linux_aarch64: (input.profile != null && input.profile.indexOf("arm64") >= 0
                     ? "gcc-linaro-aarch64-linux-gnu-4.8-2013.11_linux+1.0"
                     : "gcc7.3.0-OL7.6+2.0"),
@@ -913,7 +903,6 @@ var getJibProfilesDependencies = function (input, common) {
                     )
     };
 
-<<<<<<< HEAD
     var devkit_platform = "";
     if (input.build_os == 'macosx' && input.build_cpu == 'aarch64') {
         devkit_platform = "macosx";
@@ -923,21 +912,6 @@ var getJibProfilesDependencies = function (input, common) {
         devkit_platform = input.target_platform;
     }
 
-=======
-    var devkit_platform = (input.target_cpu == "x86"
-        ? input.target_os + "_x64"
-        : input.target_platform);
-    if (input.target_platform == "windows_aarch64") {
-        devkit_platform = "windows_x64";
-    }
-    var devkit_cross_prefix = "";
-    if (!(input.target_os == "windows")) {
-        if (input.build_platform != input.target_platform
-           && input.build_platform != devkit_platform) {
-            devkit_cross_prefix = input.build_platform + "-to-";
-        }
-    }
->>>>>>> jdk-11.0.18+5
 
     var boot_jdk_platform = (input.build_os == "macosx" ? "osx" : input.build_os)
         + "-" + input.build_cpu;

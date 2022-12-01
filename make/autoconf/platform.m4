@@ -194,11 +194,7 @@ AC_DEFUN([PLATFORM_EXTRACT_VARS_FROM_OS],
       VAR_OS=windows
       VAR_OS_ENV=windows.cygwin
       ;;
-<<<<<<< HEAD
-    *msys*)
-=======
     *msys* | *mingw*)
->>>>>>> jdk-11.0.18+5
       VAR_OS=windows
       VAR_OS_ENV=windows.msys2
       ;;
