@@ -14,6 +14,7 @@ test/nashorn/lib
 NashornProfile.txt
 **/JTreport/**
 **/JTwork/**
+<<<<<<< HEAD
 /mxbuild/
 **/.checkstyle
 **/.classpath
@@ -25,3 +26,7 @@ NashornProfile.txt
 **/.pydevproject
 **/.settings/
 **/*.pyc
+=======
+/compile_commands.json
+/.cache
+>>>>>>> jdk-11.0.20+3
