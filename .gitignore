@@ -14,14 +14,5 @@ test/nashorn/lib
 NashornProfile.txt
 **/JTreport/**
 **/JTwork/**
-/mxbuild/
-**/.checkstyle
-**/.classpath
-**/.externalToolBuilders
-**/.factorypath
-**/.idea
-**/.metadata/
-**/.project
-**/.pydevproject
-**/.settings/
-**/*.pyc
+/compile_commands.json
+/.cache
