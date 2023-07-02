@@ -1,7 +1,7 @@
 # https://github.com/graalvm/labs-openjdk-11/blob/master/doc/testing.md
 local run_test_spec = "test/hotspot/jtreg/compiler/jvmci test/jdk/tools/jlink/plugins";
 
-local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
+local labsjdk_builder_version = "f8e53eca3faabca93412bee7abe3cbcc9da7d5b6";
 
 {
     overlay: "adc52f479f9d2b1f55985066bf95d454702c7a89",
@@ -13,6 +13,7 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
           "mx": "HEAD",
           "python3": "==3.8.10",
           'pip:pylint': '==2.4.4',
+          'pip:requests': '==2.25.1',
       },
     },
 
@@ -66,7 +67,9 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
         docker: {
             image: defs.linux_docker_image_amd64_musl
         },
-        packages: {},
+        packages: {
+            "pip:requests": "==2.25.1",
+        },
     },
     LinuxDevkitAMD64:: self.Linux {
         packages+: {
@@ -238,14 +241,13 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
         ] +
         build_labsjdk("release", "JAVA_HOME") +
         build_labsjdk("fastdebug", "JAVA_HOME_FASTDEBUG") +
-        [
-            ["set-export", "PATH", "${OLD_PATH}"],
-
+            (if !is_musl_build then
+            [["set-export", "PATH", "${OLD_PATH}"],
             # Prepare for publishing
             ["set-export", "JDK_HOME", conf.path("${PWD}/jdk_home")],
             ["cd", "${JAVA_HOME}"],
-            conf.copydir(conf.jdk_home("."), "${JDK_HOME}")
-        ],
+            conf.copydir(conf.jdk_home("."), "${JDK_HOME}")]
+            else []),
 
         publishArtifacts+: if !is_musl_build then [
             {
@@ -263,7 +265,7 @@ local labsjdk_builder_version = "e9c60b5174490f2012c7c5d60a20aace93209a56";
     },
 
     # Downstream Graal branch to test against.
-    local downstream_branch = "me/GR-42125_downstream",
+    local downstream_branch = "bh/GR-46242_downstream",
 
     local clone_graal = {
         run+: [
